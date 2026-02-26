@@ -8,11 +8,13 @@ These skills also work with [Cursor](https://cursor.com), which supports `~/.cla
 
 ## Installation
 
-Clone this repo and symlink it to your Claude Code skills directory:
+Clone this repo and symlink individual skills to your Claude Code skills directory:
 
 ```bash
 git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
-ln -s ~/git/claude-skills ~/.claude/skills
+mkdir -p ~/.claude/skills
+ln -s ~/git/claude-skills/export ~/.claude/skills/export
+ln -s ~/git/claude-skills/review ~/.claude/skills/review
 ```
 
 Or copy individual skill folders to `~/.claude/skills/`.
