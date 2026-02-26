@@ -4,7 +4,7 @@ Custom skills (slash commands) for [Claude Code](https://docs.anthropic.com/en/d
 
 ## Compatibility
 
-These skills also work with [Cursor](https://cursor.com), which supports `~/.claude/skills/` as a [compatible path](https://cursor.com/docs/context/skills).
+These skills also work with [Cursor](https://cursor.com) and other tools that support the [Agent Skills](https://agentskills.io/) standard. Cursor supports `~/.claude/skills/` as a [compatible path](https://cursor.com/docs/context/skills).
 
 ## Installation
 
