@@ -21,6 +21,8 @@ Or copy individual skill folders to `~/.claude/skills/`.
 
 ## Skills
 
+See each skill directory's README.md for more information.
+
 ### [/export](export/)
 
 Exports Claude Code sessions to readable markdown files. Converts the raw JSONL session format into clean documentation.
