@@ -13,3 +13,14 @@ This is a **public repository**. Before making any commit, review the staged cha
 - Sprint and team naming conventions
 
 If you find anything that looks like it shouldn't be public, **stop and describe it to the user** before committing. Ask them to confirm whether the content is safe to publish.
+
+# Skill Maintenance
+
+When modifying skills:
+- Check the skill's README.md and update it if the changes affect usage, installation, or behavior
+- Keep the root README.md in sync (skill descriptions, links)
+
+When creating new skills:
+- Create a README.md in the skill directory explaining usage and installation
+- Add a reference to the new skill in the root README.md under "## Skills"
+- Commit and push all changes
