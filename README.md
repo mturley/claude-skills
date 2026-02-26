@@ -21,15 +21,15 @@ Or copy individual skill folders to `~/.claude/skills/`.
 
 ## Skills
 
-### /export
+### [/export](export/)
 
 Exports Claude Code sessions to readable markdown files. Converts the raw JSONL session format into clean documentation.
 
-### /review
+### [/review](review/)
 
 Reviews pull requests by checking out the branch and analyzing changes file-by-file.
 
-### /create-jira
+### [/create-jira](create-jira/)
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
 
