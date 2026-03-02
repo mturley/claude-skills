@@ -16,20 +16,6 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 ---
 
-## Available MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `jira_getIssue` | Fetch issue details |
-| `jira_createIssue` | Create new issues |
-| `jira_postIssueComment` | Add comments to issues |
-| `jira_updateIssue` | Update issue fields |
-| `jira_searchIssues` | Search with JQL |
-| `jira_getTransitions` | Get available status transitions |
-| `jira_transitionIssue` | Transition issue to new status |
-
----
-
 ## RHOAIENG Project Configuration
 
 **Project ID:** `12340620`

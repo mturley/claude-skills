@@ -56,7 +56,6 @@ When documenting a new MCP server:
 1. Create `[mcp-name].md` in this directory (lowercase, matching the MCP server name)
 2. Follow the standard format with sections:
    - **Quick Reference** - Most commonly needed information
-   - **Available Tools** - List of MCP tools with descriptions
    - **Custom Fields & Configuration** - Field IDs, format requirements
    - **Usage Patterns** - How to effectively use this MCP
    - **Known Limitations & Workarounds** - Gotchas discovered through usage
