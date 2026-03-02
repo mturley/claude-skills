@@ -19,13 +19,35 @@ This directory contains **usage patterns** for MCP servers - things like:
 
 ## Installation
 
-To make this documentation accessible to Claude in all sessions, symlink this directory to `~/.claude/skills/`:
+To make this documentation available to Claude in all sessions:
+
+### Step 1: Symlink the directory
 
 ```bash
 ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 ```
 
-This should be done alongside symlinking individual skills from the claude-skills repo.
+This makes the files physically accessible. Do this alongside symlinking individual skills.
+
+### Step 2: Add a generic MCP reference to your global CLAUDE.md
+
+Create or edit `~/.claude/CLAUDE.md` and add this section:
+
+```markdown
+# MCP Server Operations
+
+Before using any MCP server tools, check `~/.claude/skills/.mcp-usage/` for a corresponding
+documentation file. These files contain server-specific information like custom field IDs,
+format requirements, and gotchas.
+```
+
+This single instruction works for **all MCP servers** (Jira, Puppeteer, etc.). Claude will check
+the `.mcp-usage/` directory for relevant documentation when using any MCP.
+
+**Why this is needed:** The symlink makes files accessible, but Claude won't proactively check them
+without explicit instructions in CLAUDE.md. Skills can reference these files directly, but for
+Claude to use this documentation outside of skill contexts (e.g., when you ask Jira questions directly),
+you need this reference.
 
 ## Adding New MCP Documentation
 

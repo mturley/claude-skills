@@ -52,11 +52,31 @@ I've also created skills in other repositories:
 
 ## MCP Usage Reference
 
-The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs used by the team.
+The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs used by skills in this repo.
 
 See [`.mcp-usage/README.md`](.mcp-usage/README.md) for available MCP documentation.
 
-When you symlink the `.mcp-usage` directory to `~/.claude/skills/.mcp-usage` (see Installation section), it becomes accessible to Claude in all sessions, allowing it to reference field IDs, formats, and gotchas when using MCP servers.
+To make this documentation available to Claude in all sessions:
+
+1. **Symlink the directory** (makes files physically accessible):
+   ```bash
+   ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
+   ```
+
+2. **Add a generic MCP reference in your global `~/.claude/CLAUDE.md`** (tells Claude to check the directory):
+
+   ```markdown
+   # MCP Server Operations
+
+   Before using any MCP server tools, check `~/.claude/skills/.mcp-usage/` for a corresponding
+   documentation file. These files contain server-specific information like custom field IDs,
+   format requirements, and gotchas.
+   ```
+
+   This single instruction works for all MCP servers (Jira, Puppeteer, etc.), telling Claude to
+   look in the `.mcp-usage/` directory for relevant documentation when using any MCP.
+
+This ensures Claude proactively uses this documentation in all sessions, not just when using skills.
 
 ## Creating Your Own Skills
 
