@@ -112,12 +112,30 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 
 ### Git Pull Request (customfield_12310220)
 
-**Value:** Full PR URL as string
-```json
-"https://github.com/kubeflow/model-registry/pull/2288"
+**Value:** Full PR URL(s) as a string. Multiple PRs are comma-separated.
+
+**When to use:** Always set this field when creating a PR for a Jira issue. When the user asks to "link a PR to an issue", this is the field to update.
+
+**How to set:**
+1. First, fetch the issue with `jira_getIssue` and check the current value of `customfield_12310220`
+2. If the field is empty/null, set it to the new PR URL
+3. If the field already has a value, append the new URL as a comma-separated entry
+
+```
+// Single PR
+"customfield_12310220": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"
+
+// Multiple PRs (append to existing)
+"customfield_12310220": "https://github.com/opendatahub-io/odh-dashboard/pull/6466, https://github.com/kubeflow/model-registry/pull/2288"
 ```
 
-**Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually using `jira_updateIssue` when a PR exists.
+Use `jira_updateIssue` with the value in `customFields`:
+```
+issueKey: "RHOAIENG-51543"
+customFields: {"customfield_12310220": "<url or comma-separated urls>"}
+```
+
+**Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
 
 ---
 
