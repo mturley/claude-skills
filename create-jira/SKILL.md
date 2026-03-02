@@ -36,24 +36,27 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 
 7. **If the issue type is Bug, ask for Severity** (customfield_12316142)
 
-8. **Create the issue** using jira_createIssue with these properties:
+8. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
+
+9. **Create the issue** using jira_createIssue with these properties:
    - Project ID: `12340620` (RHOAIENG) - must ALSO be included in customFields as `"project": {"id": "12340620"}`
    - Component: AI Core Dashboard (add via customFields)
    - Team (customfield_12313240): `"4158"` (RHOAI Dashboard) - note: must be a string, not an object
    - Labels: Based on area selection
    - Priority: Based on user selection (use priority object with id)
    - Severity: If Bug, based on user selection
+   - Epic Link (customfield_12311140): If an epic was specified, use the epic's issue key as a string
    - Issue Type IDs:
      - Bug: `1`
      - Task: `3`
      - Story: `17`
    - Description: Use the user-approved description, formatted according to the templates below
 
-9. **After creating the issue**, provide the user with:
-   - The issue key (e.g., RHOAIENG-XXXXX)
-   - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
+10. **After creating the issue**, provide the user with:
+    - The issue key (e.g., RHOAIENG-XXXXX)
+    - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
 
-10. **Ask if they want to add it to a sprint**. If yes:
+11. **Ask if they want to add it to a sprint**. If yes:
     - Search for Green sprints using the technique described in "Finding Green Sprints" below
     - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
     - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
@@ -86,6 +89,12 @@ The Jira sprint field does NOT support text search operators like `~`. To find G
    **IMPORTANT**: Only use sprints with "Green" in the name. Never select Razzmatazz, Monarch, or other sprint names.
 
 5. **Extract the sprint ID** (e.g., `82844`) from the string and use it as an integer when updating the issue.
+
+## Epic Link vs Parent Link
+
+These are different fields - use the correct one:
+- **Epic Link** (`customfield_12311140`): Use this to link an issue to an epic. Value is the epic's issue key as a string (e.g., `"RHOAIENG-27992"`).
+- **Parent Link** (`customfield_12313140`): This is for parent-child relationships in Jira's hierarchy (not for epics). Do NOT use this for epic linking.
 
 ## Priority IDs
 Use `{"id": "<id>"}` format for priority field.
