@@ -180,34 +180,6 @@ When creating issue descriptions with file references, use Jira Wiki Markup synt
 
 ---
 
-## Critical Gotchas
-
-### 1. Severity Field Format
-- ✅ Use: `{"value": "High"}`
-- ❌ Don't use: `{"name": "High"}` or `{"id": "High"}`
-- Error: "Could not find valid 'id' or 'value'"
-
-### 2. Team Field Format
-- ✅ Use: `"4158"` (string)
-- ❌ Don't use: `{"id": "4158"}` (object)
-- Error: 400 Bad Request
-
-### 3. Sprint Field Search
-- ✅ Use: `sprint in openSprints()` or `sprint in futureSprints()`
-- ❌ Don't use: `sprint ~ "Green*"` or `sprint = "Dashboard - Green-35"`
-- Error: "The operator '~' is not supported by the 'sprint' field"
-
-### 4. Epic Link vs Parent Link
-- Epic Link (`customfield_12311140`): For linking to epics
-- Parent Link (`customfield_12313140`): For hierarchy, NOT epics
-- Using the wrong field won't create the expected relationship
-
-### 5. Git PR Field
-- The field does NOT auto-populate from GitHub
-- Must be set manually with full PR URL
-
----
-
 ## Troubleshooting
 
 ### Authentication Failures
@@ -219,59 +191,6 @@ When creating issue descriptions with file references, use Jira Wiki Markup synt
 
 ---
 
-### Field Format Errors (400 Bad Request)
-
-**Symptom:** "Could not find valid 'id' or 'value'"
-
-**Cause:** Using wrong format for select/cascading fields
-
-**Solution:**
-- Severity: Use `{"value": "..."}` NOT `{"name": "..."}`
-- Priority: Use `{"id": "..."}` format
-- Team: Use string `"4158"` NOT object `{"id": "4158"}`
-
----
-
-### Sprint Search Failures (400 Bad Request)
-
-**Symptom:** "The operator '~' is not supported by the 'sprint' field"
-
-**Cause:** Attempting to use text search operators on sprint field
-
-**Solution:**
-1. Search for issues using `sprint in openSprints()` or `sprint in futureSprints()`
-2. Parse the `customfield_12310940` field from results
-3. Extract sprint ID and name
-4. Filter by sprint name pattern for your team
-5. Use the integer sprint ID when updating issues
-
----
-
-### Epic Not Showing Issue
-
-**Symptom:** Issue created but not appearing under epic
-
-**Cause:** Used Parent Link field instead of Epic Link field
-
-**Solution:**
-- Use `customfield_12311140` (Epic Link) NOT `customfield_12313140` (Parent Link)
-- Update the issue with the correct field
-
----
-
-### PR Not Showing in Jira
-
-**Symptom:** GitHub PR not appearing in Jira issue
-
-**Cause:** Git Pull Request field doesn't auto-populate
-
-**Solution:**
-- Manually set `customfield_12310220` to the full PR URL
-- Use `jira_updateIssue` to update the field
-
----
-
 ## See Also
 
 - **`/create-jira` skill:** [`~/git/claude-skills/create-jira/SKILL.md`](../create-jira/SKILL.md) - Skill that uses this reference to create RHOAI Dashboard issues
-- **Setup instructions:** `~/Documents/md-redhat/AI Tool Use/Jira MCP.md` - Personal setup guide (environment-specific, not in this repo)

@@ -40,7 +40,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
    - For bugs: Look for the specific code paths involved
    - For tasks/stories: Identify the files and components that would need to be modified
    - Use findings to enrich the issue description with technical details and file references
-   - When referencing files, include GitHub links (see "File References" section below)
+   - When referencing files, include GitHub links (see "File References" below)
 
 4. **Ask the user for the area** (one of) - if not already clear from context:
    - Model Catalog only - use label `dashboard-area-model-catalog`
@@ -69,7 +69,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
     - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
 
 11. **Ask if they want to add it to a sprint**. If yes:
-    - Search for Green sprints using the technique described in "Finding Green Sprints" below
+    - Follow the "Finding Sprints" instructions in [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) to find the correct Green sprint
     - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
     - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
     - Transition the issue from "New" to "Backlog" using jira_getTransitions to find the transition ID, then jira_transitionIssue to perform the transition
@@ -77,34 +77,6 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 12. **If a PR was mentioned**, set the Git Pull Request field:
     - Use jira_updateIssue to set `customfield_12310220` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
     - This field does NOT auto-populate from GitHub, so it must be set manually
-
-## Finding Green Sprints
-
-The Jira sprint field does NOT support text search operators like `~`. To find Green sprints:
-
-1. **For current sprint**: Search for issues in open sprints with the model-registry label:
-   ```
-   project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-area-model-registry" ORDER BY created DESC
-   ```
-
-2. **For next sprint**: Search for issues in future sprints:
-   ```
-   project = RHOAIENG AND component = "AI Core Dashboard" AND sprint in futureSprints() ORDER BY created DESC
-   ```
-
-3. **Parse the sprint field** from results. The `customfield_12310940` field contains sprint data as strings like:
-   ```
-   com.atlassian.greenhopper.service.sprint.Sprint@...[id=82844,rapidViewId=18687,state=FUTURE,name=Dashboard - Green-35,...]
-   ```
-
-4. **Filter for "Green" sprints only**. Multiple scrum teams share this board with different sprint names:
-   - Green sprints: `Dashboard - Green - N` or `Dashboard - Green-N` (Model Registry/Catalog team)
-   - Razzmatazz sprints: `Dashboard - Razzmatazz - N` (different team)
-   - Monarch sprints: `Dashboard - Monarch-N` (different team)
-
-   **IMPORTANT**: Only use sprints with "Green" in the name. Never select Razzmatazz, Monarch, or other sprint names.
-
-5. **Extract the sprint ID** (e.g., `82844`) from the string and use it as an integer when updating the issue.
 
 ## Description Templates
 
@@ -158,12 +130,7 @@ h3. Acceptance Criteria
 
 When referencing files in the issue description, include GitHub links:
 1. Determine the GitHub repo URL by running `git remote get-url upstream` and converting it to HTTPS format
-2. Link to files on the `main` branch using Jira Wiki Markup syntax:
-   - Basic file link: `[filename|https://github.com/OWNER/REPO/blob/main/path/to/file.ts]`
-   - Specific line: `[filename:L42|https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42]`
-   - Line range: `[filename:L42-L50|https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42-L50]`
-
-Note: Use Jira Wiki Markup link syntax `[text|url]` not Markdown syntax.
+2. Link to files on the `main` branch using Jira Wiki Markup syntax (see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) for format details)
 
 ## Important Notes
 - If using Jira MCP tools encounters issues, stop and ask the user how to proceed
