@@ -62,6 +62,10 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
     - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
     - Transition the issue from "New" to "Backlog" using jira_getTransitions to find the transition ID, then jira_transitionIssue to perform the transition
 
+12. **If a PR was mentioned**, set the Git Pull Request field:
+    - Use jira_updateIssue to set `customfield_12310220` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
+    - This field does NOT auto-populate from GitHub, so it must be set manually
+
 ## Finding Green Sprints
 
 The Jira sprint field does NOT support text search operators like `~`. To find Green sprints:
@@ -90,11 +94,16 @@ The Jira sprint field does NOT support text search operators like `~`. To find G
 
 5. **Extract the sprint ID** (e.g., `82844`) from the string and use it as an integer when updating the issue.
 
-## Epic Link vs Parent Link
+## Custom Field Reference
 
+### Epic Link vs Parent Link
 These are different fields - use the correct one:
 - **Epic Link** (`customfield_12311140`): Use this to link an issue to an epic. Value is the epic's issue key as a string (e.g., `"RHOAIENG-27992"`).
 - **Parent Link** (`customfield_12313140`): This is for parent-child relationships in Jira's hierarchy (not for epics). Do NOT use this for epic linking.
+
+### Git Pull Request
+- **Git Pull Request** (`customfield_12310220`): Use this to link a PR to the issue. Value is the full PR URL as a string (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`).
+- This field does NOT auto-populate from GitHub integrations, so it must be set manually when a PR exists.
 
 ## Priority IDs
 Use `{"id": "<id>"}` format for priority field.
