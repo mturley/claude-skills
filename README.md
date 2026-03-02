@@ -25,12 +25,12 @@ ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
 
 **Important:** Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills.
 
-Alternatively, you can symlink the entire repo (though this includes git history):
+Alternatively, you can symlink the entire repo, though this includes git history and means any other skills you add would become untracked files in this repo:
 ```bash
 ln -s ~/git/claude-skills ~/.claude/skills
 ```
 
-Or copy individual folders to `~/.claude/skills/`.
+Or you can copy individual folders to `~/.claude/skills/` instead of using symlinks.
 
 ## Skills
 
