@@ -52,9 +52,10 @@ I've also created skills in other repositories:
 
 ## MCP Usage Reference
 
-The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs used by skills in this repo.
+The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs:
 
-See [`.mcp-usage/README.md`](.mcp-usage/README.md) for available MCP documentation.
+- [jira.md](.mcp-usage/jira.md) - Jira MCP field IDs, formats, gotchas, and troubleshooting
+- [puppeteer.md](.mcp-usage/puppeteer.md) - Puppeteer MCP usage patterns (placeholder)
 
 To make this documentation available to Claude in all sessions:
 
