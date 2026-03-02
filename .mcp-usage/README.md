@@ -19,13 +19,13 @@ This directory contains **usage patterns** for MCP servers - things like:
 
 ## Installation
 
-To make this documentation accessible to Claude in all sessions, symlink the entire claude-skills repo to `~/.claude/skills/`:
+To make this documentation accessible to Claude in all sessions, symlink this directory to `~/.claude/skills/`:
 
 ```bash
-ln -s ~/git/claude-skills ~/.claude/skills
+ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 ```
 
-This makes the `.mcp-usage` directory (and all skills) accessible at `~/.claude/skills/.mcp-usage`.
+This should be done alongside symlinking individual skills from the claude-skills repo.
 
 ## Adding New MCP Documentation
 

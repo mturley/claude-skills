@@ -8,17 +8,10 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
 
 ## Installation
 
-Clone this repo and symlink individual skills to your Claude Code skills directory:
+Clone this repo and symlink individual skills and the `.mcp-usage` directory to your Claude Code skills directory:
 
 ```bash
 git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
-ln -s ~/git/claude-skills ~/.claude/skills
-```
-
-This syml inks the entire repo to `~/.claude/skills/`, making all skills and the `.mcp-usage` directory accessible to Claude.
-
-Alternatively, symlink individual skills:
-```bash
 mkdir -p ~/.claude/skills
 ln -s ~/git/claude-skills/export ~/.claude/skills/export
 ln -s ~/git/claude-skills/review ~/.claude/skills/review
@@ -26,7 +19,14 @@ ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
 ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 ```
 
-Or copy individual skill folders to `~/.claude/skills/`.
+**Important:** Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills.
+
+Alternatively, you can symlink the entire repo (though this includes git history):
+```bash
+ln -s ~/git/claude-skills ~/.claude/skills
+```
+
+Or copy individual folders to `~/.claude/skills/`.
 
 ## Skills
 
@@ -56,7 +56,7 @@ The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for usi
 
 See [`.mcp-usage/README.md`](.mcp-usage/README.md) for available MCP documentation.
 
-When you symlink this repo to `~/.claude/skills/` (see Installation section), the `.mcp-usage` directory becomes accessible to Claude in all sessions, allowing it to reference field IDs, formats, and gotchas when using MCP servers.
+When you symlink the `.mcp-usage` directory to `~/.claude/skills/.mcp-usage` (see Installation section), it becomes accessible to Claude in all sessions, allowing it to reference field IDs, formats, and gotchas when using MCP servers.
 
 ## Creating Your Own Skills
 
