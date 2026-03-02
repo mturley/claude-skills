@@ -13,10 +13,14 @@ Clone this repo and symlink individual skills and the `.mcp-usage` directory to 
 ```bash
 git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
 mkdir -p ~/.claude/skills
+
+# Required for some skills:
+ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
+
+# Link the skills you want to use:
 ln -s ~/git/claude-skills/export ~/.claude/skills/export
 ln -s ~/git/claude-skills/review ~/.claude/skills/review
 ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
-ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 ```
 
 **Important:** Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills.
