@@ -8,7 +8,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 |-------|----------------|--------|-------|
 | Team | `customfield_12313240` | String: `"4158"` | NOT an object |
 | Priority | Built-in | Object: `{"id": "1"}` | See Priority IDs below |
-| Severity | `customfield_12316142` | Object: `{"value": "High"}` | Use `value` NOT `name` |
+| Severity | `customfield_12316142` | Object: `{"id": "26752"}` | Use option ID, see table below |
 | Epic Link | `customfield_12311140` | String: `"RHOAIENG-12345"` | Epic key |
 | Parent Link | `customfield_12313140` | String: `"RHOAIENG-12345"` | For hierarchy, NOT epics |
 | Git Pull Request | `customfield_12310220` | String: `"https://github.com/..."` | Manual only, doesn't auto-populate |
@@ -19,6 +19,8 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 ## RHOAIENG Project Configuration
 
 **Project ID:** `12340620`
+
+**IMPORTANT:** The project ID must ALSO be included in customFields as `"project": {"id": "12340620"}` when creating issues. The `projectId` parameter alone is not sufficient.
 
 **Component:** AI Core Dashboard (include via `customFields`)
 
@@ -74,21 +76,23 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 ### Severity (customfield_12316142) - Bugs Only
 
-**Format:** Object with `value` key (NOT `name` or `id`)
+**Format:** Object with `id` key (using the option ID number)
 ```json
 // ✅ Correct
-{"value": "High"}
+{"id": "26752"}
 
-// ❌ Wrong - will fail with "Could not find valid 'id' or 'value'"
-{"name": "High"}
-{"id": "High"}
+// ❌ Wrong - will fail with "Option id 'null' is not valid"
+{"value": "Moderate"}
+{"name": "Moderate"}
 ```
 
 **Severity Values:**
-- `Urgent`
-- `High`
-- `Moderate`
-- `Low`
+| Value | ID |
+|-------|------|
+| Urgent | `26749` (unverified) |
+| Critical | `26750` |
+| Moderate | `26752` |
+| Low | `26753` |
 
 ---
 
