@@ -9,6 +9,10 @@ This skill helps open detailed Jira issues by gathering context and investigatin
 
 2. Place the skill at `~/.claude/skills/create-jira/SKILL.md`.
 
+## Technical Reference
+
+For Jira field IDs, formats, and gotchas, see [MCP Usage Reference](../.mcp-usage/jira.md).
+
 ## Prerequisites
 
 - Must be in a git repository with an `upstream` remote pointing to GitHub (used for generating file links in issue descriptions)

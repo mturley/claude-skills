@@ -2,11 +2,29 @@
 
 Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model Registry / Model Catalog areas).
 
+**Technical Reference:** For field IDs, formats, and gotchas, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
+
 ## Arguments
 
 - `$ARGUMENTS` - Optional issue type: `bug`, `task`, or `story`
 
 ## Instructions
+
+**Prerequisites Check:**
+- Verify that `../.mcp-usage/jira.md` exists by attempting to read it
+- If the file doesn't exist, abort with this message:
+  ```
+  Error: MCP usage reference not found.
+
+  The technical reference file for Jira MCP is missing. This file contains
+  field IDs, formats, and gotchas needed to create Jira issues correctly.
+
+  Please ensure you have the claude-skills repository properly set up:
+  1. Clone: git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
+  2. Symlink: ln -s ~/git/claude-skills ~/.claude/skills
+
+  For more information, see ~/git/claude-skills/README.md
+  ```
 
 1. **Determine the issue type** (Bug, Task, or Story):
    - If the user passed an argument (e.g., `/create-jira bug`), use that type
@@ -38,18 +56,12 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 
 8. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
 
-9. **Create the issue** using jira_createIssue with these properties:
-   - Project ID: `12340620` (RHOAIENG) - must ALSO be included in customFields as `"project": {"id": "12340620"}`
-   - Component: AI Core Dashboard (add via customFields)
-   - Team (customfield_12313240): `"4158"` (RHOAI Dashboard) - note: must be a string, not an object
-   - Labels: Based on area selection
-   - Priority: Based on user selection (use priority object with id)
-   - Severity: If Bug, based on user selection
-   - Epic Link (customfield_12311140): If an epic was specified, use the epic's issue key as a string
-   - Issue Type IDs:
-     - Bug: `1`
-     - Task: `3`
-     - Story: `17`
+9. **Create the issue** using jira_createIssue. See [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) for all field IDs and formats. Include:
+   - Project ID, component, team, labels (based on area selection)
+   - Priority (based on user selection)
+   - Severity (if Bug, based on user selection)
+   - Epic Link (if specified)
+   - Issue type ID (Bug/Task/Story)
    - Description: Use the user-approved description, formatted according to the templates below
 
 10. **After creating the issue**, provide the user with:
@@ -93,33 +105,6 @@ The Jira sprint field does NOT support text search operators like `~`. To find G
    **IMPORTANT**: Only use sprints with "Green" in the name. Never select Razzmatazz, Monarch, or other sprint names.
 
 5. **Extract the sprint ID** (e.g., `82844`) from the string and use it as an integer when updating the issue.
-
-## Custom Field Reference
-
-### Epic Link vs Parent Link
-These are different fields - use the correct one:
-- **Epic Link** (`customfield_12311140`): Use this to link an issue to an epic. Value is the epic's issue key as a string (e.g., `"RHOAIENG-27992"`).
-- **Parent Link** (`customfield_12313140`): This is for parent-child relationships in Jira's hierarchy (not for epics). Do NOT use this for epic linking.
-
-### Git Pull Request
-- **Git Pull Request** (`customfield_12310220`): Use this to link a PR to the issue. Value is the full PR URL as a string (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`).
-- This field does NOT auto-populate from GitHub integrations, so it must be set manually when a PR exists.
-
-## Priority IDs
-Use `{"id": "<id>"}` format for priority field.
-- Blocker: 1
-- Critical: 2
-- Major: 3
-- Normal: 10200
-- Minor: 4
-- Undefined: 10300
-
-## Severity Values (Bugs only)
-Use `{"value": "<value>"}` format for customfield_12316142. Do NOT use `{"name": "..."}` - it will fail.
-- Urgent
-- High
-- Moderate
-- Low
 
 ## Description Templates
 

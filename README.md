@@ -12,9 +12,18 @@ Clone this repo and symlink individual skills to your Claude Code skills directo
 
 ```bash
 git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
+ln -s ~/git/claude-skills ~/.claude/skills
+```
+
+This syml inks the entire repo to `~/.claude/skills/`, making all skills and the `.mcp-usage` directory accessible to Claude.
+
+Alternatively, symlink individual skills:
+```bash
 mkdir -p ~/.claude/skills
 ln -s ~/git/claude-skills/export ~/.claude/skills/export
 ln -s ~/git/claude-skills/review ~/.claude/skills/review
+ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
+ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 ```
 
 Or copy individual skill folders to `~/.claude/skills/`.
@@ -40,6 +49,14 @@ Creates Jira issues in the RHOAIENG project. This skill is specific to the Red H
 I've also created skills in other repositories:
 
 - [/model-registry-upstream-sync](https://github.com/opendatahub-io/odh-dashboard/blob/main/.claude/skills/model-registry-upstream-sync/SKILL.md) - Orchestrates syncing upstream changes from the kubeflow/model-registry repository, handling branch creation, merge conflicts, tests, and PR creation.
+
+## MCP Usage Reference
+
+The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs used by the team.
+
+See [`.mcp-usage/README.md`](.mcp-usage/README.md) for available MCP documentation.
+
+When you symlink this repo to `~/.claude/skills/` (see Installation section), the `.mcp-usage` directory becomes accessible to Claude in all sessions, allowing it to reference field IDs, formats, and gotchas when using MCP servers.
 
 ## Creating Your Own Skills
 
