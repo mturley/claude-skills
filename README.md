@@ -8,29 +8,40 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
 
 ## Installation
 
-Clone this repo and symlink individual skills and the `.mcp-usage` directory to your Claude Code skills directory:
+1. Clone the repo:
+   ```bash
+   git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
+   ```
 
-```bash
-git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
-mkdir -p ~/.claude/skills
+2. Symlink individual skills and the `.mcp-usage` directory to your Claude Code skills directory:
+   ```bash
+   mkdir -p ~/.claude/skills
 
-# Required for some skills:
-ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
+   # Required for some skills:
+   ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
 
-# Link the skills you want to use:
-ln -s ~/git/claude-skills/export ~/.claude/skills/export
-ln -s ~/git/claude-skills/review ~/.claude/skills/review
-ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
-```
+   # Link the skills you want to use:
+   ln -s ~/git/claude-skills/export ~/.claude/skills/export
+   ln -s ~/git/claude-skills/review ~/.claude/skills/review
+   ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
+   ```
+   Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills. This is not part of the Agent Skills standard, it is this repo's way of sharing info across skills.
 
-**Important:** Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills.
+   Alternatively, you can symlink the entire repo, though this includes git history and means any other skills you add would become untracked files in this repo:
+   ```bash
+   ln -s ~/git/claude-skills ~/.claude/skills
+   ```
 
-Alternatively, you can symlink the entire repo, though this includes git history and means any other skills you add would become untracked files in this repo:
-```bash
-ln -s ~/git/claude-skills ~/.claude/skills
-```
+   If you prefer, you can copy individual folders to `~/.claude/skills/` instead of using symlinks.
 
-Or you can copy individual folders to `~/.claude/skills/` instead of using symlinks.
+3. **(Optional)** Add a generic reference to the `.mcp-usage` directory in your global `~/.claude/CLAUDE.md` so Claude proactively checks for MCP documentation in all sessions, not just when using skills:
+   ```markdown
+   # MCP Server Operations
+
+   Before using any MCP server tools, check `~/.claude/skills/.mcp-usage/` for a corresponding
+   documentation file. These files contain server-specific information like custom field IDs,
+   format requirements, and gotchas.
+   ```
 
 ## Skills
 
@@ -53,35 +64,6 @@ Creates Jira issues in the RHOAIENG project. This skill is specific to the Red H
 I've also created skills in other repositories:
 
 - [/model-registry-upstream-sync](https://github.com/opendatahub-io/odh-dashboard/blob/main/.claude/skills/model-registry-upstream-sync/SKILL.md) - Orchestrates syncing upstream changes from the kubeflow/model-registry repository, handling branch creation, merge conflicts, tests, and PR creation.
-
-## MCP Usage Reference
-
-The [`.mcp-usage/`](.mcp-usage/) directory contains shared documentation for using Model Context Protocol (MCP) servers with Claude Code. This includes field references, usage patterns, and gotchas for various MCPs:
-
-- [jira.md](.mcp-usage/jira.md) - Jira MCP field IDs, formats, gotchas, and troubleshooting
-- [puppeteer.md](.mcp-usage/puppeteer.md) - Puppeteer MCP usage patterns (placeholder)
-
-To make this documentation available to Claude in all sessions:
-
-1. **Symlink the directory** (makes files physically accessible):
-   ```bash
-   ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
-   ```
-
-2. **Add a generic MCP reference in your global `~/.claude/CLAUDE.md`** (tells Claude to check the directory):
-
-   ```markdown
-   # MCP Server Operations
-
-   Before using any MCP server tools, check `~/.claude/skills/.mcp-usage/` for a corresponding
-   documentation file. These files contain server-specific information like custom field IDs,
-   format requirements, and gotchas.
-   ```
-
-   This single instruction works for all MCP servers (Jira, Puppeteer, etc.), telling Claude to
-   look in the `.mcp-usage/` directory for relevant documentation when using any MCP.
-
-This ensures Claude proactively uses this documentation in all sessions, not just when using skills.
 
 ## Creating Your Own Skills
 
