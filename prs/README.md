@@ -1,0 +1,34 @@
+# /prs
+
+Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows two tables: your own open PRs and open PRs you've reviewed or commented on.
+
+For each PR, the dashboard shows review status, CI status, linked Jira issues (with type, status, sprint, and epic), and highlights where your action is needed.
+
+## Installation
+
+1. Set up a Jira MCP server (e.g., `@atlassian-dc-mcp/jira` for Jira Datacenter).
+
+2. Symlink the `.mcp-usage` directory to `~/.claude/skills/.mcp-usage` if you haven't already. See the [root README installation instructions](../README.md#installation).
+
+3. Place the skill at `~/.claude/skills/prs/SKILL.md`.
+
+## Prerequisites
+
+- GitHub CLI (`gh`) authenticated and available
+- Jira MCP server configured and accessible
+
+## Usage
+
+Run `/prs` in any Claude Code session. No arguments needed.
+
+The report is read-only and does not modify any PRs or Jira issues.
+
+## What it shows
+
+- **Review Status** tells you what action is needed:
+  - For your PRs: bold **Needs changes** means reviewers left feedback you haven't addressed yet
+  - For others' PRs: bold **Needs review** / **Needs re-review** means the author is waiting on you
+- **CI**: Passed, Failed, Running, or N/A
+- **Jira**: Linked RHOAIENG issues found via the Git Pull Request custom field, with issue type, status, sprint, and epic
+- PRs updated over 1 year ago are excluded (count reported at the bottom)
+- Draft PRs and merge conflicts are surfaced in the review status column
