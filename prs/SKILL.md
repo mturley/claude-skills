@@ -102,6 +102,7 @@ Sort both tables by PR `updatedAt` descending (most recently updated first).
 
 **Column formatting:**
 - **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)
+- **Title**: Truncate to 50 characters with ellipsis (e.g., "Add retry functionality for failed model transf...")
 - **Updated**: Use relative dates — "today" for today, "Mon DD" for dates within the current year, "Mon YYYY" for older dates
 - **Review Status**: Apply bold formatting per the rules in Phase 3
 - **CI**: Passed, Failed, Running, or N/A
