@@ -86,9 +86,30 @@ Collect all unique epic keys found in Phase 4. For each unique epic, fetch the i
 
 Run epic lookups in parallel.
 
-### Phase 6: Render the Report
+### Phase 6: Gather Sprint Review PRs
 
-Sort both tables by PR `updatedAt` descending (most recently updated first).
+Find the current active Green sprint by searching for any RHOAIENG issue in an open sprint whose name contains "Green":
+
+```
+project = RHOAIENG AND sprint in openSprints() AND sprint = "Dashboard - Green-{N}" AND status = Review
+```
+
+Use the sprint name identified in Phase 4 data, or search for the active Green sprint.
+
+For each issue found:
+1. Extract the Git Pull Request field (`customfield_12310220`) — this contains PR URLs
+2. For each GitHub PR URL, check if the PR is already included in Tables 1 or 2 — if so, skip it
+3. Skip non-GitHub URLs (e.g., GitLab merge requests)
+4. For remaining PR URLs, fetch the PR from GitHub and check if it is still open — skip closed PRs
+5. Fetch the same metadata as Phase 2 (labels, draft, mergeable_state, reviews, commits, CI)
+6. Determine review status using the "Others' PRs" rules from Phase 3
+7. The Jira data is already available from the search results (issue key, type, status, priority, sprint, epic)
+
+Resolve any new epic keys not already resolved in Phase 5.
+
+### Phase 7: Render the Report
+
+Sort all three tables by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending (most recently updated first). PRs with no linked Jira issue sort after all prioritized PRs.
 
 **Table 1: My Open PRs**
 
@@ -96,6 +117,11 @@ Sort both tables by PR `updatedAt` descending (most recently updated first).
 |----|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
 **Table 2: Open PRs I Reviewed or Commented On**
+
+| PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
+|----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
+
+**Table 3: Other Open PRs from Green-{N} Issues in Review**
 
 | PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
 |----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
@@ -114,7 +140,7 @@ Sort both tables by PR `updatedAt` descending (most recently updated first).
 
 If a PR has multiple Jira issues, show additional rows with empty PR/Author/Title/Updated/Review Status/CI cells.
 
-**Footer:** Report the count of PRs excluded due to the 1-year age filter.
+**Age filter note:** After Table 2, report the count of PRs excluded due to the 1-year age filter (this filter applies to the GitHub search results used by Tables 1 and 2).
 
 ## Important Notes
 

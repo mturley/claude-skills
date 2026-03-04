@@ -1,6 +1,6 @@
 # /prs
 
-Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows two tables: your own open PRs and open PRs you've reviewed or commented on.
+Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows three tables: your own open PRs, open PRs you've reviewed or commented on, and other open PRs from the current sprint's Jira issues in Review state.
 
 For each PR, the dashboard shows review status, CI status, linked Jira issues (with type, status, sprint, and epic), and highlights where your action is needed.
 
