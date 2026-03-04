@@ -76,6 +76,7 @@ For each matching Jira issue, extract:
 - **Issue key** (e.g., RHOAIENG-51543)
 - **Issue type** (Bug, Story, Task)
 - **Status** (e.g., In Progress, Review, Closed)
+- **Priority** (e.g., Blocker, Critical, Major, Normal, Minor)
 - **Sprint** — parse from `customfield_12310940` string, extract the sprint name, shorten to just the number portion (e.g., "Dashboard - Green-35" → "Green-35")
 - **Epic Link** — `customfield_12311140` (e.g., "RHOAIENG-27992")
 
@@ -91,13 +92,13 @@ Sort both tables by PR `updatedAt` descending (most recently updated first).
 
 **Table 1: My Open PRs**
 
-| PR | Title | Updated | Review Status | CI | Jira | Jira Status | Sprint | Epic |
-|----|-------|---------|---------------|-----|------|-------------|--------|------|
+| PR | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
+|----|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
 **Table 2: Open PRs I Reviewed or Commented On**
 
-| PR | Author | Title | Updated | Review Status | CI | Jira | Jira Status | Sprint | Epic |
-|----|--------|-------|---------|---------------|-----|------|-------------|--------|------|
+| PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
+|----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
 **Column formatting:**
 - **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)
@@ -105,6 +106,8 @@ Sort both tables by PR `updatedAt` descending (most recently updated first).
 - **Review Status**: Apply bold formatting per the rules in Phase 3
 - **CI**: Passed, Failed, Running, or N/A
 - **Jira**: `[RHOAIENG-XXXXX](url) (Type)` — link to `https://issues.redhat.com/browse/{key}`
+- **Status**: Jira issue status (e.g., In Progress, Review, Closed)
+- **Priority**: Jira issue priority (e.g., Blocker, Critical, Major, Normal, Minor)
 - **Epic**: `[RHOAIENG-XXXXX](url) (Short Name)` — link to `https://issues.redhat.com/browse/{key}`
 - Use `--` for empty cells
 
