@@ -16,12 +16,17 @@ For each PR, the dashboard shows review status, CI status, linked Jira issues (w
 
 - GitHub CLI (`gh`) authenticated and available
 - Jira MCP server configured and accessible
+- Python 3 (stdlib only — no pip dependencies)
 
 ## Usage
 
 Run `/prs` in any Claude Code session. No arguments needed.
 
 The report is read-only and does not modify any PRs or Jira issues.
+
+## Helper Script
+
+`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. The skill pipes a JSON array of `{owner, repo, number}` objects to it on stdin and receives back a JSON array with labels, draft status, mergeable state, review count, last review/commit timestamps, and CI status. This replaces serial `gh api` calls with concurrent ones, significantly reducing execution time.
 
 ## What it shows
 

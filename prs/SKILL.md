@@ -4,35 +4,87 @@ Generate a dashboard of open PRs I'm involved with, cross-referenced with RHOAIE
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
 
+**Helper Script:** `~/.claude/skills/prs/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
+
 ## Instructions
 
-### Phase 1: Gather PRs from GitHub
+### Phase 1: Gather PRs and Context
 
-Run the following three searches in parallel using `gh search prs`:
-- `--author=@me --state=open` (my PRs)
-- `--reviewed-by=@me --state=open` (PRs I reviewed)
-- `--commenter=@me --state=open` (PRs I commented on)
+Run ALL of the following in parallel in a single tool-call round:
 
-Request JSON fields: `repository,title,number,url,updatedAt,author`
+1. `gh search prs --author=@me --state=open` with JSON fields `repository,title,number,url,updatedAt,author`
+2. `gh search prs --reviewed-by=@me --state=open` with same JSON fields
+3. `gh search prs --commenter=@me --state=open` with same JSON fields
+4. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
 **Filtering:**
-- Exclude PRs updated over 1 year ago from the tables. Report the count of excluded PRs at the bottom.
-- Deduplicate the reviewed/commented lists and remove any PRs authored by me from those lists (they belong in "My Open PRs").
+- Exclude PRs updated over 1 year ago. Track the count for reporting later.
+- Deduplicate the reviewed/commented lists and remove any PRs authored by me (they belong in Table 1).
 
-### Phase 2: Gather PR metadata from GitHub
+**Prepare PR lists** for the next phase:
+- **Table 1 PRs** (my open PRs)
+- **Table 2 PRs** (others' PRs I reviewed/commented on)
+- **Combined unique list** of all PRs (for Jira cross-reference)
 
-For each PR, fetch the following data in parallel using `gh api` and `gh pr checks`:
+If people.md was found, parse the **Green Scrum** section to extract GitHub usernames (skip the current user and blank entries).
 
-1. **PR info:** `gh api repos/{owner}/{repo}/pulls/{number}` — extract `labels` (array of names), `draft` (boolean), `mergeable_state`
-2. **Reviews:** `gh api repos/{owner}/{repo}/pulls/{number}/reviews` — extract total count (`length`) and last review timestamp (`sort_by(.submitted_at) | last | .submitted_at`)
-3. **Commits:** `gh api repos/{owner}/{repo}/pulls/{number}/commits` — extract last commit timestamp (`last | .commit.committer.date`)
-4. **CI status:** `gh pr checks {number} --repo {owner/repo}` — determine overall status:
-   - All SUCCESS → "Passed"
-   - Any FAILURE → "Failed"
-   - Any PENDING (and no failures) → "Running"
-   - Otherwise → "N/A"
+### Phase 2: Metadata + Jira + Sprint Search + Team PRs
 
-### Phase 3: Determine Review Status
+Run ALL of the following in parallel in a single tool-call round:
+
+1. **Fetch metadata for Tables 1+2:** Pipe the combined PR list as JSON to `fetch-pr-metadata.py`:
+   ```bash
+   echo '<json_array>' | python3 ~/.claude/skills/prs/fetch-pr-metadata.py
+   ```
+   The input format is `[{"owner": "opendatahub-io", "repo": "odh-dashboard", "number": 6466}, ...]`
+
+2. **Jira cross-reference for all PRs:** For each unique PR, search Jira:
+   ```
+   project = RHOAIENG AND cf[12310220] ~ "{partial_pr_path}"
+   ```
+   Use a partial path like `kubeflow/model-registry/pull/2274` or `odh-dashboard/pull/6466` (strip `https://github.com/` and the org prefix for odh-dashboard). Run all Jira searches in parallel.
+
+3. **Sprint review Jira search** (for Table 3): Search for issues in review in the current open sprint:
+   ```
+   project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard" AND status = Review
+   ```
+   This is a broad query; post-filter results to keep only issues whose sprint name contains "Green".
+
+4. **Team member PR searches** (for Table 4, skip if no people.md): For each Green Scrum member's GitHub username, run:
+   ```bash
+   gh search prs --author={username} --state=open --json repository,title,number,url,updatedAt,author
+   ```
+
+**After this round, extract from Jira results:**
+- **Issue key**, **type**, **status**, **priority**
+- **Sprint** — parse from `customfield_12310940` string, shorten (e.g., "Dashboard - Green-35" → "Green-35")
+- **Epic Link** — `customfield_12311140`
+
+**From sprint review results** (Table 3 candidates):
+- Extract Git Pull Request URLs (`customfield_12310220`) from each issue
+- Skip PRs already in Tables 1 or 2
+- Skip non-GitHub URLs
+- Keep only open PRs (check `state` field if fetching, or verify later)
+
+**From team member results** (Table 4 candidates):
+- Remove PRs already in Tables 1, 2, or 3 candidates
+- Remove PRs updated over 1 year ago
+
+### Phase 3: Remaining Metadata + Epics + Table 4 Jira Checks
+
+Run ALL of the following in parallel in a single tool-call round:
+
+1. **Fetch metadata for Table 3+4 candidates:** Pipe the combined candidate PR list to `fetch-pr-metadata.py` (same as Phase 2 step 1). After results return, drop any PRs with `state` != `"open"`.
+
+2. **Resolve epic names:** Collect all unique epic keys from Phase 2 Jira results. For each, fetch the issue using `jira_getIssue` and extract the summary. Shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage"). Run all lookups in parallel.
+
+3. **Table 4 Jira link checks:** For each Table 4 candidate PR, search Jira using the same query pattern as Phase 2 step 2. Keep only PRs with **NO** matching Jira issue. Run all searches in parallel.
+
+After this round, resolve any new epic keys found in Table 3 Jira data that weren't already resolved.
+
+### Phase 4: Render the Report
+
+#### Review Status Rules
 
 **For My Open PRs** (action needed by me is **bold**):
 
@@ -60,108 +112,55 @@ For each PR, fetch the following data in parallel using `gh api` and `gh pr chec
 
 Evaluate conditions top-to-bottom; use the first match.
 
-### Phase 4: Cross-reference with Jira
+#### Sorting
 
-For each PR, search RHOAIENG Jira for issues that reference the PR URL in the Git Pull Request field (`customfield_12310220`):
+Sort Tables 1-3 by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending. PRs with no linked Jira issue sort after all prioritized PRs. Sort Table 4 by `updatedAt` descending only.
 
-```
-project = RHOAIENG AND cf[12310220] ~ "{partial_pr_path}"
-```
+#### Tables
 
-Use a partial path like `kubeflow/model-registry/pull/2274` or `odh-dashboard/pull/6466` (strip the `https://github.com/` prefix and the org prefix for odh-dashboard).
-
-Run all Jira searches in parallel.
-
-For each matching Jira issue, extract:
-- **Issue key** (e.g., RHOAIENG-51543)
-- **Issue type** (Bug, Story, Task)
-- **Status** (e.g., In Progress, Review, Closed)
-- **Priority** (e.g., Blocker, Critical, Major, Normal, Minor)
-- **Sprint** — parse from `customfield_12310940` string, extract the sprint name, shorten to just the number portion (e.g., "Dashboard - Green-35" → "Green-35")
-- **Epic Link** — `customfield_12311140` (e.g., "RHOAIENG-27992")
-
-### Phase 5: Resolve Epic Names
-
-Collect all unique epic keys found in Phase 4. For each unique epic, fetch the issue using `jira_getIssue` and extract the summary. Shorten it to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage").
-
-Run epic lookups in parallel.
-
-### Phase 6: Gather Sprint Review PRs
-
-Find the current active Green sprint by searching for any RHOAIENG issue in an open sprint whose name contains "Green":
-
-```
-project = RHOAIENG AND sprint in openSprints() AND sprint = "Dashboard - Green-{N}" AND status = Review
-```
-
-Use the sprint name identified in Phase 4 data, or search for the active Green sprint.
-
-For each issue found:
-1. Extract the Git Pull Request field (`customfield_12310220`) — this contains PR URLs
-2. For each GitHub PR URL, check if the PR is already included in Tables 1 or 2 — if so, skip it
-3. Skip non-GitHub URLs (e.g., GitLab merge requests)
-4. For remaining PR URLs, fetch the PR from GitHub and check if it is still open — skip closed PRs
-5. Fetch the same metadata as Phase 2 (labels, draft, mergeable_state, reviews, commits, CI)
-6. Determine review status using the "Others' PRs" rules from Phase 3
-7. The Jira data is already available from the search results (issue key, type, status, priority, sprint, epic)
-
-Resolve any new epic keys not already resolved in Phase 5.
-
-### Phase 7: Gather Unlinked Team PRs
-
-Find open PRs by Green scrum members that are not linked to any Jira issue.
-
-1. **Check for team data:** Read `../.context/people.md`. If the file does not exist, skip this phase and output a note after Table 3:
-   > _Table 4 (Unlinked Team PRs) was excluded because `.context/people.md` was not found. Run `/populate-people` to generate it._
-2. **Parse Green Scrum members:** From the `## Green Scrum` section, extract each row's **GitHub** username. Skip the current user (`@me`) and skip rows with a blank GitHub column.
-3. **Search for open PRs:** For each team member, run `gh search prs --author={github_username} --state=open` with JSON fields `repository,title,number,url,updatedAt,author`
-4. **Filter:** Remove PRs already shown in Tables 1, 2, or 3. Remove PRs updated over 1 year ago.
-5. **Check for Jira links:** For remaining PRs, search Jira using the same query as Phase 4. Keep only PRs with NO matching Jira issue.
-6. **Fetch metadata:** For unlinked PRs, fetch the same data as Phase 2 (labels, draft, mergeable_state, reviews, commits, CI)
-7. **Determine review status** using the "Others' PRs" rules from Phase 3
-
-### Phase 8: Render the Report
-
-Sort Tables 1–3 by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending (most recently updated first). PRs with no linked Jira issue sort after all prioritized PRs. Sort Table 4 by `updatedAt` descending only (no Jira data).
-
-**Table 1: My Open PRs**
+**My Open PRs**
 
 | PR | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
 |----|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
-**Table 2: Open PRs I Reviewed or Commented On**
+**PRs I'm Reviewing**
 
 | PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
 |----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
-**Table 3: Other Open PRs from Green-{N} Issues in Review**
+**Other PRs for Green-{N} Issues in `Review`**
 
 | PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
 |----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
 
-**Table 4: Other PRs from Green Scrum Team Members (No Associated Jira)**
+**Other Green Scrum PRs with No Jira**
 
 | PR | Author | Title | Updated | Review Status | CI |
 |----|--------|-------|---------|---------------|-----|
 
-**Column formatting:**
+If people.md was not found, output after Table 3:
+> _Table 4 (Other Green Scrum PRs with No Jira) was excluded because `.context/people.md` was not found. Run `/populate-people` to generate it._
+
+#### Column Formatting
+
 - **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)
-- **Title**: Truncate to 50 characters with ellipsis (e.g., "Add retry functionality for failed model transf...")
-- **Updated**: Use relative dates — "today" for today, "Mon DD" for dates within the current year, "Mon YYYY" for older dates
-- **Review Status**: Apply bold formatting per the rules in Phase 3
+- **Title**: Truncate to 50 characters with ellipsis
+- **Updated**: Relative dates — "today" for today, "Mon DD" for current year, "Mon YYYY" for older
+- **Review Status**: Apply bold formatting per the rules above
 - **CI**: Passed, Failed, Running, or N/A
 - **Jira**: `[RHOAIENG-XXXXX](url) (Type)` — link to `https://issues.redhat.com/browse/{key}`
-- **Status**: Jira issue status (e.g., In Progress, Review, Closed)
-- **Priority**: Jira issue priority (e.g., Blocker, Critical, Major, Normal, Minor)
+- **Status**: Jira issue status
+- **Priority**: Jira issue priority
+- **Sprint**: Shortened sprint name
 - **Epic**: `[RHOAIENG-XXXXX](url) (Short Name)` — link to `https://issues.redhat.com/browse/{key}`
 - Use `--` for empty cells
 
 If a PR has multiple Jira issues, show additional rows with empty PR/Author/Title/Updated/Review Status/CI cells.
 
-**Age filter note:** After Table 2, report the count of PRs excluded due to the 1-year age filter (this filter applies to the GitHub search results used by Tables 1 and 2).
+**Age filter note:** After Table 2, report the count of PRs excluded due to the 1-year age filter.
 
 ## Important Notes
 
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
-- Maximize parallel tool calls — GitHub API calls, Jira searches, and epic lookups should each be batched in parallel
+- Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
