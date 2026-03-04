@@ -54,7 +54,7 @@ Exports Claude Code sessions to readable markdown files. Converts the raw JSONL 
 
 ### [/review](review/)
 
-Reviews pull requests by checking out the branch and analyzing changes file-by-file.
+Reviews pull requests in an isolated git worktree, allowing multiple PRs to be reviewed simultaneously without affecting your working tree.
 
 ### [/create-jira](create-jira/)
 
@@ -63,6 +63,10 @@ Creates Jira issues in the RHOAIENG project. This skill is specific to the Red H
 ### [/prs](prs/)
 
 Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows two tables (your PRs and PRs you've reviewed/commented on) with review status, CI status, linked Jira issues with type/status/sprint/epic, and highlights where your action is needed.
+
+### [/populate-people](populate-people/)
+
+Generates or updates `.context/people.md` with RHOAI Dashboard team member information by cross-referencing Confluence, Jira, and GitHub. Useful for populating team context that other skills can reference.
 
 ## Skills in Other Projects
 
