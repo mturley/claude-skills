@@ -62,7 +62,7 @@ Creates Jira issues in the RHOAIENG project. This skill is specific to the Red H
 
 ### [/prs](prs/)
 
-Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows two tables (your PRs and PRs you've reviewed/commented on) with review status, CI status, linked Jira issues with type/status/sprint/epic, and highlights where your action is needed.
+Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables (your PRs, PRs you've reviewed/commented on, sprint Review PRs, and unlinked team member PRs) with review status, CI status, linked Jira issues with type/status/sprint/epic, and highlights where your action is needed.
 
 ### [/populate-people](populate-people/)
 

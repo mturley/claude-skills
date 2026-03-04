@@ -107,9 +107,22 @@ For each issue found:
 
 Resolve any new epic keys not already resolved in Phase 5.
 
-### Phase 7: Render the Report
+### Phase 7: Gather Unlinked Team PRs
 
-Sort all three tables by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending (most recently updated first). PRs with no linked Jira issue sort after all prioritized PRs.
+Find open PRs by Green scrum members that are not linked to any Jira issue.
+
+1. **Check for team data:** Read `../.context/people.md`. If the file does not exist, skip this phase and output a note after Table 3:
+   > _Table 4 (Unlinked Team PRs) was excluded because `.context/people.md` was not found. Run `/populate-people` to generate it._
+2. **Parse Green Scrum members:** From the `## Green Scrum` section, extract each row's **GitHub** username. Skip the current user (`@me`) and skip rows with a blank GitHub column.
+3. **Search for open PRs:** For each team member, run `gh search prs --author={github_username} --state=open` with JSON fields `repository,title,number,url,updatedAt,author`
+4. **Filter:** Remove PRs already shown in Tables 1, 2, or 3. Remove PRs updated over 1 year ago.
+5. **Check for Jira links:** For remaining PRs, search Jira using the same query as Phase 4. Keep only PRs with NO matching Jira issue.
+6. **Fetch metadata:** For unlinked PRs, fetch the same data as Phase 2 (labels, draft, mergeable_state, reviews, commits, CI)
+7. **Determine review status** using the "Others' PRs" rules from Phase 3
+
+### Phase 8: Render the Report
+
+Sort Tables 1–3 by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending (most recently updated first). PRs with no linked Jira issue sort after all prioritized PRs. Sort Table 4 by `updatedAt` descending only (no Jira data).
 
 **Table 1: My Open PRs**
 
@@ -125,6 +138,11 @@ Sort all three tables by Jira priority (highest first: Blocker > Critical > Majo
 
 | PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
 |----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
+
+**Table 4: Other PRs from Green Scrum Team Members (No Associated Jira)**
+
+| PR | Author | Title | Updated | Review Status | CI |
+|----|--------|-------|---------|---------------|-----|
 
 **Column formatting:**
 - **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)

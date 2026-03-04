@@ -1,6 +1,6 @@
 # /prs
 
-Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows three tables: your own open PRs, open PRs you've reviewed or commented on, and other open PRs from the current sprint's Jira issues in Review state.
+Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables: your own open PRs, open PRs you've reviewed or commented on, other open PRs from the current sprint's Jira issues in Review state, and open PRs from Green scrum team members that have no associated Jira issue.
 
 For each PR, the dashboard shows review status, CI status, linked Jira issues (with type, status, sprint, and epic), and highlights where your action is needed.
 
@@ -30,5 +30,6 @@ The report is read-only and does not modify any PRs or Jira issues.
   - For others' PRs: bold **Needs review** / **Needs re-review** means the author is waiting on you
 - **CI**: Passed, Failed, Running, or N/A
 - **Jira**: Linked RHOAIENG issues found via the Git Pull Request custom field, with issue type, status, sprint, and epic
-- PRs updated over 1 year ago are excluded (count reported at the bottom)
+- **Table 4** shows team member PRs with no Jira link (requires `.context/people.md` — run `/populate-people` to generate it)
+- PRs updated over 1 year ago are excluded (count reported after Table 2)
 - Draft PRs and merge conflicts are surfaced in the review status column
