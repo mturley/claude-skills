@@ -61,7 +61,9 @@ Run ALL of the following in parallel in a single tool-call round:
 - **Epic Link** — `customfield_12311140`
 
 **From sprint review results** (Table 3 candidates):
-- Extract Git Pull Request URLs (`customfield_12310220`) from each issue
+- For each issue, extract Git Pull Request URLs (`customfield_12310220`)
+- **CRITICAL:** Create a mapping of `{pr_url: jira_issue_data}` to preserve the link between each PR and its source Jira issue
+- Store the issue key, type, status, priority, sprint, and epic link for each PR
 - Skip PRs already in Tables 1 or 2
 - Skip non-GitHub URLs
 - Keep only open PRs (check `state` field if fetching, or verify later)
@@ -86,31 +88,46 @@ After this round, resolve any new epic keys found in Table 3 Jira data that were
 
 #### Review Status Rules
 
-**For My Open PRs** (action needed by me is **bold**):
+**CRITICAL: Evaluate conditions in the exact order listed. Stop at the FIRST matching condition.**
 
-| Status | Condition | Bold? |
-|--------|-----------|-------|
-| Draft | PR is a draft | No |
-| Approved | Has `lgtm` AND `approved` labels | No |
-| Waiting for approval | Has `lgtm` but not `approved` | No |
-| **Needs changes** | Has reviews, last review is AFTER last commit, no `lgtm` label | **Yes** |
-| Waiting for re-review | Has reviews, last commit is AFTER last review | No |
-| Waiting for review | No reviews at all | No |
+**Step-by-step evaluation process:**
 
-**For Others' PRs** (action needed by me is **bold**):
+For each PR, extract from metadata:
+- `draft` (boolean)
+- `labels` (array of strings) - check for `"lgtm"` and `"approved"`
+- `review_count` (number)
+- `last_review_at` (ISO timestamp or null)
+- `last_commit_at` (ISO timestamp or null)
 
-| Status | Condition | Bold? |
-|--------|-----------|-------|
-| Draft | PR is a draft | No |
-| Approved | Has `lgtm` AND `approved` labels | No |
-| Waiting for approval | Has `lgtm` but not `approved` | No |
-| Waiting for changes | Has reviews, last review is AFTER last commit, no `lgtm` label | No |
-| **Needs re-review** | Has reviews, last commit is AFTER last review, no `lgtm` label | **Yes** |
-| **Needs review** | No reviews at all | **Yes** |
+Then evaluate in this order:
 
-**Conflict suffix:** If `mergeable_state` is `dirty`, append ` **(conflicts)**` to the status.
+**For My Open PRs:**
 
-Evaluate conditions top-to-bottom; use the first match.
+1. **IF** `draft == true` **THEN** `"Draft"` (no bold, no emoji)
+2. **ELSE IF** `"lgtm" in labels AND "approved" in labels` **THEN** `"Approved"` (no bold, no emoji)
+3. **ELSE IF** `"lgtm" in labels AND "approved" not in labels` **THEN** `"Waiting for approval"` (no bold, no emoji)
+4. **ELSE IF** `review_count > 0 AND last_review_at > last_commit_at AND "lgtm" not in labels` **THEN** `"**Has new comments** 🔴"` (bold + emoji)
+5. **ELSE IF** `review_count > 0 AND last_commit_at > last_review_at` **THEN** `"Waiting for re-review"` (no bold, no emoji)
+6. **ELSE IF** `review_count == 0` **THEN** `"Waiting for review"` (no bold, no emoji)
+
+**For Others' PRs (Tables 2, 3, 4):**
+
+1. **IF** `draft == true` **THEN** `"Draft"` (no bold, no emoji)
+2. **ELSE IF** `"lgtm" in labels AND "approved" in labels` **THEN** `"Approved"` (no bold, no emoji)
+3. **ELSE IF** `"lgtm" in labels AND "approved" not in labels` **THEN** `"Waiting for approval"` (no bold, no emoji)
+4. **ELSE IF** `review_count > 0 AND last_review_at > last_commit_at AND "lgtm" not in labels` **THEN** `"Waiting for changes"` (no bold, no emoji)
+5. **ELSE IF** `review_count > 0 AND last_commit_at > last_review_at AND "lgtm" not in labels` **THEN** `"**Needs re-review** 🔵"` (bold + emoji)
+6. **ELSE IF** `review_count == 0` **THEN** `"**Needs review** 🟡"` (bold + emoji)
+
+**Suffixes to append to Review Status:**
+- If `mergeable_state == "dirty"`, append ` **(conflicts)**`
+- If `ci_status == "Failed"`, append ` (CI failed)`
+
+**Common mistakes to avoid:**
+- Don't confuse "last_review_at > last_commit_at" (review happened AFTER commit) with "last_commit_at > last_review_at" (commit happened AFTER review)
+- Remember that `review_count > 0` means "Has reviews" while `review_count == 0` means "No reviews at all"
+- Always check ALL conditions for a rule before moving to the next rule
+- If a PR has `review_count: 1`, it does NOT match `review_count == 0`
 
 #### Sorting
 
@@ -118,25 +135,31 @@ Sort Tables 1-3 by Jira priority (highest first: Blocker > Critical > Major > No
 
 #### Tables
 
-**My Open PRs**
+Output a single markdown document with heading `# PR Dashboard` followed by these tables as level-2 headings:
 
-| PR | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
-|----|-------|---------|---------------|-----|------|--------|----------|--------|------|
+## 1: My Open PRs
 
-**PRs I'm Reviewing**
+| PR | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
+|----|-------|---------|---------------|------|----------|--------|--------|------|
 
-| PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
-|----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
+## 2: PRs I'm Reviewing
 
-**Other PRs for Green-{N} Issues in `Review`**
+| PR | Author | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
+|----|--------|-------|---------|---------------|------|----------|--------|--------|------|
 
-| PR | Author | Title | Updated | Review Status | CI | Jira | Status | Priority | Sprint | Epic |
-|----|--------|-------|---------|---------------|-----|------|--------|----------|--------|------|
+## 3: Other PRs for Green-{N} Issues in `Review`
 
-**Other Green Scrum PRs with No Jira**
+_This table shows PRs linked to Green-{N} Jira issues that are in Review status, excluding those already listed above._
 
-| PR | Author | Title | Updated | Review Status | CI |
-|----|--------|-------|---------|---------------|-----|
+| PR | Author | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
+|----|--------|-------|---------|---------------|------|----------|--------|--------|------|
+
+**IMPORTANT:** For this table, use the Jira mapping preserved in Phase 2 to populate the Jira, Priority, Status, Sprint, and Epic columns. Each PR in this table came from a specific Jira issue in Review status.
+
+## 4: Other Green Scrum PRs with No Jira
+
+| PR | Author | Title | Updated | Review Status |
+|----|--------|-------|---------|---------------|
 
 If people.md was not found, output after Table 3:
 > _Table 4 (Other Green Scrum PRs with No Jira) was excluded because `.context/people.md` was not found. Run `/populate-people` to generate it._
@@ -146,18 +169,27 @@ If people.md was not found, output after Table 3:
 - **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)
 - **Title**: Truncate to 50 characters with ellipsis
 - **Updated**: Relative dates — "today" for today, "Mon DD" for current year, "Mon YYYY" for older
-- **Review Status**: Apply bold formatting per the rules above
-- **CI**: Passed, Failed, Running, or N/A
+- **Review Status**: Apply bold formatting and emoji per the rules above, append conflict/CI status suffixes as needed
 - **Jira**: `[RHOAIENG-XXXXX](url) (Type)` — link to `https://issues.redhat.com/browse/{key}`
-- **Status**: Jira issue status
-- **Priority**: Jira issue priority
-- **Sprint**: Shortened sprint name
-- **Epic**: `[RHOAIENG-XXXXX](url) (Short Name)` — link to `https://issues.redhat.com/browse/{key}`
+- **Priority**: Jira issue priority (Critical, Major, Normal, Minor, etc.)
+- **Status**: Jira issue status (In Progress, Review, etc.)
+- **Sprint**: Shortened sprint name (e.g., "Green-35")
+- **Epic**: `[RHOAIENG-XXXXX](url) (Short Name)` — link to `https://issues.redhat.com/browse/{key}`, use concise epic name
 - Use `--` for empty cells
 
-If a PR has multiple Jira issues, show additional rows with empty PR/Author/Title/Updated/Review Status/CI cells.
+If a PR has multiple Jira issues, show additional rows with empty PR/Author/Title/Updated/Review Status cells.
 
 **Age filter note:** After Table 2, report the count of PRs excluded due to the 1-year age filter.
+
+#### Recommendations Section
+
+After all tables, add a `## Recommended Actions` section. Analyze the dashboard data and provide prioritized recommendations for what to focus on first. Consider:
+- PRs that are blocking (your PRs with new comments, especially with failed CI)
+- High-priority items waiting for your review
+- Items that would unblock team members
+- Critical/Major priority Jira issues
+
+Keep recommendations concise and actionable. Mention CI failures and conflicts in the recommendation text where relevant.
 
 ## Important Notes
 
