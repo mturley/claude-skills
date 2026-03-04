@@ -17,7 +17,16 @@ If any prerequisite is missing, inform the user and stop.
 
 The team structure is defined on a Confluence page (content ID `479331996`). Team members are stored as opaque user key references that must be resolved to names, then cross-referenced against Jira (for emails and usernames) and GitHub (for GitHub usernames).
 
-## Phase 1: Fetch Team Structure from Confluence
+## Phase 1: Check for Existing File
+
+1. Check if `.context/people.md` already exists.
+2. If it exists, read and parse it:
+   - Extract each person's scrum, Name, Role, Email, Jira, and GitHub values from the tables
+   - Store this as the **existing roster** for comparison after fetching Confluence data
+   - Tell the user you found an existing file and will check for changes
+3. If it does not exist, tell the user you will generate it from scratch.
+
+## Phase 2: Fetch Team Structure from Confluence
 
 1. Use `confluence_getContent` to fetch content ID `479331996` with `expand=body.storage`.
 2. The response contains an HTML table with rows for each scrum. Extract the following for each scrum:
@@ -29,7 +38,7 @@ The team structure is defined on a Confluence page (content ID `479331996`). Tea
    - Some members are listed as plain text names without user keys (especially in Teal and Indigo)
 3. Collect all unique user keys across all scrums.
 
-## Phase 2: Resolve Confluence User Keys to Names
+## Phase 3: Resolve Confluence User Keys to Names
 
 The Confluence MCP does not have a user lookup tool. Use the REST API directly.
 
@@ -49,7 +58,25 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
 
 4. Some user keys may return a response with empty `displayName` but still include the `username`. In that case, try the full JSON response — the name might be in a different structure. See the "Resolving User References" section in `../.mcp-usage/confluence.md`.
 
-## Phase 3: Look Up Jira Usernames and Emails
+## Phase 4: Compare and Determine Scope
+
+1. If an existing roster was loaded in Phase 1, compare it against the Confluence data from Phases 2-3:
+   - **New members:** People in Confluence not in the existing file — these need full Jira and GitHub lookups
+   - **Removed members:** People in the existing file not in Confluence — these will be dropped
+   - **Scrum changes:** People who moved between scrums — update their scrum placement, preserve their existing data
+   - **Preserve existing data:** For members present in both, keep their Email, Jira, and GitHub values from the existing file
+   - **Incomplete entries:** Existing members with blank Email or Jira cells need Jira lookups; existing members with blank GitHub cells need GitHub lookups
+   - Report all changes to the user (new members, departures, scrum moves)
+
+2. Build two lists:
+   - **Need Jira lookup:** New members + existing members with blank Email or blank Jira
+   - **Need GitHub lookup:** New members + existing members with blank GitHub
+
+3. If no existing file was found, all members need both Jira and GitHub lookups.
+
+## Phase 5: Look Up Jira Usernames and Emails
+
+**Only perform lookups for people identified in Phase 4 as needing Jira data.** Skip anyone who already has both Email and Jira filled in from the existing file.
 
 1. Search for issues in the current open sprints to discover assignee details:
    ```jql
@@ -57,7 +84,7 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
    ```
    Extract `assignee.name`, `assignee.displayName`, and `assignee.emailAddress` from each issue.
 
-2. For any team members not found as assignees, look them up directly via the Jira REST API:
+2. For any team members still not found as assignees, look them up directly via the Jira REST API:
    ```bash
    TOKEN_JIRA=$(python3 -c "import json; c=json.load(open('$HOME/.claude.json')); print(c['mcpServers']['jira']['env']['JIRA_API_TOKEN'])")
    curl -s -H "Authorization: Bearer $TOKEN_JIRA" \
@@ -67,7 +94,9 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
 
 3. Build a lookup table mapping each person to their email and Jira username.
 
-## Phase 4: Find GitHub Usernames
+## Phase 6: Find GitHub Usernames
+
+**Only perform lookups for people identified in Phase 4 as needing GitHub data.** Skip anyone who already has a GitHub username from the existing file.
 
 1. **Check contributor lists** for these repos using `gh api`:
    - `opendatahub-io/odh-dashboard` (primary — most team members contribute here)
@@ -94,18 +123,7 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
 
 5. Leave the GitHub column blank for anyone you cannot confidently identify. Do not guess.
 
-## Phase 5: Check for Existing File
-
-1. Check if `.context/people.md` already exists.
-2. If it exists, read it and compare the team roster against what Confluence reports:
-   - **New members:** People in Confluence not in the file — add them
-   - **Removed members:** People in the file not in Confluence — remove them
-   - **Scrum changes:** People who moved between scrums — update their location
-   - **Preserve manually-added data** that isn't sourced from Confluence (e.g., GitHub usernames that were manually corrected)
-   - Report what changed to the user
-3. If the file does not exist, generate it fresh.
-
-## Phase 6: Write the File
+## Phase 7: Write the File
 
 Write `.context/people.md` with the following structure:
 
