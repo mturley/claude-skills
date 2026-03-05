@@ -8,8 +8,9 @@ Place the skill at `~/.claude/skills/pr-worktree/` (symlink or copy).
 
 ## Prerequisites
 
-- Must be in a git repository
-- The repository must have the GitHub CLI (`gh`) configured
+- The GitHub CLI (`gh`) must be configured
+- If using a PR number or branch name, must be in the correct git repository
+- If using a full PR URL, the skill can find a local clone automatically (searches `~/`)
 
 ## Usage
 
@@ -18,7 +19,7 @@ Place the skill at `~/.claude/skills/pr-worktree/` (symlink or copy).
 ```
 
 The skill will:
-1. Verify the PR belongs to the current repository
+1. Find or verify the correct local repository (searches `~/` if needed)
 2. Create a git worktree at `.claude/worktrees/pr-<number>`
 3. Check out the PR branch in the worktree
 4. Detect your editor (VS Code, Cursor, or terminal)

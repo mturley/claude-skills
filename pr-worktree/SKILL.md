@@ -8,14 +8,28 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
 
 ## Workflow
 
-### Phase 1: Pre-flight Checks
+### Phase 1: Find or Verify Repository
 
-1. Verify the PR belongs to the current repository:
-   - Get the current repo: `gh repo view --json nameWithOwner --jq '.nameWithOwner'`
-   - Get the PR's base repo: If `$ARGUMENTS` is a URL (contains "github.com"), parse the owner/repo from the URL path. Otherwise, assume it's a local PR number/branch.
-   - If they don't match, **abort** with a message explaining that the PR is from a different repository and cannot be checked out here
-2. Get the PR number: `gh pr view $ARGUMENTS --json number --jq '.number'`
-3. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>`:
+1. Determine the target repo from `$ARGUMENTS`:
+   - If `$ARGUMENTS` is a URL (contains "github.com"), parse the `owner/repo` from the URL path
+   - Otherwise, assume it's a local PR number/branch for the current repo
+2. Check if we're in the right git repository:
+   - Run `git rev-parse --is-inside-work-tree 2>/dev/null` to check if we're in a git repo at all
+   - If in a git repo, run `gh repo view --json nameWithOwner --jq '.nameWithOwner'` and compare to the target repo
+3. If **not in a git repo** or **in the wrong repo**, and the target repo was identified from a URL:
+   - Search for a local clone under `~/` by looking for directories named after the repo:
+     ```bash
+     find ~/ -maxdepth 4 -type d -name "<repo-name>" -not -path "*/node_modules/*" -not -path "*/.claude/worktrees/*" 2>/dev/null
+     ```
+   - For each candidate, check if it's a git repo with a matching remote:
+     ```bash
+     git -C <candidate> remote -v 2>/dev/null | grep -q "<owner>/<repo-name>"
+     ```
+   - Use the first match and `cd` there for all subsequent commands
+   - If no match is found, **abort** with a message explaining that no local clone was found
+4. If not in a git repo and `$ARGUMENTS` is not a URL (not enough context to find the repo), **abort** with a message asking the user to run the skill from a git repo or provide a full PR URL
+5. Get the PR number: `gh pr view $ARGUMENTS --json number --jq '.number'`
+6. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>`:
    - If it does, ask the user whether to reuse the existing worktree or remove and recreate it
    - To remove: `git worktree remove .claude/worktrees/pr-<number> --force`
 
