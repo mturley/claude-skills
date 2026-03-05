@@ -158,8 +158,7 @@ def render_table4(prs, today, people_md_found):
 def generate_recommendations(table1, table2, table3, table4):
     """Generate prioritized recommendations sorted by Jira priority across all categories.
 
-    Returns list of (text, pr_url_or_none) tuples.  When pr_url is not None,
-    the caller renders a /pr-worktree code block underneath the item.
+    Returns list of recommendation strings.
     """
 
     # Category constants for tiebreaking within the same Jira priority:
@@ -201,7 +200,6 @@ def generate_recommendations(table1, table2, table3, table4):
             jira_priority(pr), CAT_MY_PR,
             f"Unblock your work on [{pr['repo']}#{pr['number']}]({pr['url']}) "
             f"\"{title}\"{jira_ref(pr)}{detail}.",
-            pr.get("url"),
         ))
 
     # Reviews I owe teammates WITH Jira
@@ -215,7 +213,6 @@ def generate_recommendations(table1, table2, table3, table4):
             jira_priority(pr), CAT_TEAMMATE_REVIEW,
             f"Unblock {pr.get('author', '?')}: {action} [{pr['repo']}#{pr['number']}]({pr['url']}) "
             f"\"{title}\"{jira_ref(pr)}{conflict}.",
-            pr.get("url"),
         ))
 
     # Sprint PRs needing review help
@@ -228,22 +225,20 @@ def generate_recommendations(table1, table2, table3, table4):
             jira_priority(pr), CAT_SPRINT_REVIEW,
             f"Help unblock sprint: Review [{pr['repo']}#{pr['number']}]({pr['url']}) "
             f"\"{title}\" by {pr.get('author', '?')}{jira_ref(pr)}.",
-            pr.get("url"),
         ))
 
     # Sort by Jira priority (ascending), then category as tiebreaker
     scored.sort(key=lambda t: (t[0], t[1]))
-    recs = [(text, url) for _, _, text, url in scored]
+    recs = [text for _, _, text in scored]
 
     # Lower-priority items without Jira go at the end
 
     # Untracked team work (Table 4 non-draft PRs)
     t4_non_draft = [pr for pr in table4 if "Draft" not in pr.get("review_status", "")]
     if t4_non_draft:
-        recs.append((
-            f"Consider creating Jira tickets for {len(t4_non_draft)} team PR(s) with no linked issue (Table 4).",
-            None,
-        ))
+        recs.append(
+            f"Consider creating Jira tickets for {len(t4_non_draft)} team PR(s) with no linked issue (Table 4)."
+        )
 
     # Reviews I owe WITHOUT Jira
     for pr in table2:
@@ -252,14 +247,13 @@ def generate_recommendations(table1, table2, table3, table4):
         title = pr_title(pr)
         action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
         conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
-        recs.append((
+        recs.append(
             f"{action} [{pr['repo']}#{pr['number']}]({pr['url']}) "
-            f"\"{title}\" by {pr.get('author', '?')}{conflict}.",
-            pr.get("url"),
-        ))
+            f"\"{title}\" by {pr.get('author', '?')}{conflict}."
+        )
 
     if not recs:
-        recs.append(("No urgent actions identified. Dashboard looks good!", None))
+        recs.append("No urgent actions identified. Dashboard looks good!")
 
     return recs[:8]
 
@@ -314,12 +308,8 @@ def main():
     output.append("## Recommended Actions")
     output.append("")
     recs = generate_recommendations(table1, table2, table3, table4)
-    for i, (rec, pr_url) in enumerate(recs, 1):
+    for i, rec in enumerate(recs, 1):
         output.append(f"{i}. {rec}")
-        if pr_url:
-            output.append(f"   ```")
-            output.append(f"   /pr-worktree {pr_url}")
-            output.append(f"   ```")
     output.append("")
 
     print("\n".join(output))

@@ -28,6 +28,20 @@ Run ALL of the following in parallel in a single tool-call round:
 
 2. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
+3. **Discover the active Green sprint name:** Run a Jira search to find any one issue in the current Green sprint:
+   ```
+   project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-green-scrum"
+   ```
+   Run as a single `jira_searchIssues` call with `maxResults: 1`.
+
+After Phase 1 calls complete, pipe the sprint discovery result through `extract-sprint-issues.py` to get the full sprint name:
+
+```bash
+echo '<raw_jira_result>' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
+```
+
+Extract `sprint_full_name` from the output (e.g. `"Dashboard - Green-35"`).
+
 If people.md was found, parse the **Green Scrum** section to extract GitHub usernames (skip the current user and blank entries).
 
 ### Phase 2: Metadata + Jira + Team PRs
@@ -45,9 +59,9 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run this as a single `jira_searchIssues` call. The results will be matched to specific PRs by `assign-tables.py assign` via the `pr_urls` field.
 
-3. **Sprint review Jira search** (for Table 3): Search for issues in review in the current open sprint:
+3. **Sprint review Jira search** (for Table 3): Using the discovered `sprint_full_name`, search for issues in review in the current Green sprint:
    ```
-   project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard" AND status = Review
+   project = RHOAIENG AND sprint = "<sprint_full_name>" AND status = Review
    ```
    Run as a single `jira_searchIssues` call. Do NOT pipe through `extract-jira-fields.py` — the raw result goes directly to `assign-tables.py assign`.
 
@@ -126,7 +140,7 @@ Table 4 PR objects omit the `jira` field.
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
 
-The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end. Each recommended action that involves a specific PR includes the PR title (truncated) and a `/pr-worktree` code block underneath for easy copy-paste.
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end.
 
 **IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
 
@@ -146,7 +160,7 @@ The review status reference (for understanding the output):
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
-- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*`, `cat *| python3 *reviews-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.
+- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*`, `cat *| python3 *reviews-status/*`, `echo *| python3 *sprint-status/*`, `cat *| python3 *sprint-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.
 - For large JSON payloads that may exceed shell argument limits, use a heredoc piped to the script:
   ```bash
   cat <<'EOF' | python3 ~/.claude/skills/reviews-status/render-report.py
