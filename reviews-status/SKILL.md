@@ -123,7 +123,7 @@ Table 4 PR objects omit the `jira` field.
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
 
-The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end.
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end. Each recommended action that involves a specific PR includes the PR title (truncated) and a `/pr-worktree` code block underneath for easy copy-paste.
 
 **IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
 
@@ -137,14 +137,6 @@ The review status reference (for understanding the output):
 | 🔴 **Has new comments** | Waiting for changes | Reviews exist, last review is after last commit |
 | Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
 | Waiting for review | 🟡 **Needs review** | No reviews at all |
-
-### Phase 5: Offer Worktrees for PRs Needing Review
-
-After outputting the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
-
-If there are any such PRs, add a brief note after the report (as regular text, NOT using AskUserQuestion) suggesting the user can request `/pr-worktree <url>` for any of them. List the PR URLs so they're easy to copy.
-
-If there are no PRs needing review action, skip this phase entirely.
 
 ## Important Notes
 
