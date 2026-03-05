@@ -62,7 +62,7 @@ Detect the user's editor environment and open a new window in the worktree direc
 After opening the editor window (or providing the path), tell the user:
 
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>`
-2. **What to do next**: "Run `/review <PR-number>` in the new window to start the code review"
+2. **What to do next**: "Run `/review` in the new window to start the code review"
 3. **How to clean up when done**:
    - `git worktree remove .claude/worktrees/pr-<number>`
    - Or to clean up all review worktrees: `git worktree list` then remove as needed

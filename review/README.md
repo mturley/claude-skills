@@ -18,10 +18,13 @@ Place the skill at `~/.claude/skills/review/` (symlink or copy).
 /review <PR number or branch name>
 ```
 
+When run from a `/pr-worktree` worktree, the argument is optional — the PR number is inferred from the branch name.
+
 The skill will:
-1. Check for uncommitted changes (aborts if any)
-2. Verify the PR belongs to the current repository
-3. Check out the PR branch using `gh pr checkout`
+1. Detect the PR from the branch name (if no argument given)
+2. Check for uncommitted changes (aborts if any)
+3. Verify the PR belongs to the current repository
+4. Check out the PR branch using `gh pr checkout` (skipped if already on the branch)
 4. Gather PR context (title, body, author, diff)
 5. Check for existing review comments and whether they've been addressed
 6. Provide a thorough code review

@@ -4,23 +4,27 @@ Review a pull request by checking out its branch and analyzing the changes.
 
 ## Arguments
 
-- `$ARGUMENTS` - The PR number or branch name to review (passed to `gh pr checkout`)
+- `$ARGUMENTS` - The PR number or branch name to review (passed to `gh pr checkout`). Optional when run from a `/pr-worktree` worktree — the PR number is inferred from the branch name.
 
 ## Workflow
 
 ### Phase 1: Pre-flight Checks
 
-1. Run `git status` to check for uncommitted changes
-2. If there are uncommitted changes, **abort** with a message asking the user to commit or stash their changes first
-3. Verify the PR belongs to the current repository:
+1. If `$ARGUMENTS` is empty, check the current branch: `git branch --show-current`
+   - If the branch matches the pattern `review/pr-<number>`, extract the PR number and use it as `$ARGUMENTS`. Note that the checkout in Phase 2 should be skipped since we're already on the correct branch.
+   - If it doesn't match, **abort** with a message explaining that a PR number or branch name is required
+2. Run `git status` to check for uncommitted changes
+3. If there are uncommitted changes, **abort** with a message asking the user to commit or stash their changes first
+4. Verify the PR belongs to the current repository:
    - Get the current repo: `gh repo view --json nameWithOwner --jq '.nameWithOwner'`
    - Get the PR's base repo: If `$ARGUMENTS` is a URL (contains "github.com"), parse the owner/repo from the URL path. Otherwise, assume it's a local PR number/branch.
    - If they don't match, **abort** with a message explaining that the PR is from a different repository and cannot be checked out here
 
 ### Phase 2: Checkout PR Branch
 
-1. Run `gh pr checkout $ARGUMENTS` to check out the PR branch
-2. If this fails, report the error and abort
+1. If the PR number was inferred from the branch name in Phase 1, skip this phase — we're already on the correct branch
+2. Run `gh pr checkout $ARGUMENTS` to check out the PR branch
+3. If this fails, report the error and abort
 
 ### Phase 3: Gather PR Context
 
