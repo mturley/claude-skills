@@ -1,8 +1,8 @@
 # /reviews-status
 
-Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables: your own open PRs, open PRs you've reviewed or commented on, other open PRs from the current sprint's Jira issues in Review state, and open PRs from Green scrum team members that have no associated Jira issue.
+Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic.
 
-For each PR, the dashboard shows review status, CI status, linked Jira issues (with type, status, sprint, and epic), and highlights where your action is needed.
+This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized.
 
 ## Installation
 

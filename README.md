@@ -60,9 +60,13 @@ Reviews pull requests in an isolated git worktree, allowing multiple PRs to be r
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
 
+(`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
+
 ### [/reviews-status](reviews-status/)
 
-Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables (your PRs, PRs you've reviewed/commented on, sprint Review PRs, and unlinked team member PRs) with review status, CI status, linked Jira issues with type/status/sprint/epic, and highlights where your action is needed.
+Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic.
+
+(`/reviews-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/populate-people](populate-people/)
 

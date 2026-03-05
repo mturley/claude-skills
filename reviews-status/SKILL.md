@@ -1,6 +1,6 @@
-# PR Dashboard
+# Reviews Status
 
-Generate a dashboard of open PRs I'm involved with, cross-referenced with RHOAIENG Jira issues.
+Show the review status of open PRs across my work, my team's sprint, and my scrum members, cross-referenced with RHOAIENG Jira issues.
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
 
