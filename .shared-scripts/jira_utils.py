@@ -99,6 +99,7 @@ def extract_jira_issue(issue):
     fields = issue.get("fields", {})
 
     issue_type = fields.get("issuetype", {})
+    is_subtask = (issue_type.get("subtask", False) if issue_type else False)
     status = fields.get("status", {})
     priority = fields.get("priority", {})
     priority_name = priority.get("name", "Undefined") if priority else "Undefined"
@@ -117,6 +118,7 @@ def extract_jira_issue(issue):
         "key": issue.get("key", ""),
         "summary": fields.get("summary", ""),
         "type": issue_type.get("name", "") if issue_type else "",
+        "is_subtask": is_subtask,
         "status": status.get("name", "") if status else "",
         "priority": priority_name,
         "priority_sort": PRIORITY_SORT.get(priority_name, 6),

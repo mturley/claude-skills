@@ -19,6 +19,7 @@ from format_utils import (
 )
 from jira_utils import parse_pr_url
 
+import re
 
 # Status groups in display order. Each entry: (display_name, list_of_jira_statuses)
 STATUS_GROUPS = [
@@ -27,6 +28,10 @@ STATUS_GROUPS = [
     ("Backlog", ["New", "To Do", "Backlog"]),
     ("Closed / Resolved", ["Closed", "Resolved"]),
 ]
+
+# Groups where State column is shown (status is ambiguous from heading alone)
+GROUPS_WITH_STATE = {"Closed / Resolved", "Other"}
+
 
 
 def group_issues(issues):
@@ -56,84 +61,95 @@ def group_issues(issues):
     return result
 
 
-def render_status_table(issues, today, epics, pr_lookup, my_jira_username):
-    """Render a single status group as a markdown table."""
-    lines = [
-        "| Issue | Type | Pri | Title | SP | Orig SP | Blocked | Assignee | Reporter | Updated | Epic | PR | PR Updated | Review Status |",
-        "|-------|------|-----|-------|----|---------|---------|----------|----------|---------|------|----|------------|---------------|",
-    ]
+def format_blocked(issue):
+    """Format blocked field, hyperlinking any RHOAIENG issue references."""
+    if not issue.get("blocked"):
+        return "No"
+    reason = issue.get("blocked_reason", "")
+    if not reason or reason == "None":
+        return "Yes"
+    text = truncate_title(reason, 30)
+    # Hyperlink RHOAIENG-XXXXX references
+    text = re.sub(
+        r'(RHOAIENG-\d+)',
+        lambda m: f"[{m.group(1)}]({JIRA_BASE}/{m.group(1)})",
+        text,
+    )
+    return f"Yes: {text}"
 
-    # Sort by priority ascending, then updated descending
+
+def render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_state=False):
+    """Render one issue (possibly multiple rows for multi-PR) as markdown table rows."""
+    lines = []
+    jira_link = f"[{issue['key']}]({JIRA_BASE}/{issue['key']})"
+    issue_type = issue.get("type", "--")
+    priority = issue.get("priority", "--")
+    sp = str(issue["story_points"]) if issue.get("story_points") is not None else "--"
+    orig_sp = str(issue["original_story_points"]) if issue.get("original_story_points") is not None else "--"
+    assignee = issue.get("assignee", "") or "--"
+    title = truncate_title(issue.get("summary", ""), 40)
+    blocked_str = format_blocked(issue)
+    reporter = issue.get("reporter", "") or "--"
+    updated = format_date(issue.get("updated", ""), today)
+    epic_str = format_epic(issue.get("epic"), epics)
+    state = issue.get("status", "--") if show_state else None
+
+    pr_urls = issue.get("pr_urls", [])
+    parsed_prs = [p for p in (parse_pr_url(u) for u in pr_urls) if p]
+    is_mine = issue.get("assignee_username", "") == my_jira_username
+
+    # Build the Jira columns portion (reused for main row)
+    jira_cols = (
+        f"| {jira_link} | {issue_type} | {priority} | {sp} | {orig_sp} "
+        f"| {assignee} | {title} | {blocked_str} | {reporter} "
+        f"| {updated} | {epic_str}"
+    )
+    if show_state:
+        jira_cols += f" | {state}"
+
+    # Empty Jira columns for continuation rows
+    empty_jira = "|  " * (12 if show_state else 11)
+
+    if not parsed_prs:
+        lines.append(f"{jira_cols} | -- | -- | -- |")
+    else:
+        first_pr = parsed_prs[0]
+        pr_key = f"{first_pr['owner']}/{first_pr['repo']}#{first_pr['number']}"
+        pr_meta = pr_lookup.get(pr_key, {})
+        pr_link = format_pr_link(first_pr)
+        pr_updated = format_date(pr_meta.get("updated_at", ""), today)
+        review_status = pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--")
+        lines.append(f"{jira_cols} | {pr_link} | {pr_updated} | {review_status} |")
+
+        for extra_pr in parsed_prs[1:]:
+            pr_key = f"{extra_pr['owner']}/{extra_pr['repo']}#{extra_pr['number']}"
+            pr_meta = pr_lookup.get(pr_key, {})
+            pr_link = format_pr_link(extra_pr)
+            pr_updated = format_date(pr_meta.get("updated_at", ""), today)
+            review_status = pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--")
+            lines.append(f"{empty_jira} {pr_link} | {pr_updated} | {review_status} |")
+
+    return lines
+
+
+def render_status_table(issues, today, epics, pr_lookup, my_jira_username, show_state=False):
+    """Render a single status group as a markdown table."""
+    header = "| Issue | Type | Priority | SP | Orig SP | Assignee | Title | Blocked | Reporter | Updated | Epic"
+    separator = "|-------|------|----------|----|---------|----------|-------|---------|----------|---------|-----"
+    if show_state:
+        header += " | State"
+        separator += "|-------"
+    header += " | PR | PR Updated | Review Status |"
+    separator += "|----|------------|---------------|"
+    lines = [header, separator]
+
     sorted_issues = sorted(issues, key=lambda i: (
         i.get("priority_sort", 6),
         reverse_date(i.get("updated", "")),
     ))
 
     for issue in sorted_issues:
-        jira_link = f"[{issue['key']}]({JIRA_BASE}/{issue['key']})"
-        issue_type = issue.get("type", "--")
-        priority = issue.get("priority", "--")
-        title = truncate_title(issue.get("summary", ""), 40)
-        sp = str(issue["story_points"]) if issue.get("story_points") is not None else "--"
-        orig_sp = str(issue["original_story_points"]) if issue.get("original_story_points") is not None else "--"
-
-        blocked_str = "--"
-        if issue.get("blocked"):
-            reason = issue.get("blocked_reason", "")
-            if reason and reason != "None":
-                blocked_str = f"Yes: {truncate_title(reason, 20)}"
-            else:
-                blocked_str = "Yes"
-
-        assignee = issue.get("assignee", "") or "--"
-        reporter = issue.get("reporter", "") or "--"
-        updated = format_date(issue.get("updated", ""), today)
-        epic_str = format_epic(issue.get("epic"), epics)
-
-        # Get PRs for this issue
-        pr_urls = issue.get("pr_urls", [])
-        parsed_prs = [parse_pr_url(u) for u in pr_urls]
-        parsed_prs = [p for p in parsed_prs if p]
-
-        is_mine = issue.get("assignee_username", "") == my_jira_username
-
-        if not parsed_prs:
-            lines.append(
-                f"| {jira_link} | {issue_type} | {priority} | {title} "
-                f"| {sp} | {orig_sp} | {blocked_str} | {assignee} | {reporter} "
-                f"| {updated} | {epic_str} | -- | -- | -- |"
-            )
-        else:
-            # First PR on the main row
-            first_pr = parsed_prs[0]
-            pr_key = f"{first_pr['owner']}/{first_pr['repo']}#{first_pr['number']}"
-            pr_meta = pr_lookup.get(pr_key, {})
-            pr_link = format_pr_link(first_pr)
-            pr_updated = format_date(pr_meta.get("updated_at", ""), today)
-            if is_mine:
-                review_status = pr_meta.get("review_status_mine", "--")
-            else:
-                review_status = pr_meta.get("review_status_others", "--")
-
-            lines.append(
-                f"| {jira_link} | {issue_type} | {priority} | {title} "
-                f"| {sp} | {orig_sp} | {blocked_str} | {assignee} | {reporter} "
-                f"| {updated} | {epic_str} | {pr_link} | {pr_updated} | {review_status} |"
-            )
-
-            # Additional PRs on continuation rows
-            for extra_pr in parsed_prs[1:]:
-                pr_key = f"{extra_pr['owner']}/{extra_pr['repo']}#{extra_pr['number']}"
-                pr_meta = pr_lookup.get(pr_key, {})
-                pr_link = format_pr_link(extra_pr)
-                pr_updated = format_date(pr_meta.get("updated_at", ""), today)
-                if is_mine:
-                    review_status = pr_meta.get("review_status_mine", "--")
-                else:
-                    review_status = pr_meta.get("review_status_others", "--")
-                lines.append(
-                    f"|  |  |  |  |  |  |  |  |  |  |  | {pr_link} | {pr_updated} | {review_status} |"
-                )
+        lines.extend(render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_state))
 
     return lines
 
@@ -272,6 +288,10 @@ def main():
             "state": meta.get("state", ""),
         }
 
+    # Split into my issues and others
+    my_issues = [i for i in issues if i.get("assignee_username") == my_jira_username]
+    other_issues = [i for i in issues if i.get("assignee_username") != my_jira_username]
+
     # Header
     output = [f"# Sprint Status: {sprint_name}", ""]
     if sprint_goal:
@@ -285,14 +305,32 @@ def main():
     output.append(f"**{total} issues** | **{total_sp} story points** | **{blocked_count} blocked**")
     output.append("")
 
-    # Grouped tables
-    groups = group_issues(issues)
+    # My assigned issues (single table with State column)
+    my_sp = sum(i.get("story_points", 0) or 0 for i in my_issues)
+    output.append(f"## My Assigned Issues ({len(my_issues)} issues, {my_sp} story points)")
+    output.append("")
+    if my_issues:
+        output.extend(render_status_table(
+            my_issues, today, epics, pr_lookup, my_jira_username, show_state=True
+        ))
+    else:
+        output.append("_No issues assigned to you in this sprint._")
+    output.append("")
+
+    # Other sprint issues (grouped by status)
+    output.append("---")
+    output.append("")
+    output.append("## Other Sprint Issues")
+    output.append("")
+
+    groups = group_issues(other_issues)
     for group_name, group_issues_list in groups:
         group_sp = sum(i.get("story_points", 0) or 0 for i in group_issues_list)
-        output.append(f"## {group_name} ({len(group_issues_list)} issues, {group_sp} SP)")
+        output.append(f"### {group_name} ({len(group_issues_list)} issues, {group_sp} story points)")
         output.append("")
+        show_state = group_name in GROUPS_WITH_STATE
         output.extend(render_status_table(
-            group_issues_list, today, epics, pr_lookup, my_jira_username
+            group_issues_list, today, epics, pr_lookup, my_jira_username, show_state=show_state
         ))
         output.append("")
 

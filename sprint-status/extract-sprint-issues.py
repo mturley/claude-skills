@@ -37,6 +37,9 @@ def main():
     raw_issues = detect_and_parse_jira(raw)
     issues = [extract_jira_issue(i) for i in raw_issues]
 
+    # Exclude sub-tasks from the report
+    issues = [i for i in issues if not i.get("is_subtask")]
+
     if args.filter_sprint:
         keyword = args.filter_sprint.lower()
         issues = [i for i in issues if i["sprint"] and keyword in i["sprint"].lower()]

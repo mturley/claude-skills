@@ -4,7 +4,7 @@ Show the current Green sprint status with all tickets grouped by status (Review,
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
-**Helper Script:** `~/.claude/skills/sprint-status/extract-sprint-issues.py` — parses raw Jira sprint search results and extracts all fields. Pass raw Jira on stdin with `--filter-sprint Green`, get back `{issues, pr_metadata_input, epic_keys, sprint_name, sprint_goal}`.
+**Helper Script:** `~/.claude/skills/sprint-status/extract-sprint-issues.py` — parses raw Jira sprint search results, excludes sub-tasks, and extracts all fields. Pass raw Jira on stdin with `--filter-sprint Green`, get back `{issues, pr_metadata_input, epic_keys, sprint_name, sprint_goal}`.
 
 **Helper Script:** `~/.claude/skills/.shared-scripts/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back metadata with review status.
 
@@ -20,8 +20,7 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run as a single `jira_searchIssues` call with `maxResults: 100`.
 
-2. **Read people.md** for user context:
-   Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
+2. **Look up the current Jira user:** Call `jira_getIssue` on any known issue (or use the Jira API) to determine the current access token's username. Alternatively, read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
 
 After the Jira result returns, pipe it through `extract-sprint-issues.py`:
 
@@ -69,6 +68,12 @@ The input JSON format:
 - `pr_metadata`: the metadata array from Phase 2 (from `fetch-pr-metadata.py`)
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for PRs on issues assigned to the current user, and `review_status_others` for all other PRs.
+
+The report renders in two main sections:
+- **My Assigned Issues**: A single table of all issues assigned to the current user, with a State column
+- **Other Sprint Issues**: Grouped by status (Review → In Progress → Backlog → Closed/Resolved), with State shown in the final group
+
+Sub-tasks are excluded from the report by `extract-sprint-issues.py`.
 
 **IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
 
