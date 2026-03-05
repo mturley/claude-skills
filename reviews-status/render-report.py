@@ -214,8 +214,13 @@ def render_table4(prs, today, people_md_found):
 
 
 def generate_recommendations(table1, table2, table3, table4):
-    """Generate prioritized recommendations focused on unblocking the Green Scrum."""
-    recs = []
+    """Generate prioritized recommendations sorted by Jira priority across all categories."""
+
+    # Category constants for tiebreaking within the same Jira priority:
+    # my PRs first, then teammate reviews, then sprint PRs
+    CAT_MY_PR = 0
+    CAT_TEAMMATE_REVIEW = 1
+    CAT_SPRINT_REVIEW = 2
 
     def jira_priority(pr):
         return min(
@@ -230,62 +235,64 @@ def generate_recommendations(table1, table2, table3, table4):
         j = jira_list[0]
         return f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
 
-    # 1. Reviews I owe teammates WITH Jira (I'm blocking sprint work)
-    t2_with_jira = [
-        pr for pr in table2
-        if "**" in pr.get("review_status", "") and pr.get("jira")
-    ]
-    t2_with_jira.sort(key=jira_priority)
+    # Build (priority, category, text) tuples for all actionable PRs with Jira
 
-    for pr in t2_with_jira:
-        action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
-        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
-        recs.append(
-            f"Unblock {pr.get('author', '?')}: {action} [{pr['repo']}#{pr['number']}]({pr['url']})"
-            f"{jira_ref(pr)}{conflict}."
-        )
+    scored = []
 
-    # 2. My PRs needing action (blocking my own sprint work from landing)
-    my_action = [pr for pr in table1 if "**" in pr.get("review_status", "")]
-    my_action.sort(key=jira_priority)
-
-    for pr in my_action:
+    # My PRs needing action
+    for pr in table1:
+        if "**" not in pr.get("review_status", ""):
+            continue
         if "CI failed" in pr.get("review_status", ""):
             detail = " — fix CI and address comments"
         else:
             detail = " — address review comments"
-        recs.append(
+        scored.append((
+            jira_priority(pr), CAT_MY_PR,
             f"Unblock your work on [{pr['repo']}#{pr['number']}]({pr['url']})"
-            f"{jira_ref(pr)}{detail}."
-        )
+            f"{jira_ref(pr)}{detail}.",
+        ))
 
-    # 3. Sprint PRs needing review help (Table 3 with "Needs review" or "Needs re-review")
-    t3_needs_review = [
-        pr for pr in table3
-        if "Needs review" in pr.get("review_status", "")
-        or "Needs re-review" in pr.get("review_status", "")
-    ]
-    t3_needs_review.sort(key=jira_priority)
+    # Reviews I owe teammates WITH Jira
+    for pr in table2:
+        if "**" not in pr.get("review_status", "") or not pr.get("jira"):
+            continue
+        action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
+        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
+        scored.append((
+            jira_priority(pr), CAT_TEAMMATE_REVIEW,
+            f"Unblock {pr.get('author', '?')}: {action} [{pr['repo']}#{pr['number']}]({pr['url']})"
+            f"{jira_ref(pr)}{conflict}.",
+        ))
 
-    for pr in t3_needs_review:
-        recs.append(
+    # Sprint PRs needing review help
+    for pr in table3:
+        status = pr.get("review_status", "")
+        if "Needs review" not in status and "Needs re-review" not in status:
+            continue
+        scored.append((
+            jira_priority(pr), CAT_SPRINT_REVIEW,
             f"Help unblock sprint: Review [{pr['repo']}#{pr['number']}]({pr['url']}) by "
-            f"{pr.get('author', '?')}{jira_ref(pr)}."
-        )
+            f"{pr.get('author', '?')}{jira_ref(pr)}.",
+        ))
 
-    # 4. Untracked team work (Table 4 non-draft PRs)
+    # Sort by Jira priority (ascending), then category as tiebreaker
+    scored.sort(key=lambda t: (t[0], t[1]))
+    recs = [text for _, _, text in scored]
+
+    # Lower-priority items without Jira go at the end
+
+    # Untracked team work (Table 4 non-draft PRs)
     t4_non_draft = [pr for pr in table4 if "Draft" not in pr.get("review_status", "")]
     if t4_non_draft:
         recs.append(
             f"Consider creating Jira tickets for {len(t4_non_draft)} team PR(s) with no linked issue (Table 4)."
         )
 
-    # 5. Reviews I owe WITHOUT Jira (lower priority)
-    t2_no_jira = [
-        pr for pr in table2
-        if "**" in pr.get("review_status", "") and not pr.get("jira")
-    ]
-    for pr in t2_no_jira:
+    # Reviews I owe WITHOUT Jira
+    for pr in table2:
+        if "**" not in pr.get("review_status", "") or pr.get("jira"):
+            continue
         action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
         conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
         recs.append(

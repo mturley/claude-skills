@@ -53,6 +53,10 @@ Run ALL of the following in parallel in a single tool-call round:
    ```bash
    echo '<jira_result_json>' | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
    ```
+   If the result is persisted to a file (output too large), pipe the file directly — the script auto-detects the MCP wrapper format:
+   ```bash
+   cat /path/to/persisted-output.json | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
+   ```
    This extracts compact fields and keeps only issues with "Green" in their sprint name.
 
 4. **Team member PR searches** (for Table 4, skip if no people.md): For each Green Scrum member's GitHub username, run:
@@ -91,10 +95,12 @@ After this round, resolve any new epic keys found in Table 3 Jira data that were
 
 ### Phase 4: Render the Report
 
-Assemble the collected data into JSON and pipe through `render-report.py`:
+Assemble the collected data into JSON and pipe through `render-report.py`. For the render input, use a heredoc since the assembled JSON is typically large:
 
 ```bash
-echo '<assembled_json>' | python3 ~/.claude/skills/reviews-status/render-report.py
+cat <<'EOF' | python3 ~/.claude/skills/reviews-status/render-report.py
+{"today":"2026-03-05","sprint_number":"35","excluded_count":5,...}
+EOF
 ```
 
 The input JSON format:
@@ -117,7 +123,7 @@ Table 4 PR objects omit the `jira` field.
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
 
-The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are focused on what can be done to unblock the Green Scrum team: reviews you owe teammates come first, then your own PRs needing action, then sprint PRs needing review help, then untracked team work needing Jira tickets.
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions prioritize your own PRs needing action first, then reviews you owe teammates, then sprint PRs needing review help, then untracked team work needing Jira tickets.
 
 The review status reference (for understanding the output):
 
@@ -151,3 +157,14 @@ If there are no PRs needing review action, skip this phase entirely.
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
+- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*` and `cat *| python3 *reviews-status/*`.
+- For large JSON payloads that may exceed shell argument limits (e.g. the Phase 4 render input), use a heredoc piped to the script:
+  ```bash
+  cat <<'EOF' | python3 ~/.claude/skills/reviews-status/render-report.py
+  {"today":"2026-03-05","sprint_number":"35",...}
+  EOF
+  ```
+- When a tool result is persisted to a file (output too large), pipe the file directly to the helper script — `extract-jira-fields.py` auto-detects the MCP wrapper format:
+  ```bash
+  cat /path/to/persisted-output.json | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
+  ```
