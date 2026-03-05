@@ -62,7 +62,8 @@ Detect the user's editor environment and open a new window in the worktree direc
 After opening the editor window (or providing the path), tell the user:
 
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>`
-2. **What to do next**: "Run `/review` in the new window to start the code review"
-3. **How to clean up when done**:
+2. **Dependencies not installed**: The worktree is a fresh checkout with no dependencies installed. If you need to build or test the code, you'll need to install dependencies first (e.g. `npm install`, `pip install`, `go mod download`, etc.) just like a fresh clone.
+3. **What to do next**: "Run `/review` in the new window to start the code review"
+4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
    - `git worktree remove .claude/worktrees/pr-<number>`
    - Or to clean up all review worktrees: `git worktree list` then remove as needed
