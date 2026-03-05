@@ -7,13 +7,13 @@ This skill helps open detailed Jira issues by gathering context and investigatin
 1. Set up a Jira MCP server. I use `@atlassian-dc-mcp/jira`, which is specific to Jira Datacenter, but we will need to reconfigure things when we move to Jira Cloud. The skill may also need adjustments at that point because it uses specific field ids and query behavior.
     * You can just ask Claude "Help me set up the @atlassian-dc-mcp/jira MCP server using JIRA_HOST=issues.redhat.com"
 
-2. Symlink the `.mcp-usage` directory to `~/.claude/skills/.mcp-usage` if you haven't already. This contains Jira field IDs and format references used by the skill. See the [root README installation instructions](../README.md#installation) for details.
+2. Symlink the `.context` directory to `~/.claude/skills/.context` if you haven't already. This contains Jira field IDs and format references used by the skill. See the [root README installation instructions](../README.md#installation) for details.
 
 3. Place the skill at `~/.claude/skills/create-jira/SKILL.md`.
 
 ## Technical Reference
 
-For Jira field IDs, formats, and gotchas, see [MCP Usage Reference](../.mcp-usage/jira.md).
+For Jira field IDs, formats, and gotchas, see [MCP Usage Reference](../.context/jira-mcp.md).
 
 ## Prerequisites
 

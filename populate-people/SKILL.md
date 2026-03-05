@@ -2,7 +2,7 @@
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information sourced from Confluence, Jira, and GitHub.
 
-Technical Reference: Read `../.mcp-usage/confluence.md` before using Confluence tools.
+Technical Reference: Read `../.context/confluence-mcp.md` before using Confluence tools.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
 
 3. **Rate limiting:** If you get HTTP 429, wait 5-10 seconds and retry. Process keys in batches of ~10 with a brief pause between batches.
 
-4. Some user keys may return a response with empty `displayName` but still include the `username`. In that case, try the full JSON response — the name might be in a different structure. See the "Resolving User References" section in `../.mcp-usage/confluence.md`.
+4. Some user keys may return a response with empty `displayName` but still include the `username`. In that case, try the full JSON response — the name might be in a different structure. See the "Resolving User References" section in `../.context/confluence-mcp.md`.
 
 ## Phase 4: Compare and Determine Scope
 

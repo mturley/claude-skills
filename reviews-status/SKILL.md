@@ -2,7 +2,7 @@
 
 Show the review status of open PRs across my work, my team's sprint, and my scrum members, cross-referenced with RHOAIENG Jira issues.
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/reviews-status/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
 

@@ -6,9 +6,9 @@ Generates or updates `.context/people.md` with RHOAI Dashboard team member infor
 
 Place at `~/.claude/skills/populate-people/` (or symlink from this repo).
 
-Requires the shared MCP documentation directory:
+Requires the shared context directory:
 ```bash
-ln -s ~/git/claude-skills/.mcp-usage ~/.claude/skills/.mcp-usage
+ln -s ~/git/claude-skills/.context ~/.claude/skills/.context
 ```
 
 ## Prerequisites

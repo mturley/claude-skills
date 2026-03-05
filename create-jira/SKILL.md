@@ -2,7 +2,7 @@
 
 Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model Registry / Model Catalog areas).
 
-**Technical Reference:** For field IDs, formats, and gotchas, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
+**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
 ## Arguments
 
@@ -11,7 +11,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 ## Instructions
 
 **Prerequisites Check:**
-- Verify that `../.mcp-usage/jira.md` exists by attempting to read it
+- Verify that `../.context/jira-mcp.md` exists by attempting to read it
 - If the file doesn't exist, abort with this message:
   ```
   Error: MCP usage reference not found.
@@ -56,7 +56,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 
 8. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
 
-9. **Create the issue** using jira_createIssue. See [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) for all field IDs and formats. Include:
+9. **Create the issue** using jira_createIssue. See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for all field IDs and formats. Include:
    - Project ID, component, team, labels (based on area selection)
    - Priority (based on user selection)
    - Severity (if Bug, based on user selection)
@@ -69,7 +69,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
     - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
 
 11. **Ask if they want to add it to a sprint**. If yes:
-    - Follow the "Finding Sprints" instructions in [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) to find the correct Green sprint
+    - Follow the "Finding Sprints" instructions in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to find the correct Green sprint
     - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
     - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
     - Transition the issue from "New" to "Backlog" using jira_getTransitions to find the transition ID, then jira_transitionIssue to perform the transition
@@ -130,7 +130,7 @@ h3. Acceptance Criteria
 
 When referencing files in the issue description, include GitHub links:
 1. Determine the GitHub repo URL by running `git remote get-url upstream` and converting it to HTTPS format
-2. Link to files on the `main` branch using Jira Wiki Markup syntax (see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md) for format details)
+2. Link to files on the `main` branch using Jira Wiki Markup syntax (see [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for format details)
 
 ## Important Notes
 - If using Jira MCP tools encounters issues, stop and ask the user how to proceed
