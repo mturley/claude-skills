@@ -24,6 +24,7 @@ import re
 # Status groups in display order. Each entry: (display_name, list_of_jira_statuses)
 STATUS_GROUPS = [
     ("Review", ["Review"]),
+    ("Testing", ["Testing"]),
     ("In Progress", ["In Progress"]),
     ("Backlog", ["New", "To Do", "Backlog"]),
     ("Closed / Resolved", ["Closed", "Resolved"]),
@@ -99,13 +100,18 @@ def render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_stat
     is_mine = issue.get("assignee_username", "") == my_jira_username
 
     # Build the Jira columns portion (reused for main row)
-    jira_cols = (
-        f"| {jira_link} | {issue_type} | {priority} | {sp} | {orig_sp} "
-        f"| {assignee} | {title} | {blocked_str} | {reporter} "
-        f"| {updated} | {epic_str}"
-    )
     if show_state:
-        jira_cols += f" | {state}"
+        jira_cols = (
+            f"| {state} | {jira_link} | {issue_type} | {priority} | {sp} | {orig_sp} "
+            f"| {assignee} | {title} | {blocked_str} | {reporter} "
+            f"| {updated} | {epic_str}"
+        )
+    else:
+        jira_cols = (
+            f"| {jira_link} | {issue_type} | {priority} | {sp} | {orig_sp} "
+            f"| {assignee} | {title} | {blocked_str} | {reporter} "
+            f"| {updated} | {epic_str}"
+        )
 
     # Empty Jira columns for continuation rows
     empty_jira = "|  " * (12 if show_state else 11)
@@ -134,11 +140,12 @@ def render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_stat
 
 def render_status_table(issues, today, epics, pr_lookup, my_jira_username, show_state=False):
     """Render a single status group as a markdown table."""
-    header = "| Issue | Type | Priority | SP | Orig SP | Assignee | Title | Blocked | Reporter | Updated | Epic"
-    separator = "|-------|------|----------|----|---------|----------|-------|---------|----------|---------|-----"
     if show_state:
-        header += " | State"
-        separator += "|-------"
+        header = "| State | Issue | Type | Priority | SP | Orig SP | Assignee | Title | Blocked | Reporter | Updated | Epic"
+        separator = "|-------|-------|------|----------|----|---------|----------|-------|---------|----------|---------|-----"
+    else:
+        header = "| Issue | Type | Priority | SP | Orig SP | Assignee | Title | Blocked | Reporter | Updated | Epic"
+        separator = "|-------|------|----------|----|---------|----------|-------|---------|----------|---------|-----"
     header += " | PR | PR Updated | Review Status |"
     separator += "|----|------------|---------------|"
     lines = [header, separator]

@@ -1,6 +1,6 @@
 # Sprint Status
 
-Show the current Green sprint status with all tickets grouped by status (Review, In Progress, Backlog, Closed/Resolved), including Jira issue details and GitHub PR metadata.
+Show the current Green sprint status with all tickets grouped by status (Review, Testing, In Progress, Backlog, Closed/Resolved), including Jira issue details and GitHub PR metadata.
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
@@ -70,8 +70,8 @@ The input JSON format:
 Use `review_status_mine` from `fetch-pr-metadata.py` output for PRs on issues assigned to the current user, and `review_status_others` for all other PRs.
 
 The report renders in two main sections:
-- **My Assigned Issues**: A single table of all issues assigned to the current user, with a State column
-- **Other Sprint Issues**: Grouped by status (Review → In Progress → Backlog → Closed/Resolved), with State shown in the final group
+- **My Assigned Issues**: A single table of all issues assigned to the current user, with State as the first column
+- **Other Sprint Issues**: Grouped by status (Review → Testing → In Progress → Backlog → Closed/Resolved), with State as the first column in the final group
 
 Sub-tasks are excluded from the report by `extract-sprint-issues.py`.
 
