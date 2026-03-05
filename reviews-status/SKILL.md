@@ -125,6 +125,8 @@ Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and 
 
 The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end.
 
+**IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
+
 The review status reference (for understanding the output):
 
 | My PRs (`review_status_mine`) | Others' PRs (`review_status_others`) | Meaning |
@@ -138,17 +140,9 @@ The review status reference (for understanding the output):
 
 ### Phase 5: Offer Worktrees for PRs Needing Review
 
-After rendering the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
+After outputting the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
 
-If there are any such PRs, ask the user:
-
-> Would you like to open a worktree for any of these PRs to start reviewing?
-
-Use AskUserQuestion with multiSelect enabled. List each PR as an option with:
-- **label**: `repo#number` (e.g. `odh-dashboard#6466`)
-- **description**: the PR title and author (e.g. `"Add model version labels" by jdoe`)
-
-For each PR the user selects, run `/pr-worktree <url>` using the PR's full GitHub URL. Run them sequentially (each worktree setup needs to complete before the next).
+If there are any such PRs, add a brief note after the report (as regular text, NOT using AskUserQuestion) suggesting the user can request `/pr-worktree <url>` for any of them. List the PR URLs so they're easy to copy.
 
 If there are no PRs needing review action, skip this phase entirely.
 
