@@ -63,4 +63,7 @@ Be constructive and specific. Reference line numbers when pointing out issues.
 
 ### Post-Review
 
-After completing the review, **remain on the PR branch**. Do not switch back to the original branch - the user may want to inspect the code further.
+After completing the review:
+
+1. **Remain on the PR branch**. Do not switch back to the original branch - the user may want to inspect the code further.
+2. **End your output with a link to the PR**: Get the PR URL from `gh pr view --json url --jq '.url'` and display it as a clickable markdown link at the very end of your review.
