@@ -8,6 +8,8 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 **Helper Script:** `~/.claude/skills/reviews-status/extract-jira-fields.py` — parses Jira search results into compact JSON. Pass raw Jira response on stdin, get back `[{key, summary, type, status, priority, priority_sort, sprint, epic, pr_urls}]`. Supports `--filter-sprint Green` to filter by sprint name.
 
+**Helper Script:** `~/.claude/skills/reviews-status/assign-tables.py` — deduplicates PRs and assigns them to tables. Two subcommands: `deduplicate` (after Phase 1) and `assign` (after Phase 2).
+
 ## Instructions
 
 ### Phase 1: Gather PRs and Context
@@ -19,14 +21,12 @@ Run ALL of the following in parallel in a single tool-call round:
 3. `gh search prs --commenter=@me --state=open` with same JSON fields
 4. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
-**Filtering:**
-- Exclude PRs updated over 1 year ago. Track the count for reporting later.
-- Deduplicate the reviewed/commented lists and remove any PRs authored by me (they belong in Table 1).
+**Process PR lists:** Pipe the raw results through `assign-tables.py`:
+```bash
+echo '{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD","my_prs":<result1>,"reviewed_prs":<result2>,"commented_prs":<result3>}' | python3 ~/.claude/skills/reviews-status/assign-tables.py deduplicate
+```
 
-**Prepare PR lists** for the next phase:
-- **Table 1 PRs** (my open PRs)
-- **Table 2 PRs** (others' PRs I reviewed/commented on)
-- **Combined unique list** of all PRs (for Jira cross-reference)
+This outputs `table1_prs`, `table2_prs`, `excluded_count`, `all_prs` (for metadata fetch), and `jira_search_paths` (for Jira cross-reference).
 
 If people.md was found, parse the **Green Scrum** section to extract GitHub usernames (skip the current user and blank entries).
 
@@ -34,17 +34,16 @@ If people.md was found, parse the **Green Scrum** section to extract GitHub user
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Fetch metadata for Tables 1+2:** Pipe the combined PR list as JSON to `fetch-pr-metadata.py`:
+1. **Fetch metadata for Tables 1+2:** Pipe the `all_prs` array from `assign-tables.py deduplicate` to `fetch-pr-metadata.py`:
    ```bash
-   echo '<json_array>' | python3 ~/.claude/skills/reviews-status/fetch-pr-metadata.py
+   echo '<all_prs_json>' | python3 ~/.claude/skills/reviews-status/fetch-pr-metadata.py
    ```
-   The input format is `[{"owner": "opendatahub-io", "repo": "odh-dashboard", "number": 6466}, ...]`
 
-2. **Jira cross-reference for all PRs:** For each unique PR, search Jira:
+2. **Jira cross-reference for all PRs:** For each path in `jira_search_paths` from `assign-tables.py deduplicate`, search Jira:
    ```
    project = RHOAIENG AND cf[12310220] ~ "{partial_pr_path}"
    ```
-   Use a partial path like `kubeflow/model-registry/pull/2274` or `odh-dashboard/pull/6466` (strip `https://github.com/` and the org prefix for odh-dashboard). Run all Jira searches in parallel.
+   Run all Jira searches in parallel.
 
 3. **Sprint review Jira search** (for Table 3): Search for issues in review in the current open sprint:
    ```
@@ -64,27 +63,29 @@ Run ALL of the following in parallel in a single tool-call round:
 **After this round, extract from Jira results:**
 For individual Jira cross-reference results, pipe each through `extract-jira-fields.py` or parse the compact fields directly (these are small enough to process inline). The sprint review results are already parsed by `extract-jira-fields.py` from step 3.
 
-**From sprint review results** (Table 3 candidates):
-The `extract-jira-fields.py` output includes `pr_urls` for each issue. For each issue:
-- **CRITICAL:** Create a mapping of `{pr_url: jira_issue_data}` to preserve the link between each PR and its source Jira issue
-- Store the issue key, type, status, priority, priority_sort, sprint, and epic for each PR
-- Skip PRs already in Tables 1 or 2
-- Skip non-GitHub URLs
-- Keep only open PRs (check `state` field if fetching, or verify later)
+**Assign Table 3+4 candidates:** Pipe the collected data through `assign-tables.py`:
+```bash
+echo '{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD","table1_prs":<from_phase1>,"table2_prs":<from_phase1>,"sprint_review_issues":<from_extract_jira>,"team_prs":{"username1":<search_result>,...}}' | python3 ~/.claude/skills/reviews-status/assign-tables.py assign
+```
 
-**From team member results** (Table 4 candidates):
-- Remove PRs already in Tables 1, 2, or 3 candidates
-- Remove PRs updated over 1 year ago
+This handles deduplication, age filtering, PR URL parsing, and outputs:
+- `table3_candidates` — PRs from sprint review issues, each with their source `jira` data attached
+- `table4_candidates` — team member PRs not in Tables 1-3
+- `metadata_input` — combined Table 3+4 candidates formatted for `fetch-pr-metadata.py`
+- `epic_keys` — unique epic keys for resolution
+- `table4_jira_paths` — partial paths for Table 4 Jira link checks
+
+Table 3 candidates have empty `title`, `author`, `updated_at` fields that will be filled by the metadata fetch in Phase 3.
 
 ### Phase 3: Remaining Metadata + Epics + Table 4 Jira Checks
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Fetch metadata for Table 3+4 candidates:** Pipe the combined candidate PR list to `fetch-pr-metadata.py` (same as Phase 2 step 1). After results return, drop any PRs with `state` != `"open"`.
+1. **Fetch metadata for Table 3+4 candidates:** Pipe `metadata_input` from `assign-tables.py assign` to `fetch-pr-metadata.py`. After results return, drop any PRs with `state` != `"open"`.
 
-2. **Resolve epic names:** Collect all unique epic keys from Phase 2 Jira results. For each, fetch the issue using `jira_getIssue` and extract the summary. Shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage"). Run all lookups in parallel.
+2. **Resolve epic names:** For each key in `epic_keys` from `assign-tables.py assign`, fetch the issue using `jira_getIssue` and extract the summary. Shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage"). Run all lookups in parallel.
 
-3. **Table 4 Jira link checks:** For each Table 4 candidate PR, search Jira using the same query pattern as Phase 2 step 2. Keep only PRs with **NO** matching Jira issue. Run all searches in parallel.
+3. **Table 4 Jira link checks:** For each path in `table4_jira_paths` from `assign-tables.py assign`, search Jira using `project = RHOAIENG AND cf[12310220] ~ "{path}"`. Keep only Table 4 PRs with **NO** matching Jira issue. Run all searches in parallel.
 
 After this round, resolve any new epic keys found in Table 3 Jira data that weren't already resolved.
 
