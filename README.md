@@ -56,17 +56,17 @@ Exports Claude Code sessions to readable markdown files. Converts the raw JSONL 
 
 Reviews pull requests in an isolated git worktree, allowing multiple PRs to be reviewed simultaneously without affecting your working tree.
 
-### [/create-jira](create-jira/)
-
-Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
-
-(`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
-
 ### [/reviews-status](reviews-status/)
 
 Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic.
 
 (`/reviews-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/create-jira](create-jira/)
+
+Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
+
+(`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/populate-people](populate-people/)
 
