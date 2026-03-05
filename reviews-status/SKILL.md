@@ -4,11 +4,15 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
+**Helper Script:** `~/.claude/skills/reviews-status/gather-prs.py` — runs three `gh search prs` queries in parallel (--author, --reviewed-by, --commenter) and deduplicates results. Pass `{my_username, max_age_days, today}` on stdin, get back `{table1_prs, table2_prs, excluded_count, all_prs, jira_search_paths}`.
+
 **Helper Script:** `~/.claude/skills/reviews-status/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
 
-**Helper Script:** `~/.claude/skills/reviews-status/extract-jira-fields.py` — parses Jira search results into compact JSON. Pass raw Jira response on stdin, get back `[{key, summary, type, status, priority, priority_sort, sprint, epic, pr_urls}]`. Supports `--filter-sprint Green` to filter by sprint name.
+**Helper Script:** `~/.claude/skills/reviews-status/fetch-team-prs.py` — runs `gh search prs` for each team member in parallel. Pass `{usernames: [...]}` on stdin, get back `{username: [prs], ...}`.
 
-**Helper Script:** `~/.claude/skills/reviews-status/assign-tables.py` — deduplicates PRs and assigns them to tables. Two subcommands: `deduplicate` (after Phase 1) and `assign` (after Phase 2).
+**Helper Script:** `~/.claude/skills/reviews-status/assign-tables.py` — deduplicates PRs and assigns them to tables. Two subcommands: `deduplicate` (used internally by `gather-prs.py`) and `assign` (after Phase 2). The `assign` subcommand accepts raw Jira responses and handles extraction, cross-ref matching, and sprint filtering internally.
+
+**Helper Script:** `~/.claude/skills/reviews-status/extract-jira-fields.py` — standalone Jira field parser (not called in the main flow; extraction is handled by `assign-tables.py assign`).
 
 ## Instructions
 
@@ -16,63 +20,54 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. `gh search prs --author=@me --state=open` with JSON fields `repository,title,number,url,updatedAt,author`
-2. `gh search prs --reviewed-by=@me --state=open` with same JSON fields
-3. `gh search prs --commenter=@me --state=open` with same JSON fields
-4. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
+1. Pipe `{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD"}` to `gather-prs.py`:
+   ```bash
+   echo '{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD"}' | python3 ~/.claude/skills/reviews-status/gather-prs.py
+   ```
+   This runs all three `gh search prs` queries internally and outputs `table1_prs`, `table2_prs`, `excluded_count`, `all_prs`, and `jira_search_paths`.
 
-**Process PR lists:** Pipe the raw results through `assign-tables.py`:
-```bash
-echo '{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD","my_prs":<result1>,"reviewed_prs":<result2>,"commented_prs":<result3>}' | python3 ~/.claude/skills/reviews-status/assign-tables.py deduplicate
-```
-
-This outputs `table1_prs`, `table2_prs`, `excluded_count`, `all_prs` (for metadata fetch), and `jira_search_paths` (for Jira cross-reference).
+2. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
 If people.md was found, parse the **Green Scrum** section to extract GitHub usernames (skip the current user and blank entries).
 
-### Phase 2: Metadata + Jira + Sprint Search + Team PRs
+### Phase 2: Metadata + Jira + Team PRs
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Fetch metadata for Tables 1+2:** Pipe the `all_prs` array from `assign-tables.py deduplicate` to `fetch-pr-metadata.py`:
+1. **Fetch metadata for Tables 1+2:** Pipe the `all_prs` array from `gather-prs.py` to `fetch-pr-metadata.py`:
    ```bash
    echo '<all_prs_json>' | python3 ~/.claude/skills/reviews-status/fetch-pr-metadata.py
    ```
 
-2. **Jira cross-reference for all PRs:** For each path in `jira_search_paths` from `assign-tables.py deduplicate`, search Jira:
+2. **Batched Jira cross-reference for all PRs:** Construct a single JQL query using OR clauses for all paths in `jira_search_paths`:
    ```
-   project = RHOAIENG AND cf[12310220] ~ "{partial_pr_path}"
+   project = RHOAIENG AND (cf[12310220] ~ "path1" OR cf[12310220] ~ "path2" OR ...)
    ```
-   Run all Jira searches in parallel.
+   Run this as a single `jira_searchIssues` call. The results will be matched to specific PRs by `assign-tables.py assign` via the `pr_urls` field.
 
 3. **Sprint review Jira search** (for Table 3): Search for issues in review in the current open sprint:
    ```
    project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard" AND status = Review
    ```
-   Pipe the result through `extract-jira-fields.py` to parse and filter:
-   ```bash
-   echo '<jira_result_json>' | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
-   ```
-   If the result is persisted to a file (output too large), pipe the file directly — the script auto-detects the MCP wrapper format:
-   ```bash
-   cat /path/to/persisted-output.json | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
-   ```
-   This extracts compact fields and keeps only issues with "Green" in their sprint name.
+   Run as a single `jira_searchIssues` call. Do NOT pipe through `extract-jira-fields.py` — the raw result goes directly to `assign-tables.py assign`.
 
-4. **Team member PR searches** (for Table 4, skip if no people.md): For each Green Scrum member's GitHub username, run:
+4. **Team member PR searches** (for Table 4, skip if no people.md): Pipe the usernames to `fetch-team-prs.py`:
    ```bash
-   gh search prs --author={username} --state=open --json repository,title,number,url,updatedAt,author
+   echo '{"usernames":["user1","user2",...]}' | python3 ~/.claude/skills/reviews-status/fetch-team-prs.py
    ```
 
-**After this round, extract from Jira results:**
-For individual Jira cross-reference results, pipe each through `extract-jira-fields.py` or parse the compact fields directly (these are small enough to process inline). The sprint review results are already parsed by `extract-jira-fields.py` from step 3.
-
-**Assign Table 3+4 candidates:** Pipe the collected data through `assign-tables.py`:
+**Assign tables:** After all Phase 2 calls complete, pipe everything through `assign-tables.py assign`. Use a heredoc for large payloads:
 ```bash
-echo '{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD","table1_prs":<from_phase1>,"table2_prs":<from_phase1>,"sprint_review_issues":<from_extract_jira>,"team_prs":{"username1":<search_result>,...}}' | python3 ~/.claude/skills/reviews-status/assign-tables.py assign
+cat <<'EOF' | python3 ~/.claude/skills/reviews-status/assign-tables.py assign
+{"my_username":"...","max_age_days":365,"today":"YYYY-MM-DD","table1_prs":<from_phase1>,"table2_prs":<from_phase1>,"crossref_raw":<raw_jira_crossref_result>,"sprint_review_raw":<raw_jira_sprint_result>,"filter_sprint":"Green","team_prs":<from_fetch_team_prs>}
+EOF
 ```
 
-This handles deduplication, age filtering, PR URL parsing, and outputs:
+When a Jira tool result is persisted to a file (output too large for inline), read the file content and include it as the value. The script auto-detects the MCP wrapper format.
+
+This handles Jira extraction, cross-ref matching to Table 1/2 PRs, sprint filtering, deduplication, age filtering, and PR URL parsing. It outputs:
+- `table1_prs` — with `jira` arrays attached from cross-ref matching
+- `table2_prs` — with `jira` arrays attached from cross-ref matching
 - `table3_candidates` — PRs from sprint review issues, each with their source `jira` data attached
 - `table4_candidates` — team member PRs not in Tables 1-3
 - `metadata_input` — combined Table 3+4 candidates formatted for `fetch-pr-metadata.py`
@@ -87,9 +82,17 @@ Run ALL of the following in parallel in a single tool-call round:
 
 1. **Fetch metadata for Table 3+4 candidates:** Pipe `metadata_input` from `assign-tables.py assign` to `fetch-pr-metadata.py`. After results return, drop any PRs with `state` != `"open"`.
 
-2. **Resolve epic names:** For each key in `epic_keys` from `assign-tables.py assign`, fetch the issue using `jira_getIssue` and extract the summary. Shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage"). Run all lookups in parallel.
+2. **Batched epic name lookup:** If `epic_keys` is non-empty, construct a single JQL query:
+   ```
+   key in (RHOAIENG-27992, RHOAIENG-12345, ...)
+   ```
+   Run as a single `jira_searchIssues` call. Extract the summary from each issue and shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage").
 
-3. **Table 4 Jira link checks:** For each path in `table4_jira_paths` from `assign-tables.py assign`, search Jira using `project = RHOAIENG AND cf[12310220] ~ "{path}"`. Keep only Table 4 PRs with **NO** matching Jira issue. Run all searches in parallel.
+3. **Batched Table 4 Jira link checks:** If `table4_jira_paths` is non-empty, construct a single JQL query:
+   ```
+   project = RHOAIENG AND (cf[12310220] ~ "path1" OR cf[12310220] ~ "path2" OR ...)
+   ```
+   Run as a single `jira_searchIssues` call. Then keep only Table 4 PRs whose path has **NO** match in the results.
 
 After this round, resolve any new epic keys found in Table 3 Jira data that weren't already resolved.
 
@@ -138,19 +141,24 @@ The review status reference (for understanding the output):
 | Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
 | Waiting for review | 🟡 **Needs review** | No reviews at all |
 
+### Phase 5: Offer Worktrees for PRs Needing Review
+
+After outputting the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
+
+If there are any such PRs, add a brief note after the report (as regular text, NOT using AskUserQuestion) suggesting the user can request `/pr-worktree <url>` for any of them. List the PR URLs so they're easy to copy.
+
+If there are no PRs needing review action, skip this phase entirely.
+
 ## Important Notes
 
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
 - **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*` and `cat *| python3 *reviews-status/*`.
-- For large JSON payloads that may exceed shell argument limits (e.g. the Phase 4 render input), use a heredoc piped to the script:
+- For large JSON payloads that may exceed shell argument limits, use a heredoc piped to the script:
   ```bash
   cat <<'EOF' | python3 ~/.claude/skills/reviews-status/render-report.py
   {"today":"2026-03-05","sprint_number":"35",...}
   EOF
   ```
-- When a tool result is persisted to a file (output too large), pipe the file directly to the helper script — `extract-jira-fields.py` auto-detects the MCP wrapper format:
-  ```bash
-  cat /path/to/persisted-output.json | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
-  ```
+- When a Jira tool result is persisted to a file (output too large), read the file and include its content in the JSON payload — `assign-tables.py assign` auto-detects the MCP wrapper format.

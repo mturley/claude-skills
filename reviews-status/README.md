@@ -28,11 +28,15 @@ The report is read-only and does not modify any PRs or Jira issues. After the re
 
 All scripts use stdin/stdout JSON, Python 3 stdlib only (no pip dependencies).
 
-`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using `concurrent.futures.ThreadPoolExecutor`. Pipes in `[{owner, repo, number}]`, gets back labels, draft status, mergeable state, review count, timestamps, CI status, and pre-computed review status strings. Replaces serial `gh api` calls with concurrent ones.
+`gather-prs.py` runs three `gh search prs` queries (--author, --reviewed-by, --commenter) in parallel using `ThreadPoolExecutor`, then pipes results through `assign-tables.py deduplicate`. Replaces three separate tool calls plus a post-processing step with a single script invocation.
 
-`extract-jira-fields.py` parses raw Jira search responses into compact JSON with only the fields needed by the skill. Auto-detects three input formats (raw response, tool-result wrapper, direct issues array). Supports `--filter-sprint Green` to filter by sprint name.
+`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using `ThreadPoolExecutor`. Pipes in `[{owner, repo, number}]`, gets back labels, draft status, mergeable state, review count, timestamps, CI status, and pre-computed review status strings.
 
-`assign-tables.py` handles PR deduplication, age filtering, and table assignment between phases. Two subcommands: `deduplicate` (after Phase 1) splits PRs into Table 1/2 and generates Jira search paths; `assign` (after Phase 2) processes sprint review issues and team PRs into Table 3/4 candidates.
+`fetch-team-prs.py` runs `gh search prs --author={username}` for each team member in parallel using `ThreadPoolExecutor`. Replaces one tool call per team member with a single script invocation.
+
+`assign-tables.py` handles PR deduplication, age filtering, and table assignment between phases. Two subcommands: `deduplicate` (used internally by `gather-prs.py`) splits PRs into Table 1/2 and generates Jira search paths; `assign` (after Phase 2) accepts raw Jira responses, handles extraction and cross-ref matching, processes sprint review issues and team PRs into Table 3/4 candidates, and returns Table 1/2 PRs with Jira data attached.
+
+`extract-jira-fields.py` parses raw Jira search responses into compact JSON. Standalone utility (not called in the main flow — extraction is handled by `assign-tables.py assign`). Supports `--filter-sprint` filtering.
 
 `render-report.py` takes fully assembled table data and renders the complete markdown report. Handles sorting by Jira priority, title truncation, date formatting, multi-Jira rows, and auto-generates the Recommended Actions section.
 
