@@ -24,9 +24,17 @@ Run `/reviews-status` in any Claude Code session. No arguments needed.
 
 The report is read-only and does not modify any PRs or Jira issues.
 
-## Helper Script
+## Helper Scripts
 
-`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. The skill pipes a JSON array of `{owner, repo, number}` objects to it on stdin and receives back a JSON array with labels, draft status, mergeable state, review count, last review/commit timestamps, CI status, and pre-computed review status strings (`review_status_mine` and `review_status_others`). The review status logic runs deterministically in Python rather than being interpreted from prose instructions. This replaces serial `gh api` calls with concurrent ones, significantly reducing execution time.
+All scripts use stdin/stdout JSON, Python 3 stdlib only (no pip dependencies).
+
+`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using `concurrent.futures.ThreadPoolExecutor`. Pipes in `[{owner, repo, number}]`, gets back labels, draft status, mergeable state, review count, timestamps, CI status, and pre-computed review status strings. Replaces serial `gh api` calls with concurrent ones.
+
+`extract-jira-fields.py` parses raw Jira search responses into compact JSON with only the fields needed by the skill. Auto-detects three input formats (raw response, tool-result wrapper, direct issues array). Supports `--filter-sprint Green` to filter by sprint name.
+
+`assign-tables.py` handles PR deduplication, age filtering, and table assignment between phases. Two subcommands: `deduplicate` (after Phase 1) splits PRs into Table 1/2 and generates Jira search paths; `assign` (after Phase 2) processes sprint review issues and team PRs into Table 3/4 candidates.
+
+`render-report.py` takes fully assembled table data and renders the complete markdown report. Handles sorting by Jira priority, title truncation, date formatting, multi-Jira rows, and auto-generates the Recommended Actions section.
 
 ## What it shows
 
