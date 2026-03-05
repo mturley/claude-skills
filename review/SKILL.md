@@ -11,7 +11,7 @@ Review a pull request by checking out its branch and analyzing the changes.
 ### Phase 1: Pre-flight Checks
 
 1. If `$ARGUMENTS` is empty, check the current branch: `git branch --show-current`
-   - If the branch matches the pattern `review/pr-<number>`, extract the PR number and use it as `$ARGUMENTS`. Note that the checkout in Phase 2 should be skipped since we're already on the correct branch.
+   - If the branch matches the pattern `review/pr-<number>-*` (e.g. `review/pr-123-fix-login`), extract the PR number and use it as `$ARGUMENTS`. Note that the checkout in Phase 2 should be skipped since we're already on the correct branch.
    - If it doesn't match, **abort** with a message explaining that a PR number or branch name is required
 2. Run `git status` to check for uncommitted changes
 3. If there are uncommitted changes, **abort** with a message asking the user to commit or stash their changes first

@@ -123,7 +123,7 @@ Table 4 PR objects omit the `jira` field.
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
 
-The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions prioritize your own PRs needing action first, then reviews you owe teammates, then sprint PRs needing review help, then untracked team work needing Jira tickets.
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end.
 
 The review status reference (for understanding the output):
 

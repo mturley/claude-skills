@@ -20,7 +20,7 @@ Place the skill at `~/.claude/skills/pr-worktree/` (symlink or copy).
 
 The skill will:
 1. Find or verify the correct local repository (searches `~/` if needed)
-2. Create a git worktree at `.claude/worktrees/pr-<number>`
+2. Create a git worktree at `.claude/worktrees/pr-<number>-<slug>`
 3. Check out the PR branch in the worktree
 4. Detect your editor (VS Code, Cursor, or terminal)
 5. Open a new editor window in the worktree directory
@@ -37,7 +37,7 @@ The skill automatically detects your editor environment:
 
 ```bash
 # Remove a specific review worktree
-git worktree remove .claude/worktrees/pr-<number>
+git worktree remove .claude/worktrees/pr-<number>-<slug>
 
 # List all worktrees
 git worktree list

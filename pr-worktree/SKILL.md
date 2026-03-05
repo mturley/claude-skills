@@ -28,19 +28,25 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
    - Use the first match and `cd` there for all subsequent commands
    - If no match is found, **abort** with a message explaining that no local clone was found
 4. If not in a git repo and `$ARGUMENTS` is not a URL (not enough context to find the repo), **abort** with a message asking the user to run the skill from a git repo or provide a full PR URL
-5. Get the PR number: `gh pr view $ARGUMENTS --json number --jq '.number'`
-6. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>`:
+5. Get the PR number and title: `gh pr view $ARGUMENTS --json number,title,url --jq '{number: .number, title: .title, url: .url}'`
+6. Generate a short slug from the PR title:
+   - Lowercase the title
+   - Replace non-alphanumeric characters with hyphens
+   - Collapse consecutive hyphens
+   - Trim leading/trailing hyphens
+   - Truncate to 40 characters (at a word boundary if possible)
+   - The worktree name is `pr-<number>-<slug>` (e.g. `pr-123-fix-login-validation`)
+7. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>-*` (glob match on the PR number prefix):
    - If it does, ask the user whether to reuse the existing worktree or remove and recreate it
-   - To remove: `git worktree remove .claude/worktrees/pr-<number> --force`
+   - To remove: `git worktree remove <existing-path> --force`
 
 ### Phase 2: Create Worktree and Checkout PR Branch
 
-1. Get the PR URL: `gh pr view $ARGUMENTS --json url --jq '.url'`
-2. Extract the base repo from the URL (e.g. `https://github.com/org/repo/pull/123` → `org/repo`)
-3. Fetch the PR ref into a local branch: `git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:review/pr-<number>`
+1. Extract the base repo from the PR URL (e.g. `https://github.com/org/repo/pull/123` → `org/repo`)
+2. Fetch the PR ref into a local branch: `git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:review/pr-<number>-<slug>`
    - This works regardless of fork configuration since PR refs always exist on the base repository
-4. Create the worktree: `git worktree add .claude/worktrees/pr-<number> review/pr-<number>`
-5. If the worktree creation fails, report the error and abort
+3. Create the worktree: `git worktree add .claude/worktrees/pr-<number>-<slug> review/pr-<number>-<slug>`
+4. If the worktree creation fails, report the error and abort
 
 ### Phase 3: Detect Editor and Open New Window
 
@@ -63,9 +69,9 @@ Detect the user's editor environment and open a new window in the worktree direc
 
 After opening the editor window (or providing the path), tell the user:
 
-1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>`
+1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>-<slug>`
 2. **Dependencies not installed**: The worktree is a fresh checkout with no dependencies installed. If you need to build or test the code, you'll need to install dependencies first (e.g. `npm install`, `pip install`, `go mod download`, etc.) just like a fresh clone.
 3. **What to do next**: "Run `/review` in the new window to start the code review"
 4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
-   - `git worktree remove .claude/worktrees/pr-<number>`
+   - `git worktree remove .claude/worktrees/pr-<number>-<slug>`
    - Or to clean up all review worktrees: `git worktree list` then remove as needed
