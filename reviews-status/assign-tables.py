@@ -286,13 +286,26 @@ def cmd_assign(data):
     }
 
 
+def read_stdin():
+    """Read and parse JSON from stdin with clear error messages."""
+    raw = sys.stdin.read()
+    if not raw.strip():
+        print("Error: No input on stdin. Pipe JSON data to this script.", file=sys.stderr)
+        sys.exit(1)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON on stdin: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("deduplicate", "assign"):
         print("Usage: assign-tables.py <deduplicate|assign>", file=sys.stderr)
         sys.exit(1)
 
     subcommand = sys.argv[1]
-    data = json.load(sys.stdin)
+    data = read_stdin()
 
     if subcommand == "deduplicate":
         result = cmd_deduplicate(data)

@@ -117,7 +117,7 @@ Table 4 PR objects omit the `jira` field.
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
 
-The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, and generates the `## Recommended Actions` section automatically.
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are focused on what can be done to unblock the Green Scrum team: reviews you owe teammates come first, then your own PRs needing action, then sprint PRs needing review help, then untracked team work needing Jira tickets.
 
 The review status reference (for understanding the output):
 

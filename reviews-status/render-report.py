@@ -190,6 +190,11 @@ def render_table4(prs, today, people_md_found):
         )
         return lines
 
+    lines.append(
+        f"_Open PRs from Green Scrum members with no linked RHOAIENG Jira issue."
+        f" Consider creating tickets or linking existing ones._"
+    )
+    lines.append("")
     lines.extend([
         "| PR | Author | Title | Updated | Review Status |",
         "|----|--------|-------|---------|---------------|",
@@ -208,86 +213,106 @@ def render_table4(prs, today, people_md_found):
     return lines
 
 
-def generate_recommendations(table1, table2, table3):
-    """Generate prioritized recommendations based on dashboard data."""
+def generate_recommendations(table1, table2, table3, table4):
+    """Generate prioritized recommendations focused on unblocking the Green Scrum."""
     recs = []
 
-    # 1. My PRs with action needed (bold = has **)
-    my_action_needed = [
-        pr for pr in table1
-        if "**" in pr.get("review_status", "")
-    ]
-    # Prioritize CI failures
-    ci_failed = [pr for pr in my_action_needed if "CI failed" in pr.get("review_status", "")]
-    ci_ok = [pr for pr in my_action_needed if "CI failed" not in pr.get("review_status", "")]
-
-    for pr in ci_failed:
-        jira_text = ""
-        jira_list = pr.get("jira", [])
-        if jira_list:
-            j = jira_list[0]
-            jira_text = f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
-        recs.append(
-            f"Address comments and fix CI on [{pr['repo']}#{pr['number']}]({pr['url']}){jira_text} — "
-            f"CI is failing and reviewers are waiting on your changes."
+    def jira_priority(pr):
+        return min(
+            (j.get("priority_sort", 999) for j in pr.get("jira", [])),
+            default=999,
         )
 
-    for pr in ci_ok:
-        jira_text = ""
+    def jira_ref(pr):
         jira_list = pr.get("jira", [])
-        if jira_list:
-            j = jira_list[0]
-            jira_text = f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
-        recs.append(
-            f"Address review comments on [{pr['repo']}#{pr['number']}]({pr['url']}){jira_text}."
-        )
+        if not jira_list:
+            return ""
+        j = jira_list[0]
+        return f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
 
-    # 2. Others' PRs needing my review (bold in review_status_others)
-    needs_review = [
+    # 1. Reviews I owe teammates WITH Jira (I'm blocking sprint work)
+    t2_with_jira = [
         pr for pr in table2
-        if "**" in pr.get("review_status", "")
+        if "**" in pr.get("review_status", "") and pr.get("jira")
     ]
-    # Sort by priority
-    needs_review.sort(key=lambda p: min(
-        (j.get("priority_sort", 999) for j in p.get("jira", [])),
-        default=999
-    ))
+    t2_with_jira.sort(key=jira_priority)
 
-    for pr in needs_review:
-        jira_text = ""
-        jira_list = pr.get("jira", [])
-        if jira_list:
-            j = jira_list[0]
-            jira_text = f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
+    for pr in t2_with_jira:
         action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
-        conflict_text = " (has merge conflicts)" if "conflicts" in pr.get("review_status", "") else ""
+        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
         recs.append(
-            f"{action} [{pr['repo']}#{pr['number']}]({pr['url']}) by {pr.get('author', '?')}{jira_text}{conflict_text}."
+            f"Unblock {pr.get('author', '?')}: {action} [{pr['repo']}#{pr['number']}]({pr['url']})"
+            f"{jira_ref(pr)}{conflict}."
         )
 
-    # 3. Table 3 high-priority items
-    high_priority_t3 = [
-        pr for pr in table3
-        if any(j.get("priority_sort", 999) <= 3 for j in pr.get("jira", []))
-    ]
-    for pr in high_priority_t3:
-        jira_list = pr.get("jira", [])
-        if jira_list:
-            j = jira_list[0]
-            recs.append(
-                f"Consider reviewing [{pr['repo']}#{pr['number']}]({pr['url']}) by {pr.get('author', '?')} — "
-                f"{j.get('priority', '')} sprint issue [{j['key']}]({JIRA_BASE}/{j['key']}) in Review."
-            )
+    # 2. My PRs needing action (blocking my own sprint work from landing)
+    my_action = [pr for pr in table1 if "**" in pr.get("review_status", "")]
+    my_action.sort(key=jira_priority)
 
-    # Limit to 6 recommendations
+    for pr in my_action:
+        if "CI failed" in pr.get("review_status", ""):
+            detail = " — fix CI and address comments"
+        else:
+            detail = " — address review comments"
+        recs.append(
+            f"Unblock your work on [{pr['repo']}#{pr['number']}]({pr['url']})"
+            f"{jira_ref(pr)}{detail}."
+        )
+
+    # 3. Sprint PRs needing review help (Table 3 with "Needs review" or "Needs re-review")
+    t3_needs_review = [
+        pr for pr in table3
+        if "Needs review" in pr.get("review_status", "")
+        or "Needs re-review" in pr.get("review_status", "")
+    ]
+    t3_needs_review.sort(key=jira_priority)
+
+    for pr in t3_needs_review:
+        recs.append(
+            f"Help unblock sprint: Review [{pr['repo']}#{pr['number']}]({pr['url']}) by "
+            f"{pr.get('author', '?')}{jira_ref(pr)}."
+        )
+
+    # 4. Untracked team work (Table 4 non-draft PRs)
+    t4_non_draft = [pr for pr in table4 if "Draft" not in pr.get("review_status", "")]
+    if t4_non_draft:
+        recs.append(
+            f"Consider creating Jira tickets for {len(t4_non_draft)} team PR(s) with no linked issue (Table 4)."
+        )
+
+    # 5. Reviews I owe WITHOUT Jira (lower priority)
+    t2_no_jira = [
+        pr for pr in table2
+        if "**" in pr.get("review_status", "") and not pr.get("jira")
+    ]
+    for pr in t2_no_jira:
+        action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
+        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
+        recs.append(
+            f"{action} [{pr['repo']}#{pr['number']}]({pr['url']}) by {pr.get('author', '?')}{conflict}."
+        )
+
     if not recs:
         recs.append("No urgent actions identified. Dashboard looks good!")
 
-    return recs[:6]
+    return recs[:8]
+
+
+def read_stdin():
+    """Read and parse JSON from stdin with clear error messages."""
+    raw = sys.stdin.read()
+    if not raw.strip():
+        print("Error: No input on stdin. Pipe JSON data to this script.", file=sys.stderr)
+        sys.exit(1)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON on stdin: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
-    data = json.load(sys.stdin)
+    data = read_stdin()
 
     today_str = data.get("today", "")
     try:
@@ -335,7 +360,7 @@ def main():
     # Recommendations
     output.append("## Recommended Actions")
     output.append("")
-    recs = generate_recommendations(table1, table2, table3)
+    recs = generate_recommendations(table1, table2, table3, table4)
     for i, rec in enumerate(recs, 1):
         output.append(f"{i}. {rec}")
     output.append("")
