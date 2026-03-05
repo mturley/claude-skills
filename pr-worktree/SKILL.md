@@ -46,15 +46,17 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
 
 Detect the user's editor environment and open a new window in the worktree directory.
 
+**Important**: When running inside a Claude Code session, use `env -u CLAUDECODE` when launching the editor so the new window doesn't inherit the session. Without this, Claude Code in the new window will refuse to start with a "nested session" error. This is harmless when `CLAUDECODE` is not set (e.g. when running from Cursor's AI), so always include it.
+
 **Detection logic** (check Cursor before VS Code, since Cursor is a VS Code fork and may also set `VSCODE_*` variables):
 
 1. **Cursor**: Check if `CURSOR_CHANNEL` env var is set, or if `__CFBundleIdentifier` contains "cursor"
-   - Open with: `cursor --new-window <worktree-path>`
+   - Open with: `env -u CLAUDECODE cursor --new-window <worktree-path>`
 2. **VS Code**: Check if `VSCODE_PID` env var is set, or if `TERM_PROGRAM` is "vscode"
-   - Open with: `code --new-window <worktree-path>`
+   - Open with: `env -u CLAUDECODE code --new-window <worktree-path>`
 3. **Terminal (no editor detected)**: Print the worktree path and example commands for common editors, then ask the user if they want Claude to open an editor for them:
-   - `code --new-window <worktree-path>`
-   - `cursor --new-window <worktree-path>`
+   - `env -u CLAUDECODE code --new-window <worktree-path>`
+   - `env -u CLAUDECODE cursor --new-window <worktree-path>`
    - `cd <worktree-path>`
 
 ### Post-Setup
