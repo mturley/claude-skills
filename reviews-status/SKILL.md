@@ -141,14 +141,6 @@ The review status reference (for understanding the output):
 | Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
 | Waiting for review | 🟡 **Needs review** | No reviews at all |
 
-### Phase 5: Offer Worktrees for PRs Needing Review
-
-After outputting the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
-
-If there are any such PRs, add a brief note after the report (as regular text, NOT using AskUserQuestion) suggesting the user can request `/pr-worktree <url>` for any of them. List the PR URLs so they're easy to copy.
-
-If there are no PRs needing review action, skip this phase entirely.
-
 ## Important Notes
 
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
