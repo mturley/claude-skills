@@ -4,7 +4,7 @@ Generate a dashboard of open PRs I'm involved with, cross-referenced with RHOAIE
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.mcp-usage/jira.md`](../.mcp-usage/jira.md)
 
-**Helper Script:** `~/.claude/skills/prs/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
+**Helper Script:** `~/.claude/skills/review-status/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
 
 ## Instructions
 
@@ -34,7 +34,7 @@ Run ALL of the following in parallel in a single tool-call round:
 
 1. **Fetch metadata for Tables 1+2:** Pipe the combined PR list as JSON to `fetch-pr-metadata.py`:
    ```bash
-   echo '<json_array>' | python3 ~/.claude/skills/prs/fetch-pr-metadata.py
+   echo '<json_array>' | python3 ~/.claude/skills/review-status/fetch-pr-metadata.py
    ```
    The input format is `[{"owner": "opendatahub-io", "repo": "odh-dashboard", "number": 6466}, ...]`
 

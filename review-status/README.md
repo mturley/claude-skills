@@ -1,4 +1,4 @@
-# /prs
+# /review-status
 
 Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables: your own open PRs, open PRs you've reviewed or commented on, other open PRs from the current sprint's Jira issues in Review state, and open PRs from Green scrum team members that have no associated Jira issue.
 
@@ -10,7 +10,7 @@ For each PR, the dashboard shows review status, CI status, linked Jira issues (w
 
 2. Symlink the `.mcp-usage` directory to `~/.claude/skills/.mcp-usage` if you haven't already. See the [root README installation instructions](../README.md#installation).
 
-3. Place the skill at `~/.claude/skills/prs/SKILL.md`.
+3. Place the skill at `~/.claude/skills/review-status/SKILL.md`.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ For each PR, the dashboard shows review status, CI status, linked Jira issues (w
 
 ## Usage
 
-Run `/prs` in any Claude Code session. No arguments needed.
+Run `/review-status` in any Claude Code session. No arguments needed.
 
 The report is read-only and does not modify any PRs or Jira issues.
 

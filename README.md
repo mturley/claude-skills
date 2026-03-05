@@ -24,7 +24,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
-   ln -s ~/git/claude-skills/prs ~/.claude/skills/prs
+   ln -s ~/git/claude-skills/review-status ~/.claude/skills/review-status
    ```
    Make sure to symlink the `.mcp-usage` directory—it contains shared MCP documentation needed by some skills. This is not part of the Agent Skills standard, it is this repo's way of sharing info across skills.
 
@@ -60,7 +60,7 @@ Reviews pull requests in an isolated git worktree, allowing multiple PRs to be r
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
 
-### [/prs](prs/)
+### [/review-status](review-status/)
 
 Generates a dashboard of open PRs you're involved with, cross-referenced with RHOAIENG Jira issues. Shows up to four tables (your PRs, PRs you've reviewed/commented on, sprint Review PRs, and unlinked team member PRs) with review status, CI status, linked Jira issues with type/status/sprint/epic, and highlights where your action is needed.
 
