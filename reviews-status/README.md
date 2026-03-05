@@ -22,7 +22,7 @@ This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be g
 
 Run `/reviews-status` in any Claude Code session. No arguments needed.
 
-The report is read-only and does not modify any PRs or Jira issues.
+The report is read-only and does not modify any PRs or Jira issues. After the report, you'll be offered the option to open worktrees for any PRs that need your review (uses `/pr-worktree`).
 
 ## Helper Scripts
 

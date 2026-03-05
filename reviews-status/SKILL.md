@@ -130,6 +130,22 @@ The review status reference (for understanding the output):
 | Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
 | Waiting for review | 🟡 **Needs review** | No reviews at all |
 
+### Phase 5: Offer Worktrees for PRs Needing Review
+
+After rendering the report, collect all PRs across all tables where the review status contains "Needs review" or "Needs re-review" (i.e. the bold statuses indicating the user should take action). Exclude drafts.
+
+If there are any such PRs, ask the user:
+
+> Would you like to open a worktree for any of these PRs to start reviewing?
+
+Use AskUserQuestion with multiSelect enabled. List each PR as an option with:
+- **label**: `repo#number` (e.g. `odh-dashboard#6466`)
+- **description**: the PR title and author (e.g. `"Add model version labels" by jdoe`)
+
+For each PR the user selects, run `/pr-worktree <url>` using the PR's full GitHub URL. Run them sequentially (each worktree setup needs to complete before the next).
+
+If there are no PRs needing review action, skip this phase entirely.
+
 ## Important Notes
 
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
