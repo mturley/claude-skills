@@ -86,48 +86,24 @@ After this round, resolve any new epic keys found in Table 3 Jira data that were
 
 ### Phase 4: Render the Report
 
-#### Review Status Rules
+#### Review Status
 
-**CRITICAL: Evaluate conditions in the exact order listed. Stop at the FIRST matching condition.**
+The `fetch-pr-metadata.py` script computes review status automatically. Each PR in its output includes two pre-formatted fields:
+- `review_status_mine` — use for Table 1 (my PRs)
+- `review_status_others` — use for Tables 2, 3, and 4 (others' PRs)
 
-**Step-by-step evaluation process:**
+These fields contain the final markdown string for the Review Status column, including bold formatting, emojis, and suffixes for conflicts/CI failures. Copy them directly into the table cell.
 
-For each PR, extract from metadata:
-- `draft` (boolean)
-- `labels` (array of strings) - check for `"lgtm"` and `"approved"`
-- `review_count` (number)
-- `last_review_at` (ISO timestamp or null)
-- `last_commit_at` (ISO timestamp or null)
+**Possible values** (bold = action needed by me):
 
-Then evaluate in this order:
-
-**For My Open PRs:**
-
-1. **IF** `draft == true` **THEN** `"Draft"` (no bold, no emoji)
-2. **ELSE IF** `"lgtm" in labels AND "approved" in labels` **THEN** `"Approved"` (no bold, no emoji)
-3. **ELSE IF** `"lgtm" in labels AND "approved" not in labels` **THEN** `"Waiting for approval"` (no bold, no emoji)
-4. **ELSE IF** `review_count > 0 AND last_review_at > last_commit_at AND "lgtm" not in labels` **THEN** `"**Has new comments** 🔴"` (bold + emoji)
-5. **ELSE IF** `review_count > 0 AND last_commit_at > last_review_at` **THEN** `"Waiting for re-review"` (no bold, no emoji)
-6. **ELSE IF** `review_count == 0` **THEN** `"Waiting for review"` (no bold, no emoji)
-
-**For Others' PRs (Tables 2, 3, 4):**
-
-1. **IF** `draft == true` **THEN** `"Draft"` (no bold, no emoji)
-2. **ELSE IF** `"lgtm" in labels AND "approved" in labels` **THEN** `"Approved"` (no bold, no emoji)
-3. **ELSE IF** `"lgtm" in labels AND "approved" not in labels` **THEN** `"Waiting for approval"` (no bold, no emoji)
-4. **ELSE IF** `review_count > 0 AND last_review_at > last_commit_at AND "lgtm" not in labels` **THEN** `"Waiting for changes"` (no bold, no emoji)
-5. **ELSE IF** `review_count > 0 AND last_commit_at > last_review_at AND "lgtm" not in labels` **THEN** `"**Needs re-review** 🔵"` (bold + emoji)
-6. **ELSE IF** `review_count == 0` **THEN** `"**Needs review** 🟡"` (bold + emoji)
-
-**Suffixes to append to Review Status:**
-- If `mergeable_state == "dirty"`, append ` **(conflicts)**`
-- If `ci_status == "Failed"`, append ` (CI failed)`
-
-**Common mistakes to avoid:**
-- Don't confuse "last_review_at > last_commit_at" (review happened AFTER commit) with "last_commit_at > last_review_at" (commit happened AFTER review)
-- Remember that `review_count > 0` means "Has reviews" while `review_count == 0` means "No reviews at all"
-- Always check ALL conditions for a rule before moving to the next rule
-- If a PR has `review_count: 1`, it does NOT match `review_count == 0`
+| My PRs (`review_status_mine`) | Others' PRs (`review_status_others`) | Meaning |
+|------|--------|---------|
+| Draft | Draft | PR is a draft |
+| Approved | Approved | Has `lgtm` + `approved` labels |
+| Waiting for approval | Waiting for approval | Has `lgtm` but not `approved` |
+| 🔴 **Has new comments** | Waiting for changes | Reviews exist, last review is after last commit |
+| Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
+| Waiting for review | 🟡 **Needs review** | No reviews at all |
 
 #### Sorting
 

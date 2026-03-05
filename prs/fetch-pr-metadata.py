@@ -80,6 +80,70 @@ def fetch_ci_status(owner, repo, number):
     return "N/A"
 
 
+def compute_review_status(pr_data, is_mine):
+    """Compute the formatted review status string for a PR.
+
+    Args:
+        pr_data: dict with draft, labels, review_count, last_review_at,
+                 last_commit_at, mergeable_state, ci_status
+        is_mine: True for Table 1 (my PRs), False for Tables 2/3/4
+
+    Returns:
+        Formatted markdown string ready for table cell.
+    """
+    draft = pr_data.get("draft", False)
+    labels = pr_data.get("labels", [])
+    review_count = pr_data.get("review_count", 0)
+    last_review_at = pr_data.get("last_review_at")
+    last_commit_at = pr_data.get("last_commit_at")
+    mergeable_state = pr_data.get("mergeable_state", "")
+    ci_status = pr_data.get("ci_status", "N/A")
+
+    has_lgtm = "lgtm" in labels
+    has_approved = "approved" in labels
+
+    # Evaluate conditions top-to-bottom, stop at first match
+    if draft:
+        status, bold, emoji = "Draft", False, ""
+    elif has_lgtm and has_approved:
+        status, bold, emoji = "Approved", False, ""
+    elif has_lgtm and not has_approved:
+        status, bold, emoji = "Waiting for approval", False, ""
+    elif review_count > 0 and last_review_at and last_commit_at and last_review_at > last_commit_at and not has_lgtm:
+        if is_mine:
+            status, bold, emoji = "Has new comments", True, "\U0001f534"
+        else:
+            status, bold, emoji = "Waiting for changes", False, ""
+    elif review_count > 0 and last_review_at and last_commit_at and last_commit_at > last_review_at:
+        if is_mine:
+            status, bold, emoji = "Waiting for re-review", False, ""
+        else:
+            if not has_lgtm:
+                status, bold, emoji = "Needs re-review", True, "\U0001f535"
+            else:
+                status, bold, emoji = "Waiting for re-review", False, ""
+    elif review_count == 0:
+        if is_mine:
+            status, bold, emoji = "Waiting for review", False, ""
+        else:
+            status, bold, emoji = "Needs review", True, "\U0001f7e1"
+    else:
+        status, bold, emoji = "Unknown", False, ""
+
+    # Format with bold and emoji
+    formatted = f"**{status}**" if bold else status
+    if emoji:
+        formatted = f"{emoji} {formatted}"
+
+    # Append suffixes
+    if mergeable_state == "dirty":
+        formatted += " **(conflicts)**"
+    if ci_status == "Failed":
+        formatted += " (CI failed)"
+
+    return formatted
+
+
 def fetch_one_pr(pr):
     """Fetch all metadata for a single PR."""
     owner = pr["owner"]
@@ -104,7 +168,7 @@ def fetch_one_pr(pr):
         last_commit_at = commit_future.result()
         ci_status = ci_future.result()
 
-    return {
+    result = {
         "owner": owner,
         "repo": repo,
         "number": number,
@@ -117,6 +181,12 @@ def fetch_one_pr(pr):
         "last_commit_at": last_commit_at,
         "ci_status": ci_status,
     }
+
+    # Compute review status for both perspectives
+    result["review_status_mine"] = compute_review_status(result, is_mine=True)
+    result["review_status_others"] = compute_review_status(result, is_mine=False)
+
+    return result
 
 
 def main():

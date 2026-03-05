@@ -26,14 +26,13 @@ The report is read-only and does not modify any PRs or Jira issues.
 
 ## Helper Script
 
-`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. The skill pipes a JSON array of `{owner, repo, number}` objects to it on stdin and receives back a JSON array with labels, draft status, mergeable state, review count, last review/commit timestamps, and CI status. This replaces serial `gh api` calls with concurrent ones, significantly reducing execution time.
+`fetch-pr-metadata.py` fetches GitHub PR metadata in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. The skill pipes a JSON array of `{owner, repo, number}` objects to it on stdin and receives back a JSON array with labels, draft status, mergeable state, review count, last review/commit timestamps, CI status, and pre-computed review status strings (`review_status_mine` and `review_status_others`). The review status logic runs deterministically in Python rather than being interpreted from prose instructions. This replaces serial `gh api` calls with concurrent ones, significantly reducing execution time.
 
 ## What it shows
 
-- **Review Status** tells you what action is needed:
-  - For your PRs: bold **Needs changes** means reviewers left feedback you haven't addressed yet
+- **Review Status** tells you what action is needed (computed by `fetch-pr-metadata.py`):
+  - For your PRs: bold **Has new comments** means reviewers left feedback you haven't addressed yet
   - For others' PRs: bold **Needs review** / **Needs re-review** means the author is waiting on you
-- **CI**: Passed, Failed, Running, or N/A
 - **Jira**: Linked RHOAIENG issues found via the Git Pull Request custom field, with issue type, status, sprint, and epic
 - **Table 4** shows team member PRs with no Jira link (requires `.context/people.md` — run `/populate-people` to generate it)
 - PRs updated over 1 year ago are excluded (count reported after Table 2)
