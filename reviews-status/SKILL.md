@@ -6,6 +6,8 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 **Helper Script:** `~/.claude/skills/reviews-status/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
 
+**Helper Script:** `~/.claude/skills/reviews-status/extract-jira-fields.py` — parses Jira search results into compact JSON. Pass raw Jira response on stdin, get back `[{key, summary, type, status, priority, priority_sort, sprint, epic, pr_urls}]`. Supports `--filter-sprint Green` to filter by sprint name.
+
 ## Instructions
 
 ### Phase 1: Gather PRs and Context
@@ -48,7 +50,11 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard" AND status = Review
    ```
-   This is a broad query; post-filter results to keep only issues whose sprint name contains "Green".
+   Pipe the result through `extract-jira-fields.py` to parse and filter:
+   ```bash
+   echo '<jira_result_json>' | python3 ~/.claude/skills/reviews-status/extract-jira-fields.py --filter-sprint Green
+   ```
+   This extracts compact fields and keeps only issues with "Green" in their sprint name.
 
 4. **Team member PR searches** (for Table 4, skip if no people.md): For each Green Scrum member's GitHub username, run:
    ```bash
@@ -56,14 +62,12 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
 
 **After this round, extract from Jira results:**
-- **Issue key**, **type**, **status**, **priority**
-- **Sprint** — parse from `customfield_12310940` string, shorten (e.g., "Dashboard - Green-35" → "Green-35")
-- **Epic Link** — `customfield_12311140`
+For individual Jira cross-reference results, pipe each through `extract-jira-fields.py` or parse the compact fields directly (these are small enough to process inline). The sprint review results are already parsed by `extract-jira-fields.py` from step 3.
 
 **From sprint review results** (Table 3 candidates):
-- For each issue, extract Git Pull Request URLs (`customfield_12310220`)
+The `extract-jira-fields.py` output includes `pr_urls` for each issue. For each issue:
 - **CRITICAL:** Create a mapping of `{pr_url: jira_issue_data}` to preserve the link between each PR and its source Jira issue
-- Store the issue key, type, status, priority, sprint, and epic link for each PR
+- Store the issue key, type, status, priority, priority_sort, sprint, and epic for each PR
 - Skip PRs already in Tables 1 or 2
 - Skip non-GitHub URLs
 - Keep only open PRs (check `state` field if fetching, or verify later)
