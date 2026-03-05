@@ -44,14 +44,16 @@ def main():
         keyword = args.filter_sprint.lower()
         issues = [i for i in issues if i["sprint"] and keyword in i["sprint"].lower()]
 
-    # Extract sprint name and goal from the first matching raw issue
+    # Extract sprint name, full name, and goal from the first matching raw issue
     sprint_name = None
+    sprint_full_name = None
     sprint_goal = None
     for raw_issue in raw_issues:
         sprint_field = raw_issue.get("fields", {}).get("customfield_12310940")
         name = parse_sprint(sprint_field)
         if name and (not args.filter_sprint or args.filter_sprint.lower() in name.lower()):
             sprint_name = name
+            sprint_full_name = parse_sprint(sprint_field, shorten=False)
             sprint_goal = parse_sprint_goal(sprint_field)
             break
 
@@ -80,6 +82,7 @@ def main():
         "pr_metadata_input": pr_metadata_input,
         "epic_keys": sorted(epic_keys),
         "sprint_name": sprint_name,
+        "sprint_full_name": sprint_full_name,
         "sprint_goal": sprint_goal,
     }, sys.stdout)
 

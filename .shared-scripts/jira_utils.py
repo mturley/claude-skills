@@ -22,13 +22,14 @@ PRIORITY_SORT = {
 }
 
 
-def parse_sprint(sprint_field):
-    """Extract shortened sprint name from customfield_12310940.
+def parse_sprint(sprint_field, shorten=True):
+    """Extract sprint name from customfield_12310940.
 
     The field contains strings like:
       com.atlassian.greenhopper.service.sprint.Sprint@...[id=82844,...,name=Dashboard - Green-35,...]
 
-    Returns the last sprint's name, shortened (e.g. "Dashboard - Green-35" -> "Green-35").
+    With shorten=True (default): returns shortened name (e.g. "Green-35").
+    With shorten=False: returns the full Jira sprint name (e.g. "Dashboard - Green-35").
     """
     if not sprint_field:
         return None
@@ -46,8 +47,7 @@ def parse_sprint(sprint_field):
         return None
 
     name = match.group(1).strip()
-    # Shorten: "Dashboard - Green-35" -> "Green-35"
-    if " - " in name:
+    if shorten and " - " in name:
         name = name.split(" - ", 1)[1]
     return name
 
@@ -226,8 +226,12 @@ if __name__ == "__main__":
         "https://github.com/kubeflow/model-registry/pull/2310",
     ]
 
-    # Test parse_sprint_goal
+    # Test parse_sprint with shorten=False
     sprint_field = test_issue["fields"]["customfield_12310940"]
+    full_name = parse_sprint(sprint_field, shorten=False)
+    assert full_name == "Dashboard - Green-35", f"Got: {full_name}"
+
+    # Test parse_sprint_goal
     goal = parse_sprint_goal(sprint_field)
     assert goal == "OCI Storage, MCP Catalog, BoW, tech debt", f"Got: {goal}"
 

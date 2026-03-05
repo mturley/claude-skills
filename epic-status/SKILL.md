@@ -12,13 +12,35 @@ Show the status of all issues in a selected epic, discovered from the current Gr
 
 ### Phase 1: Discover Epics from Current Sprint
 
-**Step 1:** Fetch all sprint issues with a single Jira search:
+**Step 1a — Discover sprint name (parallel):**
+
+Run ALL of the following in parallel in a single tool-call round:
+
+1. **Discover the active Green sprint name:** Run a Jira search to find any one issue in the current Green sprint:
+   ```
+   project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-green-scrum"
+   ```
+   Run as a single `jira_searchIssues` call with `maxResults: 1`.
+
+2. **Look up the current Jira user:** Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username and GitHub username).
+
+After the discovery query returns, pipe it through `extract-sprint-issues.py` to get the full sprint name:
+
+```bash
+echo '<raw_jira_result>' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
 ```
-project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard"
+
+Extract `sprint_full_name` from the output (e.g. `"Dashboard - Green-35"`).
+
+**Step 1b — Fetch all sprint issues (sequential):**
+
+Using the discovered `sprint_full_name`, run a targeted Jira search for all issues in that specific sprint:
+```
+project = RHOAIENG AND sprint = "<sprint_full_name>"
 ```
 Run as a single `jira_searchIssues` call with `maxResults: 100`.
 
-After the Jira result returns, pipe it through `extract-sprint-issues.py`:
+Pipe the result through `extract-sprint-issues.py`:
 
 ```bash
 cat <<'EOF' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
@@ -28,15 +50,13 @@ EOF
 
 From the output, extract the `epic_keys` array. Also count how many issues reference each epic from the `issues` array to show counts in the selection prompt.
 
-**Step 2 (run in parallel):**
+**Step 2 — Epic lookup (parallel):**
 
-1. **Batch epic lookup:** If `epic_keys` is non-empty, construct a single JQL query:
-   ```
-   key in (RHOAIENG-27992, RHOAIENG-12345, ...)
-   ```
-   Run as a single `jira_searchIssues` call. Extract the summary from each issue and shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage").
-
-2. **Look up the current Jira user:** Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username and GitHub username).
+If `epic_keys` is non-empty, construct a single JQL query:
+```
+key in (RHOAIENG-27992, RHOAIENG-12345, ...)
+```
+Run as a single `jira_searchIssues` call. Extract the summary from each issue and shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage").
 
 ### Phase 2: User Selection
 
@@ -116,6 +136,6 @@ The review status reference (for understanding the output):
 
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
-- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *epic-status/*`, `cat *| python3 *epic-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.
+- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *epic-status/*`, `cat *| python3 *epic-status/*`, `echo *| python3 *sprint-status/*`, `cat *| python3 *sprint-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.
 - For large JSON payloads that may exceed shell argument limits, use a heredoc piped to the script.
 - When a Jira tool result is persisted to a file (output too large), read the file and include its content in the JSON payload — `extract-epic-issues.py` auto-detects the MCP wrapper format.

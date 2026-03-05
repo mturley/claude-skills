@@ -4,7 +4,7 @@ Show the current Green sprint status with all tickets grouped by status (Review,
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
-**Helper Script:** `~/.claude/skills/sprint-status/extract-sprint-issues.py` — parses raw Jira sprint search results, excludes sub-tasks, and extracts all fields. Pass raw Jira on stdin with `--filter-sprint Green`, get back `{issues, pr_metadata_input, epic_keys, sprint_name, sprint_goal}`.
+**Helper Script:** `~/.claude/skills/sprint-status/extract-sprint-issues.py` — parses raw Jira sprint search results, excludes sub-tasks, and extracts all fields. Pass raw Jira on stdin with `--filter-sprint Green`, get back `{issues, pr_metadata_input, epic_keys, sprint_name, sprint_full_name, sprint_goal}`.
 
 **Helper Script:** `~/.claude/skills/.shared-scripts/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back metadata with review status.
 
@@ -12,17 +12,35 @@ Show the current Green sprint status with all tickets grouped by status (Review,
 
 ### Phase 1: Fetch Sprint Issues
 
+**Step 1 — Discover sprint name (parallel):**
+
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Fetch all sprint issues:** Run a single Jira search:
+1. **Discover the active Green sprint name:** Run a Jira search to find any one issue in the current Green sprint:
    ```
-   project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard"
+   project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-green-scrum"
    ```
-   Run as a single `jira_searchIssues` call with `maxResults: 100`.
+   Run as a single `jira_searchIssues` call with `maxResults: 1`.
 
-2. **Look up the current Jira user:** Call `jira_getIssue` on any known issue (or use the Jira API) to determine the current access token's username. Alternatively, read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
+2. **Look up the current Jira user:** Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
 
-After the Jira result returns, pipe it through `extract-sprint-issues.py`:
+After the discovery query returns, pipe it through `extract-sprint-issues.py` to get the full sprint name:
+
+```bash
+echo '<raw_jira_result>' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
+```
+
+Extract `sprint_full_name` from the output (e.g. `"Dashboard - Green-35"`).
+
+**Step 2 — Fetch all sprint issues (sequential):**
+
+Using the discovered `sprint_full_name`, run a targeted Jira search for all issues in that specific sprint:
+```
+project = RHOAIENG AND sprint = "<sprint_full_name>"
+```
+Run as a single `jira_searchIssues` call with `maxResults: 100`. This returns only the ~30 Green sprint issues rather than all issues across every active scrum sprint.
+
+Pipe the result through `extract-sprint-issues.py`:
 
 ```bash
 cat <<'EOF' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
