@@ -37,8 +37,15 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
    - Truncate to 40 characters (at a word boundary if possible)
    - The worktree name is `pr-<number>-<slug>` (e.g. `pr-123-fix-login-validation`)
 7. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>-*` (glob match on the PR number prefix):
-   - If it does, ask the user whether to reuse the existing worktree or remove and recreate it
-   - To remove: `git worktree remove <existing-path> --force`
+   - If it does, check whether it's up to date with the PR's latest changes:
+     1. Fetch the latest PR ref: `git fetch https://github.com/<base_repo>.git refs/pull/<number>/head`
+     2. Compare `FETCH_HEAD` with the worktree's current HEAD: `git -C <existing-path> rev-parse HEAD`
+     3. If they match, the worktree is up to date — tell the user and ask whether to reuse or recreate
+     4. If they differ, tell the user the worktree is behind the PR's latest changes and ask whether to:
+        - **Update**: hard reset the worktree to the latest PR state: fetch into the existing branch (`git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:<branch-name>` with `--force`), then `git -C <existing-path> reset --hard <branch-name>`
+        - **Recreate**: remove and recreate the worktree from scratch (`git worktree remove <existing-path> --force`)
+        - **Reuse as-is**: keep the worktree in its current state (e.g. if the user has local changes they want to keep)
+   - To remove (if recreating): `git worktree remove <existing-path> --force`
 
 ### Phase 2: Create Worktree and Checkout PR Branch
 
