@@ -6,7 +6,7 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 **Helper Script:** `~/.claude/skills/reviews-status/gather-prs.py` — runs three `gh search prs` queries in parallel (--author, --reviewed-by, --commenter) and deduplicates results. Pass `{my_username, max_age_days, today}` on stdin, get back `{table1_prs, table2_prs, excluded_count, all_prs, jira_search_paths}`.
 
-**Helper Script:** `~/.claude/skills/reviews-status/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
+**Helper Script:** `~/.claude/skills/.shared-scripts/fetch-pr-metadata.py` — fetches PR metadata in parallel via `gh api`. Pass a JSON array of `{owner, repo, number}` on stdin, get back a JSON array with `state`, `draft`, `labels`, `mergeable_state`, `review_count`, `last_review_at`, `last_commit_at`, `ci_status`.
 
 **Helper Script:** `~/.claude/skills/reviews-status/fetch-team-prs.py` — runs `gh search prs` for each team member in parallel. Pass `{usernames: [...]}` on stdin, get back `{username: [prs], ...}`.
 
@@ -36,7 +36,7 @@ Run ALL of the following in parallel in a single tool-call round:
 
 1. **Fetch metadata for Tables 1+2:** Pipe the `all_prs` array from `gather-prs.py` to `fetch-pr-metadata.py`:
    ```bash
-   echo '<all_prs_json>' | python3 ~/.claude/skills/reviews-status/fetch-pr-metadata.py
+   echo '<all_prs_json>' | python3 ~/.claude/skills/.shared-scripts/fetch-pr-metadata.py
    ```
 
 2. **Batched Jira cross-reference for all PRs:** Construct a single JQL query using OR clauses for all paths in `jira_search_paths`:
@@ -146,7 +146,7 @@ The review status reference (for understanding the output):
 - Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
-- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*` and `cat *| python3 *reviews-status/*`.
+- **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*`, `cat *| python3 *reviews-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.
 - For large JSON payloads that may exceed shell argument limits, use a heredoc piped to the script:
   ```bash
   cat <<'EOF' | python3 ~/.claude/skills/reviews-status/render-report.py

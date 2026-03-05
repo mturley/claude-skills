@@ -13,6 +13,11 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 | Parent Link | `customfield_12313140` | String: `"RHOAIENG-12345"` | For hierarchy, NOT epics |
 | Git Pull Request | `customfield_12310220` | String: `"https://github.com/..."` | Manual only, doesn't auto-populate |
 | Sprint | `customfield_12310940` | Integer: `82844` | Extract from sprint search results |
+| Story Points | `customfield_12310243` | Integer or null | Story points estimate |
+| Original Story Points | `customfield_12314040` | Numeric or null | Original estimate before refinement |
+| Blocked | `customfield_12316543` | Object: `{"value": "True"}` | Select field, True/False |
+| Blocked Reason | `customfield_12316544` | String | "None" or actual reason text |
+| Flagged | `customfield_12315542` | null or flagged | For impediments |
 
 ---
 
@@ -144,6 +149,39 @@ customFields: {"customfield_12310220": "<url or comma-separated urls>"}
 **Value:** Integer sprint ID (e.g., `82844`)
 
 **Important:** Sprint IDs must be extracted from search results. See "Finding Sprints" section below.
+
+---
+
+### Story Points (customfield_12310243)
+
+**Value:** Integer or null (e.g., `5`, `8`, `null`)
+
+Standard story point estimate for the issue.
+
+---
+
+### Original Story Points (customfield_12314040)
+
+**Value:** Numeric or null
+
+Represents the original estimate before sprint refinement. Useful for tracking estimation accuracy.
+
+---
+
+### Blocked (customfield_12316543)
+
+**Value:** Select field with object format
+```json
+{"value": "True", "id": "..."}
+```
+
+Check the `value` field for `"True"` / `"False"` (case-insensitive). Used together with Blocked Reason.
+
+---
+
+### Blocked Reason (customfield_12316544)
+
+**Value:** String. `"None"` when not blocked, or actual reason text when blocked.
 
 ---
 

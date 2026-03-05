@@ -8,64 +8,15 @@ Uses only Python stdlib. No pip dependencies.
 """
 
 import json
+import os
 import sys
 from datetime import datetime, date
 
-
-JIRA_BASE = "https://issues.redhat.com/browse"
-
-
-def truncate_title(title, max_len=50):
-    """Truncate title to max_len characters with ellipsis."""
-    if len(title) <= max_len:
-        return title
-    return title[:max_len - 3] + "..."
-
-
-def format_date(iso_str, today):
-    """Format ISO date string as relative date.
-
-    - "today" for today
-    - "Mon DD" for current year
-    - "Mon YYYY" for older
-    """
-    if not iso_str:
-        return "--"
-    try:
-        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-        d = dt.date()
-        if d == today:
-            return "today"
-        if d.year == today.year:
-            return dt.strftime("%b %d")
-        return dt.strftime("%b %Y")
-    except (ValueError, TypeError):
-        return "--"
-
-
-def format_pr_link(pr):
-    """Format PR as [repo#number](url)."""
-    repo = pr.get("repo", "")
-    number = pr.get("number", 0)
-    url = pr.get("url", "")
-    return f"[{repo}#{number}]({url})"
-
-
-def format_jira_link(jira):
-    """Format Jira issue as [KEY](url) (Type)."""
-    key = jira.get("key", "")
-    issue_type = jira.get("type", "")
-    return f"[{key}]({JIRA_BASE}/{key}) ({issue_type})"
-
-
-def format_epic(epic_key, epics):
-    """Format epic as [KEY](url) (Short Name)."""
-    if not epic_key:
-        return "--"
-    short_name = epics.get(epic_key, "")
-    if short_name:
-        return f"[{epic_key}]({JIRA_BASE}/{epic_key}) ({short_name})"
-    return f"[{epic_key}]({JIRA_BASE}/{epic_key})"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '.shared-scripts'))
+from format_utils import (
+    JIRA_BASE, truncate_title, format_date, format_pr_link,
+    format_jira_link, format_epic, reverse_date, read_stdin,
+)
 
 
 def sort_key_with_jira(pr):
@@ -78,15 +29,6 @@ def sort_key_with_jira(pr):
     updated = pr.get("updated_at", "")
     # Negate updated for descending sort (reverse string comparison via complement)
     return (min_priority, reverse_date(updated))
-
-
-def reverse_date(iso_str):
-    """Return a value that sorts dates in descending order."""
-    if not iso_str:
-        return ""
-    # Invert the string for reverse sort — simple approach:
-    # just negate the string by returning its complement
-    return "".join(chr(255 - ord(c)) if ord(c) < 256 else c for c in iso_str)
 
 
 def render_table1(prs, today, epics):
@@ -320,19 +262,6 @@ def generate_recommendations(table1, table2, table3, table4):
         recs.append(("No urgent actions identified. Dashboard looks good!", None))
 
     return recs[:8]
-
-
-def read_stdin():
-    """Read and parse JSON from stdin with clear error messages."""
-    raw = sys.stdin.read()
-    if not raw.strip():
-        print("Error: No input on stdin. Pipe JSON data to this script.", file=sys.stderr)
-        sys.exit(1)
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON on stdin: {e}", file=sys.stderr)
-        sys.exit(1)
 
 
 def main():

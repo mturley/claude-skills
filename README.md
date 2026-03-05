@@ -13,12 +13,13 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
    ```
 
-2. Symlink individual skills and the `.context` directory to your Claude Code skills directory:
+2. Symlink individual skills and shared directories to your Claude Code skills directory:
    ```bash
    mkdir -p ~/.claude/skills
 
-   # Required for some skills:
+   # Required shared directories (see skill descriptions for which ones each skill needs):
    ln -s ~/git/claude-skills/.context ~/.claude/skills/.context
+   ln -s ~/git/claude-skills/.shared-scripts ~/.claude/skills/.shared-scripts
 
    # Link the skills you want to use:
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
@@ -26,8 +27,10 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
+   ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
    ```
-   Make sure to symlink the `.context` directory—it contains shared context files (MCP documentation, team data) needed by some skills.
+   - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
+   - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
 
    Alternatively, you can symlink the entire repo, though this includes git history and means any other skills you add would become untracked files in this repo:
    ```bash
@@ -64,12 +67,21 @@ Creates an isolated git worktree for a pull request and opens it in a new editor
 ### [/reviews-status](reviews-status/)
 
 Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic.
+Requires: `.context/`, `.shared-scripts/`
 
 (`/reviews-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/sprint-status](sprint-status/)
+
+Shows the current Green sprint status with all tickets grouped by workflow status (Review, In Progress, Backlog, Closed/Resolved). Each section includes a table with Jira issue details (story points, assignee, blocked status, epic) and linked GitHub PR metadata (review status, CI status).
+Requires: `.context/`, `.shared-scripts/`
+
+(`/sprint-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/create-jira](create-jira/)
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
+Requires: `.context/`
 
 (`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
 

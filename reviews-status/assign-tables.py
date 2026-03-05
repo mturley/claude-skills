@@ -12,91 +12,16 @@ Uses only Python stdlib. No pip dependencies.
 """
 
 import json
-import re
+import os
 import sys
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
-
-# --- Jira extraction utilities (from extract-jira-fields.py) ---
-
-PRIORITY_SORT = {
-    "Blocker": 1,
-    "Critical": 2,
-    "Major": 3,
-    "Normal": 4,
-    "Minor": 5,
-    "Undefined": 6,
-}
-
-
-def parse_sprint(sprint_field):
-    """Extract shortened sprint name from customfield_12310940."""
-    if not sprint_field:
-        return None
-    entries = sprint_field if isinstance(sprint_field, list) else [sprint_field]
-    last = entries[-1] if entries else None
-    if not last or not isinstance(last, str):
-        return None
-    match = re.search(r"name=([^,\]]+)", last)
-    if not match:
-        return None
-    name = match.group(1).strip()
-    if " - " in name:
-        name = name.split(" - ", 1)[1]
-    return name
-
-
-def parse_pr_urls(pr_field):
-    """Extract PR URLs from customfield_12310220."""
-    if not pr_field:
-        return []
-    if isinstance(pr_field, list):
-        return [u.strip() for u in pr_field if u and u.strip()]
-    if isinstance(pr_field, str):
-        return [u.strip() for u in pr_field.split(",") if u.strip()]
-    return []
-
-
-def extract_jira_issue(issue):
-    """Extract compact fields from a single Jira issue."""
-    fields = issue.get("fields", {})
-    issue_type = fields.get("issuetype", {})
-    status = fields.get("status", {})
-    priority = fields.get("priority", {})
-    priority_name = priority.get("name", "Undefined") if priority else "Undefined"
-    return {
-        "key": issue.get("key", ""),
-        "summary": fields.get("summary", ""),
-        "type": issue_type.get("name", "") if issue_type else "",
-        "status": status.get("name", "") if status else "",
-        "priority": priority_name,
-        "priority_sort": PRIORITY_SORT.get(priority_name, 6),
-        "sprint": parse_sprint(fields.get("customfield_12310940")),
-        "epic": fields.get("customfield_12311140"),
-        "pr_urls": parse_pr_urls(fields.get("customfield_12310220")),
-    }
-
-
-def detect_and_parse_jira(data):
-    """Auto-detect Jira response format and return a list of issue dicts."""
-    if isinstance(data, str):
-        data = json.loads(data)
-    # Tool-result wrapper [{"type":"text","text":"..."}]
-    if isinstance(data, list) and data and isinstance(data[0], dict) and "type" in data[0] and "text" in data[0]:
-        inner = json.loads(data[0]["text"])
-        return detect_and_parse_jira(inner)
-    if isinstance(data, dict):
-        if "data" in data and isinstance(data["data"], dict):
-            return data["data"].get("issues", [])
-        if "issues" in data:
-            return data.get("issues", [])
-        if "key" in data and "fields" in data:
-            return [data]
-        return []
-    if isinstance(data, list):
-        return data
-    return []
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '.shared-scripts'))
+from jira_utils import (
+    PRIORITY_SORT, parse_sprint, parse_pr_urls,
+    extract_jira_issue, detect_and_parse_jira, parse_pr_url,
+)
 
 
 def normalize_pr(pr):
@@ -177,29 +102,6 @@ def generate_jira_path(url):
         return f"{repo}/{rest}"
     return f"{org}/{repo}/{rest}"
 
-
-def parse_pr_url(url):
-    """Parse a GitHub PR URL into {owner, repo, number, url}.
-
-    Returns None for non-GitHub or invalid URLs.
-    """
-    if not url or "github.com" not in url:
-        return None
-    parsed = urlparse(url)
-    parts = parsed.path.strip("/").split("/")
-    # Expected: ["org", "repo", "pull", "number"]
-    if len(parts) < 4 or parts[2] != "pull":
-        return None
-    try:
-        number = int(parts[3])
-    except (ValueError, IndexError):
-        return None
-    return {
-        "owner": parts[0],
-        "repo": parts[1],
-        "number": number,
-        "url": url,
-    }
 
 
 def cmd_deduplicate(data):
