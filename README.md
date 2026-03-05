@@ -28,6 +28,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
    ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
+   ln -s ~/git/claude-skills/epic-status ~/.claude/skills/epic-status
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -77,6 +78,13 @@ Shows the current Green sprint status with all tickets grouped by workflow statu
 Requires: `.context/`, `.shared-scripts/`
 
 (`/sprint-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/epic-status](epic-status/)
+
+Shows all issues in a selected epic, discovered from the current Green sprint. Displays Jira issue details and GitHub PR metadata grouped by status, with sprint information for each issue.
+Requires: `.context/`, `.shared-scripts/`
+
+(`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/create-jira](create-jira/)
 
