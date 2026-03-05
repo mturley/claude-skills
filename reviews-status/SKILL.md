@@ -91,15 +91,35 @@ After this round, resolve any new epic keys found in Table 3 Jira data that were
 
 ### Phase 4: Render the Report
 
-#### Review Status
+Assemble the collected data into JSON and pipe through `render-report.py`:
 
-The `fetch-pr-metadata.py` script computes review status automatically. Each PR in its output includes two pre-formatted fields:
-- `review_status_mine` — use for Table 1 (my PRs)
-- `review_status_others` — use for Tables 2, 3, and 4 (others' PRs)
+```bash
+echo '<assembled_json>' | python3 ~/.claude/skills/reviews-status/render-report.py
+```
 
-These fields contain the final markdown string for the Review Status column, including bold formatting, emojis, and suffixes for conflicts/CI failures. Copy them directly into the table cell.
+The input JSON format:
+- `today`: today's date as `"YYYY-MM-DD"`
+- `sprint_number`: current sprint number (e.g. `"35"`)
+- `excluded_count`: count of PRs excluded by age filter
+- `people_md_found`: boolean
+- `epics`: `{"RHOAIENG-XXXXX": "Short Name", ...}` mapping of epic keys to concise names
+- `table1`: array of PR objects (my open PRs)
+- `table2`: array of PR objects (PRs I'm reviewing)
+- `table3`: array of PR objects (other Green sprint review PRs)
+- `table4`: array of PR objects (team PRs with no Jira)
 
-**Possible values** (bold = action needed by me):
+Each PR object in tables 1-3:
+```json
+{"repo":"odh-dashboard","number":6466,"url":"...","title":"...","author":"mturley","updated_at":"2026-03-04T17:41:50Z","review_status":"...","jira":[{"key":"RHOAIENG-51543","type":"Bug","priority":"Critical","priority_sort":2,"status":"In Progress","sprint":"Green-35","epic":"RHOAIENG-27992"}]}
+```
+
+Table 4 PR objects omit the `jira` field.
+
+Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and `review_status_others` for tables 2-4.
+
+The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, and generates the `## Recommended Actions` section automatically.
+
+The review status reference (for understanding the output):
 
 | My PRs (`review_status_mine`) | Others' PRs (`review_status_others`) | Meaning |
 |------|--------|---------|
@@ -109,68 +129,6 @@ These fields contain the final markdown string for the Review Status column, inc
 | 🔴 **Has new comments** | Waiting for changes | Reviews exist, last review is after last commit |
 | Waiting for re-review | 🔵 **Needs re-review** | Reviews exist, last commit is after last review |
 | Waiting for review | 🟡 **Needs review** | No reviews at all |
-
-#### Sorting
-
-Sort Tables 1-3 by Jira priority (highest first: Blocker > Critical > Major > Normal > Minor) then by PR `updatedAt` descending. PRs with no linked Jira issue sort after all prioritized PRs. Sort Table 4 by `updatedAt` descending only.
-
-#### Tables
-
-Output a single markdown document with heading `# PR Dashboard` followed by these tables as level-2 headings:
-
-## 1: My Open PRs
-
-| PR | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
-|----|-------|---------|---------------|------|----------|--------|--------|------|
-
-## 2: PRs I'm Reviewing
-
-| PR | Author | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
-|----|--------|-------|---------|---------------|------|----------|--------|--------|------|
-
-## 3: Other PRs for Green-{N} Issues in `Review`
-
-_This table shows PRs linked to Green-{N} Jira issues that are in Review status, excluding those already listed above._
-
-| PR | Author | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |
-|----|--------|-------|---------|---------------|------|----------|--------|--------|------|
-
-**IMPORTANT:** For this table, use the Jira mapping preserved in Phase 2 to populate the Jira, Priority, Status, Sprint, and Epic columns. Each PR in this table came from a specific Jira issue in Review status.
-
-## 4: Other Green Scrum PRs with No Jira
-
-| PR | Author | Title | Updated | Review Status |
-|----|--------|-------|---------|---------------|
-
-If people.md was not found, output after Table 3:
-> _Table 4 (Other Green Scrum PRs with No Jira) was excluded because `.context/people.md` was not found. Run `/populate-people` to generate it._
-
-#### Column Formatting
-
-- **PR**: `[repo-short#number](url)` — use short repo name (e.g., `model-registry`, `odh-dashboard`)
-- **Title**: Truncate to 50 characters with ellipsis
-- **Updated**: Relative dates — "today" for today, "Mon DD" for current year, "Mon YYYY" for older
-- **Review Status**: Apply bold formatting and emoji per the rules above, append conflict/CI status suffixes as needed
-- **Jira**: `[RHOAIENG-XXXXX](url) (Type)` — link to `https://issues.redhat.com/browse/{key}`
-- **Priority**: Jira issue priority (Critical, Major, Normal, Minor, etc.)
-- **Status**: Jira issue status (In Progress, Review, etc.)
-- **Sprint**: Shortened sprint name (e.g., "Green-35")
-- **Epic**: `[RHOAIENG-XXXXX](url) (Short Name)` — link to `https://issues.redhat.com/browse/{key}`, use concise epic name
-- Use `--` for empty cells
-
-If a PR has multiple Jira issues, show additional rows with empty PR/Author/Title/Updated/Review Status cells.
-
-**Age filter note:** After Table 2, report the count of PRs excluded due to the 1-year age filter.
-
-#### Recommendations Section
-
-After all tables, add a `## Recommended Actions` section. Analyze the dashboard data and provide prioritized recommendations for what to focus on first. Consider:
-- PRs that are blocking (your PRs with new comments, especially with failed CI)
-- High-priority items waiting for your review
-- Items that would unblock team members
-- Critical/Major priority Jira issues
-
-Keep recommendations concise and actionable. Mention CI failures and conflicts in the recommendation text where relevant.
 
 ## Important Notes
 
