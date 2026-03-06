@@ -44,12 +44,12 @@ The session file path follows this pattern:
 - Project directory: `~/.claude/projects/-Users-<username>-<path-to-repo>`
 - Session file: Most recently modified `.jsonl` file in that directory
 
-For example, if working in `/Users/mturley/git/odh-dashboard`, the sessions are in:
-`~/.claude/projects/-Users-mturley-git-odh-dashboard/`
+For example, if working in `/Users/mturley/git/rhoai-dashboard-workspace/opendatahub-io/odh-dashboard`, the sessions are in:
+`~/.claude/projects/-Users-mturley-git-rhoai-dashboard-workspace-opendatahub-io-odh-dashboard/`
 
 To find the current session:
 ```bash
-ls -t ~/.claude/projects/-Users-mturley-git-odh-dashboard/*.jsonl | head -1
+ls -t ~/.claude/projects/-Users-mturley-git-rhoai-dashboard-workspace-opendatahub-io-odh-dashboard/*.jsonl | head -1
 ```
 
 ## Output Format
