@@ -22,6 +22,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/.shared-scripts ~/.claude/skills/.shared-scripts
 
    # Link the skills you want to use:
+   ln -s ~/git/claude-skills/activity ~/.claude/skills/activity
    ln -s ~/git/claude-skills/branch-worktree ~/.claude/skills/branch-worktree
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
    ln -s ~/git/claude-skills/pr-worktree ~/.claude/skills/pr-worktree
@@ -90,6 +91,13 @@ Shows all issues in a selected epic, discovered from the current Green sprint. D
 Requires: `.context/`, `.shared-scripts/`
 
 (`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/activity](activity/)
+
+Shows a summary of your personal activity on GitHub and Jira for a given day. Groups by activity type (shipped, opened, reviewed, Jira activity) with cross-references between PRs and Jira issues.
+Requires: `.context/`, `.shared-scripts/`
+
+(`/activity` is specific to the RHOAIENG Jira project but could be generalized)
 
 ### [/create-jira](create-jira/)
 
