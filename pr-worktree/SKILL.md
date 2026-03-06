@@ -72,12 +72,46 @@ Detect the user's editor environment and open a new window in the worktree direc
    - `env -u CLAUDECODE cursor --new-window <worktree-path>`
    - `cd <worktree-path>`
 
+### Phase 4: Offer to Install Dependencies
+
+Investigate the worktree to determine how to install dependencies, then offer to do it for the user.
+
+#### Step 1: Investigate
+
+Check the following in the worktree root, in order of priority:
+
+1. **Documentation files** (`README.md`, `README.rst`, `README.txt`, `README`, `CONTRIBUTING.md`, `DEVELOPING.md`, `DEVELOPMENT.md`, `SETUP.md`): Scan for setup/installation sections (look for headings like "Getting Started", "Installation", "Setup", "Development", "Prerequisites", "Building"). Extract the recommended install commands.
+2. **Makefile / makefile**: Look for common targets like `install`, `setup`, `deps`, `dependencies`, `init`, `bootstrap`. Read the target recipes to understand what they do.
+3. **Lockfiles and manifest files** (fallback if READMEs/Makefiles don't have clear guidance):
+   - `package-lock.json` → `npm ci`
+   - `yarn.lock` → `yarn install`
+   - `pnpm-lock.yaml` → `pnpm install`
+   - `package.json` (no lockfile) → `npm install`
+   - `requirements.txt` → `pip install -r requirements.txt`
+   - `Pipfile.lock` → `pipenv install`
+   - `poetry.lock` → `poetry install`
+   - `pyproject.toml` (no lockfile) → `pip install -e .`
+   - `go.mod` → `go mod download`
+   - `Gemfile.lock` → `bundle install`
+   - `Cargo.lock` → `cargo fetch`
+   - `composer.lock` → `composer install`
+
+If none of these are found, skip this phase entirely.
+
+#### Step 2: Propose and confirm
+
+Tell the user what you found (e.g. "The README says to run `make install`, which runs `npm ci` and builds the project") and what command(s) you would run. Ask whether they want you to install dependencies now.
+
+#### Step 3: Install
+
+If the user approves, run the install command(s) in the worktree directory and report success or failure.
+
 ### Post-Setup
 
 After opening the editor window (or providing the path), tell the user:
 
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>-<slug>`
-2. **Dependencies not installed**: The worktree is a fresh checkout with no dependencies installed. If you need to build or test the code, you'll need to install dependencies first (e.g. `npm install`, `pip install`, `go mod download`, etc.) just like a fresh clone.
+2. **Dependencies**: whether they were installed, or a reminder to install them if the user declined or no dependency manager was detected
 3. **What to do next**: "Run `/review` in the new window to start the code review"
 4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
    - `git worktree remove .claude/worktrees/pr-<number>-<slug>`
