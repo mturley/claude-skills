@@ -32,8 +32,24 @@ def sort_key_with_jira(pr):
     return (min_priority, reverse_date(updated))
 
 
-def render_table1(prs, today, epics):
+def render_table1(prs, today, epics, exclude_jira=False):
     """Render Table 1: My Open PRs."""
+    if exclude_jira:
+        lines = [
+            "## 1: My Open PRs",
+            "",
+            "| PR | Title | Updated | Review Status |",
+            "|----|-------|---------|---------------|",
+        ]
+        sorted_prs = sorted(prs, key=lambda p: reverse_date(p.get("updated_at", "")))
+        for pr in sorted_prs:
+            pr_link = format_pr_link(pr)
+            title = truncate_title(pr.get("title", ""))
+            updated = format_date(pr.get("updated_at", ""), today)
+            review_status = pr.get("review_status", "--")
+            lines.append(f"| {pr_link} | {title} | {updated} | {review_status} |")
+        return lines
+
     lines = [
         "## 1: My Open PRs",
         "",
@@ -73,12 +89,31 @@ def render_table1(prs, today, epics):
     return lines
 
 
-def render_table_with_author(prs, today, epics, heading, description=None, important_note=None):
+def render_table_with_author(prs, today, epics, heading, description=None, important_note=None, exclude_jira=False):
     """Render a table with Author column (Tables 2 and 3)."""
     lines = [heading, ""]
     if description:
         lines.append(description)
         lines.append("")
+
+    if exclude_jira:
+        lines.extend([
+            "| PR | Author | Title | Updated | Review Status |",
+            "|----|--------|-------|---------|---------------|",
+        ])
+        sorted_prs = sorted(prs, key=lambda p: reverse_date(p.get("updated_at", "")))
+        for pr in sorted_prs:
+            pr_link = format_pr_link(pr)
+            author = pr.get("author", "--")
+            title = truncate_title(pr.get("title", ""))
+            updated = format_date(pr.get("updated_at", ""), today)
+            review_status = pr.get("review_status", "--")
+            lines.append(f"| {pr_link} | {author} | {title} | {updated} | {review_status} |")
+        if important_note:
+            lines.append("")
+            lines.append(important_note)
+        return lines
+
     lines.extend([
         "| PR | Author | Title | Updated | Review Status | Jira | Priority | Status | Sprint | Epic |",
         "|----|--------|-------|---------|---------------|------|----------|--------|--------|------|",
@@ -122,21 +157,30 @@ def render_table_with_author(prs, today, epics, heading, description=None, impor
     return lines
 
 
-def render_table4(prs, today, people_md_found):
-    """Render Table 4: Other Green Scrum PRs with No Jira."""
-    lines = ["## 4: Other Green Scrum PRs with No Jira", ""]
+def render_table4(prs, today, people_md_found, exclude_jira=False):
+    """Render Table 4: Other Green Scrum PRs (with No Jira, or all when exclude_jira)."""
+    if exclude_jira:
+        lines = ["## 4: Other Green Scrum PRs", ""]
+    else:
+        lines = ["## 4: Other Green Scrum PRs with No Jira", ""]
 
     if not people_md_found:
+        table_name = "Other Green Scrum PRs" if exclude_jira else "Other Green Scrum PRs with No Jira"
         lines.append(
-            "> _Table 4 (Other Green Scrum PRs with No Jira) was excluded because "
+            f"> _Table 4 ({table_name}) was excluded because "
             "`.context/people.md` was not found. Run `/populate-people` to generate it._"
         )
         return lines
 
-    lines.append(
-        f"_Open PRs from Green Scrum members with no linked RHOAIENG Jira issue."
-        f" Consider creating tickets or linking existing ones._"
-    )
+    if exclude_jira:
+        lines.append(
+            f"_Open PRs from Green Scrum members not already listed above._"
+        )
+    else:
+        lines.append(
+            f"_Open PRs from Green Scrum members with no linked RHOAIENG Jira issue."
+            f" Consider creating tickets or linking existing ones._"
+        )
     lines.append("")
     lines.extend([
         "| PR | Author | Title | Updated | Review Status |",
@@ -292,6 +336,7 @@ def main():
     sprint_number = data.get("sprint_number", "N")
     excluded_count = data.get("excluded_count", 0)
     people_md_found = data.get("people_md_found", True)
+    exclude_jira = data.get("exclude_jira", False)
     epics = data.get("epics", {})
 
     table1 = data.get("table1", [])
@@ -301,12 +346,16 @@ def main():
 
     output = ["# PR Dashboard", ""]
 
+    if exclude_jira:
+        output.append("_Jira data excluded for faster report. Run without `exclude-jira` for full details._")
+        output.append("")
+
     # Table 1
-    output.extend(render_table1(table1, today, epics))
+    output.extend(render_table1(table1, today, epics, exclude_jira=exclude_jira))
     output.append("")
 
     # Table 2
-    output.extend(render_table_with_author(table2, today, epics, "## 2: PRs I'm Reviewing"))
+    output.extend(render_table_with_author(table2, today, epics, "## 2: PRs I'm Reviewing", exclude_jira=exclude_jira))
     output.append("")
 
     # Age filter note
@@ -314,16 +363,17 @@ def main():
         output.append(f"_{excluded_count} PR(s) excluded because they were last updated over 1 year ago._")
         output.append("")
 
-    # Table 3
-    output.extend(render_table_with_author(
-        table3, today, epics,
-        f"## 3: Other PRs for Green-{sprint_number} Issues in `Review`",
-        description=f"_This table shows PRs linked to Green-{sprint_number} Jira issues that are in Review status, excluding those already listed above._",
-    ))
-    output.append("")
+    # Table 3 (skip when exclude_jira — it's entirely Jira-driven)
+    if not exclude_jira:
+        output.extend(render_table_with_author(
+            table3, today, epics,
+            f"## 3: Other PRs for Green-{sprint_number} Issues in `Review`",
+            description=f"_This table shows PRs linked to Green-{sprint_number} Jira issues that are in Review status, excluding those already listed above._",
+        ))
+        output.append("")
 
     # Table 4
-    output.extend(render_table4(table4, today, people_md_found))
+    output.extend(render_table4(table4, today, people_md_found, exclude_jira=exclude_jira))
     output.append("")
 
     # Recommendations

@@ -22,6 +22,8 @@ This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be g
 
 Run `/reviews-status` in any Claude Code session. No arguments needed.
 
+Optional argument: `/reviews-status exclude-jira` — skips all Jira lookups for a faster report. Tables render without Jira columns, Table 3 (sprint review PRs) is skipped, and Table 4 shows all team PRs instead of only those without Jira links.
+
 The report is read-only and does not modify any PRs or Jira issues.
 
 ## Helper Scripts

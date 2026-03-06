@@ -2,6 +2,8 @@
 
 Show the review status of open PRs across my work, my team's sprint, and my scrum members, cross-referenced with RHOAIENG Jira issues.
 
+**Optional argument:** `exclude-jira` — skip all Jira lookups and render a faster report without Jira columns, Table 3, or epic data. When this argument is present, skip all `jira_searchIssues` calls and Jira-dependent processing in every phase.
+
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/reviews-status/gather-prs.py` — runs three `gh search prs` queries in parallel (--author, --reviewed-by, --commenter) and deduplicates results. Pass `{my_username, max_age_days, today}` on stdin, get back `{table1_prs, table2_prs, excluded_count, all_prs, jira_search_paths}`.
@@ -28,19 +30,19 @@ Run ALL of the following in parallel in a single tool-call round:
 
 2. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
-3. **Discover the active Green sprint name:** Run a Jira search to find any one issue in the current Green sprint:
+3. **Discover the active Green sprint name** _(skip if `exclude-jira`)_: Run a Jira search to find any one issue in the current Green sprint:
    ```
    project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-green-scrum"
    ```
    Run as a single `jira_searchIssues` call with `maxResults: 1`.
 
-After Phase 1 calls complete, pipe the sprint discovery result through `extract-sprint-issues.py` to get the full sprint name:
+After Phase 1 calls complete:
 
-```bash
-echo '<raw_jira_result>' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
-```
-
-Extract `sprint_full_name` from the output (e.g. `"Dashboard - Green-35"`).
+- _(skip if `exclude-jira`)_ Pipe the sprint discovery result through `extract-sprint-issues.py` to get the full sprint name:
+  ```bash
+  echo '<raw_jira_result>' | python3 ~/.claude/skills/sprint-status/extract-sprint-issues.py --filter-sprint Green
+  ```
+  Extract `sprint_full_name` from the output (e.g. `"Dashboard - Green-35"`).
 
 If people.md was found, parse the **Green Scrum** section to extract GitHub usernames (skip the current user and blank entries).
 
@@ -53,13 +55,13 @@ Run ALL of the following in parallel in a single tool-call round:
    echo '<all_prs_json>' | python3 ~/.claude/skills/.shared-scripts/fetch-pr-metadata.py
    ```
 
-2. **Batched Jira cross-reference for all PRs:** Construct a single JQL query using OR clauses for all paths in `jira_search_paths`:
+2. **Batched Jira cross-reference for all PRs** _(skip if `exclude-jira`)_: Construct a single JQL query using OR clauses for all paths in `jira_search_paths`:
    ```
    project = RHOAIENG AND (cf[12310220] ~ "path1" OR cf[12310220] ~ "path2" OR ...)
    ```
    Run this as a single `jira_searchIssues` call. The results will be matched to specific PRs by `assign-tables.py assign` via the `pr_urls` field.
 
-3. **Sprint review Jira search** (for Table 3): Using the discovered `sprint_full_name`, search for issues in review in the current Green sprint:
+3. **Sprint review Jira search** (for Table 3) _(skip if `exclude-jira`)_: Using the discovered `sprint_full_name`, search for issues in review in the current Green sprint:
    ```
    project = RHOAIENG AND sprint = "<sprint_full_name>" AND status = Review
    ```
@@ -77,12 +79,14 @@ cat <<'EOF' | python3 ~/.claude/skills/reviews-status/assign-tables.py assign
 EOF
 ```
 
+When `exclude-jira`, omit `crossref_raw` and `sprint_review_raw` from the input. The script handles missing keys gracefully — Table 1/2 PRs will have no `jira` arrays, Table 3 will be empty, and Table 4 will include all team PRs.
+
 When a Jira tool result is persisted to a file (output too large for inline), read the file content and include it as the value. The script auto-detects the MCP wrapper format.
 
 This handles Jira extraction, cross-ref matching to Table 1/2 PRs, sprint filtering, deduplication, age filtering, and PR URL parsing. It outputs:
-- `table1_prs` — with `jira` arrays attached from cross-ref matching
-- `table2_prs` — with `jira` arrays attached from cross-ref matching
-- `table3_candidates` — PRs from sprint review issues, each with their source `jira` data attached
+- `table1_prs` — with `jira` arrays attached from cross-ref matching (empty when `exclude-jira`)
+- `table2_prs` — with `jira` arrays attached from cross-ref matching (empty when `exclude-jira`)
+- `table3_candidates` — PRs from sprint review issues, each with their source `jira` data attached (empty when `exclude-jira`)
 - `table4_candidates` — team member PRs not in Tables 1-3
 - `metadata_input` — combined Table 3+4 candidates formatted for `fetch-pr-metadata.py`
 - `epic_keys` — unique epic keys for resolution
@@ -94,19 +98,19 @@ Table 3 candidates have empty `title`, `author`, `updated_at` fields that will b
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Fetch metadata for Table 3+4 candidates:** Pipe `metadata_input` from `assign-tables.py assign` to `fetch-pr-metadata.py`. After results return, drop any PRs with `state` != `"open"`.
+1. **Fetch metadata for Table 3+4 candidates:** Pipe `metadata_input` from `assign-tables.py assign` to `fetch-pr-metadata.py`. After results return, drop any PRs with `state` != `"open"`. _(When `exclude-jira`, this is Table 4 candidates only since Table 3 is empty.)_
 
-2. **Batched epic name lookup:** If `epic_keys` is non-empty, construct a single JQL query:
+2. **Batched epic name lookup** _(skip if `exclude-jira`)_: If `epic_keys` is non-empty, construct a single JQL query:
    ```
    key in (RHOAIENG-27992, RHOAIENG-12345, ...)
    ```
    Run as a single `jira_searchIssues` call. Extract the summary from each issue and shorten to a concise label (e.g., "Dashboard - OCI Compliant Storage layer for Model Registry" → "OCI Storage").
 
-3. **Batched Table 4 Jira link checks:** If `table4_jira_paths` is non-empty, construct a single JQL query:
+3. **Batched Table 4 Jira link checks** _(skip if `exclude-jira`)_: If `table4_jira_paths` is non-empty, construct a single JQL query:
    ```
    project = RHOAIENG AND (cf[12310220] ~ "path1" OR cf[12310220] ~ "path2" OR ...)
    ```
-   Run as a single `jira_searchIssues` call. Then keep only Table 4 PRs whose path has **NO** match in the results.
+   Run as a single `jira_searchIssues` call. Then keep only Table 4 PRs whose path has **NO** match in the results. _(When `exclude-jira`, keep all Table 4 PRs.)_
 
 After this round, resolve any new epic keys found in Table 3 Jira data that weren't already resolved.
 
@@ -125,11 +129,12 @@ The input JSON format:
 - `sprint_number`: current sprint number (e.g. `"35"`)
 - `excluded_count`: count of PRs excluded by age filter
 - `people_md_found`: boolean
+- `exclude_jira`: boolean (optional, default false) — when true, renders tables without Jira columns, skips Table 3, and adjusts Table 4 description
 - `epics`: `{"RHOAIENG-XXXXX": "Short Name", ...}` mapping of epic keys to concise names
 - `table1`: array of PR objects (my open PRs)
 - `table2`: array of PR objects (PRs I'm reviewing)
-- `table3`: array of PR objects (other Green sprint review PRs)
-- `table4`: array of PR objects (team PRs with no Jira)
+- `table3`: array of PR objects (other Green sprint review PRs) — empty when `exclude_jira`
+- `table4`: array of PR objects (team PRs with no Jira, or all team PRs when `exclude_jira`)
 
 Each PR object in tables 1-3:
 ```json
@@ -157,7 +162,7 @@ The review status reference (for understanding the output):
 
 ## Important Notes
 
-- Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report
+- Do NOT skip the Jira cross-reference or epic name lookup — these are key parts of the report (unless `exclude-jira` is specified)
 - Maximize parallel tool calls — run everything listed in each phase in a SINGLE tool-call round
 - The report is read-only — do not modify any PRs or Jira issues
 - **Never use inline Python** (`cat <<'PYEOF' | python3` with arbitrary code). All Bash commands must pipe to the skill helper scripts so they match the auto-approved permission patterns `echo *| python3 *reviews-status/*`, `cat *| python3 *reviews-status/*`, `echo *| python3 *sprint-status/*`, `cat *| python3 *sprint-status/*`, `echo *| python3 *.shared-scripts/*`, and `cat *| python3 *.shared-scripts/*`.

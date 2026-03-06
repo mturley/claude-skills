@@ -72,7 +72,7 @@ Creates an isolated git worktree for a pull request and opens it in a new editor
 
 ### [/reviews-status](reviews-status/)
 
-Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic.
+Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic. Supports `exclude-jira` argument to skip Jira lookups for a faster report.
 Requires: `.context/`, `.shared-scripts/`
 
 (`/reviews-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
