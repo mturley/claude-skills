@@ -240,6 +240,19 @@ When creating issue descriptions with file references, use Jira Wiki Markup synt
 
 ---
 
+## Write Operation Preview Requirement
+
+**Before any Jira write operation** (`jira_createIssue`, `jira_updateIssue`, `jira_postIssueComment`, `jira_transitionIssue`), always show the user a preview of what will be written. This includes:
+
+- **Creating issues:** Show the full drafted title, description, and all fields (priority, severity, labels, sprint, assignee, etc.) before making the API call.
+- **Updating issues:** Show a diff or summary of what fields/content will change.
+- **Posting comments:** Show the full comment text.
+- **Transitioning issues:** State the current status and the target status.
+
+Wait for user approval before proceeding with the write operation.
+
+---
+
 ## Troubleshooting
 
 ### Authentication Failures
