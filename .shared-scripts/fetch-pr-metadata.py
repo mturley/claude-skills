@@ -4,7 +4,7 @@
 Reads a JSON array of {owner, repo, number} objects from stdin.
 Outputs a JSON array with metadata for each PR:
   state, draft, labels, mergeable_state, review_count, last_review_at,
-  last_commit_at, ci_status
+  last_commit_at, ci_status, review_decision
 
 Uses only Python stdlib. Requires `gh` CLI to be authenticated.
 """
@@ -24,60 +24,62 @@ def run_gh(args):
     return result.stdout, result.stderr, result.returncode
 
 
-def fetch_pr_info(owner, repo, number):
-    """Fetch PR info (labels, draft, mergeable_state)."""
+def fetch_pr_data(owner, repo, number):
+    """Fetch all PR metadata in a single gh pr view --json call."""
+    fields = ",".join([
+        "isDraft", "labels", "mergeStateStatus", "reviewDecision",
+        "reviews", "statusCheckRollup", "commits", "state",
+    ])
     stdout, _, rc = run_gh([
-        "api", f"repos/{owner}/{repo}/pulls/{number}",
-        "--jq", '{draft, mergeable_state, labels: [.labels[].name], state}'
+        "pr", "view", str(number), "--repo", f"{owner}/{repo}",
+        "--json", fields,
     ])
     if rc != 0 or not stdout.strip():
         return None
-    return json.loads(stdout)
+    data = json.loads(stdout)
 
+    # Extract labels
+    labels = [label["name"] for label in data.get("labels", [])]
 
-def fetch_reviews(owner, repo, number):
-    """Fetch review count and last review timestamp."""
-    stdout, _, rc = run_gh([
-        "api", f"repos/{owner}/{repo}/pulls/{number}/reviews",
-        "--jq", '{count: length, last_review_at: (sort_by(.submitted_at) | last | .submitted_at)}'
-    ])
-    if rc != 0 or not stdout.strip():
-        return {"count": 0, "last_review_at": None}
-    return json.loads(stdout)
+    # Extract review info
+    reviews = data.get("reviews", [])
+    review_count = len(reviews)
+    sorted_reviews = sorted(reviews, key=lambda r: r.get("submittedAt", ""))
+    last_review_at = sorted_reviews[-1]["submittedAt"] if sorted_reviews else None
 
+    # Extract last commit date
+    commits = data.get("commits", [])
+    last_commit_at = commits[-1]["committedDate"] if commits else None
 
-def fetch_last_commit(owner, repo, number):
-    """Fetch last commit timestamp."""
-    stdout, _, rc = run_gh([
-        "api", f"repos/{owner}/{repo}/pulls/{number}/commits",
-        "--jq", 'last | .commit.committer.date'
-    ])
-    if rc != 0 or not stdout.strip():
-        return None
-    return stdout.strip().strip('"')
+    # Compute CI status from statusCheckRollup
+    checks = data.get("statusCheckRollup") or []
+    ci_status = "N/A"
+    if checks:
+        has_fail = any(c.get("conclusion") == "FAILURE" for c in checks)
+        has_pending = any(c.get("status") == "IN_PROGRESS" for c in checks)
+        has_pass = any(c.get("conclusion") == "SUCCESS" for c in checks)
+        if has_fail:
+            ci_status = "Failed"
+        elif has_pending:
+            ci_status = "Running"
+        elif has_pass:
+            ci_status = "Passed"
 
+    # Map mergeStateStatus to mergeable_state for backward compatibility
+    merge_state = data.get("mergeStateStatus", "UNKNOWN")
+    mergeable_state = "dirty" if merge_state == "DIRTY" else merge_state.lower()
 
-def fetch_ci_status(owner, repo, number):
-    """Fetch CI status from gh pr checks."""
-    stdout, _, rc = run_gh([
-        "pr", "checks", str(number), "--repo", f"{owner}/{repo}"
-    ])
-    if rc != 0 and not stdout.strip():
-        return "N/A"
-    lines = stdout.strip().split("\n") if stdout.strip() else []
-    if not lines:
-        return "N/A"
-    has_fail = any("fail" in line.lower() for line in lines)
-    has_pending = any("pending" in line.lower() for line in lines)
-    if has_fail:
-        return "Failed"
-    if has_pending:
-        return "Running"
-    # Check if all passed
-    has_pass = any("pass" in line.lower() or "success" in line.lower() for line in lines)
-    if has_pass:
-        return "Passed"
-    return "N/A"
+    return {
+        "state": data.get("state", "unknown").lower(),
+        "draft": data.get("isDraft", False),
+        "labels": labels,
+        "mergeable_state": mergeable_state,
+        "review_count": review_count,
+        "last_review_at": last_review_at,
+        "last_commit_at": last_commit_at,
+        "ci_status": ci_status,
+        "review_decision": data.get("reviewDecision", ""),
+    }
 
 
 def compute_review_status(pr_data, is_mine):
@@ -85,8 +87,8 @@ def compute_review_status(pr_data, is_mine):
 
     Args:
         pr_data: dict with draft, labels, review_count, last_review_at,
-                 last_commit_at, mergeable_state, ci_status
-        is_mine: True for Table 1 (my PRs), False for Tables 2/3/4
+                 last_commit_at, mergeable_state, ci_status, review_decision
+        is_mine: True for my PRs, False for others' PRs
 
     Returns:
         Formatted markdown string ready for table cell.
@@ -98,9 +100,11 @@ def compute_review_status(pr_data, is_mine):
     last_commit_at = pr_data.get("last_commit_at")
     mergeable_state = pr_data.get("mergeable_state", "")
     ci_status = pr_data.get("ci_status", "N/A")
+    review_decision = pr_data.get("review_decision", "")
 
     has_lgtm = "lgtm" in labels
     has_approved = "approved" in labels
+    changes_requested = review_decision == "CHANGES_REQUESTED"
 
     # Evaluate conditions top-to-bottom, stop at first match
     if draft:
@@ -108,10 +112,13 @@ def compute_review_status(pr_data, is_mine):
     elif has_lgtm and has_approved:
         status, bold, emoji = "Approved", False, ""
     elif has_lgtm and not has_approved:
-        status, bold, emoji = "Waiting for approval", False, ""
-    elif review_count > 0 and last_review_at and last_commit_at and last_review_at > last_commit_at and not has_lgtm:
         if is_mine:
-            status, bold, emoji = "Has new comments", True, "\U0001f534"
+            status, bold, emoji = "Waiting for approval", False, ""
+        else:
+            status, bold, emoji = "Needs approval", True, "\U0001f7e2"
+    elif changes_requested and last_review_at and last_commit_at and last_review_at > last_commit_at:
+        if is_mine:
+            status, bold, emoji = "Changes requested", True, "\U0001f534"
         else:
             status, bold, emoji = "Waiting for changes", False, ""
     elif review_count > 0 and last_review_at and last_commit_at and last_commit_at > last_review_at:
@@ -122,6 +129,11 @@ def compute_review_status(pr_data, is_mine):
                 status, bold, emoji = "Needs re-review", True, "\U0001f535"
             else:
                 status, bold, emoji = "Waiting for re-review", False, ""
+    elif review_count > 0 and last_review_at and last_commit_at and last_review_at > last_commit_at and not has_lgtm:
+        if is_mine:
+            status, bold, emoji = "Has new comments", True, "\U0001f7e0"
+        else:
+            status, bold, emoji = "Has comments", False, ""
     elif review_count == 0:
         if is_mine:
             status, bold, emoji = "Waiting for review", False, ""
@@ -150,36 +162,18 @@ def fetch_one_pr(pr):
     repo = pr["repo"]
     number = pr["number"]
 
-    # First fetch PR info (we need it for state/draft/labels)
-    info = fetch_pr_info(owner, repo, number)
-    if info is None:
+    data = fetch_pr_data(owner, repo, number)
+    if data is None:
         return {
             "owner": owner, "repo": repo, "number": number,
             "error": "Failed to fetch PR info"
         }
 
-    # Then fetch reviews, commits, and CI in parallel
-    with ThreadPoolExecutor(max_workers=3) as inner:
-        review_future = inner.submit(fetch_reviews, owner, repo, number)
-        commit_future = inner.submit(fetch_last_commit, owner, repo, number)
-        ci_future = inner.submit(fetch_ci_status, owner, repo, number)
-
-        reviews = review_future.result()
-        last_commit_at = commit_future.result()
-        ci_status = ci_future.result()
-
     result = {
         "owner": owner,
         "repo": repo,
         "number": number,
-        "state": info.get("state", "unknown"),
-        "draft": info.get("draft", False),
-        "labels": info.get("labels", []),
-        "mergeable_state": info.get("mergeable_state", "unknown"),
-        "review_count": reviews.get("count", 0),
-        "last_review_at": reviews.get("last_review_at"),
-        "last_commit_at": last_commit_at,
-        "ci_status": ci_status,
+        **data,
     }
 
     # Compute review status for both perspectives
@@ -196,7 +190,7 @@ def main():
         return
 
     results = []
-    with ThreadPoolExecutor(max_workers=min(30, len(input_data) * 4)) as pool:
+    with ThreadPoolExecutor(max_workers=min(30, len(input_data))) as pool:
         futures = {pool.submit(fetch_one_pr, pr): pr for pr in input_data}
         for future in as_completed(futures):
             try:

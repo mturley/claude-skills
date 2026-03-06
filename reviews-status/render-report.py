@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..
 from format_utils import (
     JIRA_BASE, truncate_title, format_date, format_pr_link,
     format_jira_link, format_epic, reverse_date, read_stdin,
+    format_priority,
 )
 
 
@@ -57,14 +58,14 @@ def render_table1(prs, today, epics):
             first_jira = jira_list[0]
             lines.append(
                 f"| {pr_link} | {title} | {updated} | {review_status} "
-                f"| {format_jira_link(first_jira)} | {first_jira.get('priority', '--')} "
+                f"| {format_jira_link(first_jira)} | {format_priority(first_jira.get('priority', ''))} "
                 f"| {first_jira.get('status', '--')} | {first_jira.get('sprint') or '--'} "
                 f"| {format_epic(first_jira.get('epic'), epics)} |"
             )
             for extra_jira in jira_list[1:]:
                 lines.append(
                     f"|  |  |  |  "
-                    f"| {format_jira_link(extra_jira)} | {extra_jira.get('priority', '--')} "
+                    f"| {format_jira_link(extra_jira)} | {format_priority(extra_jira.get('priority', ''))} "
                     f"| {extra_jira.get('status', '--')} | {extra_jira.get('sprint') or '--'} "
                     f"| {format_epic(extra_jira.get('epic'), epics)} |"
                 )
@@ -102,14 +103,14 @@ def render_table_with_author(prs, today, epics, heading, description=None, impor
             first_jira = jira_list[0]
             lines.append(
                 f"| {pr_link} | {author} | {title} | {updated} | {review_status} "
-                f"| {format_jira_link(first_jira)} | {first_jira.get('priority', '--')} "
+                f"| {format_jira_link(first_jira)} | {format_priority(first_jira.get('priority', ''))} "
                 f"| {first_jira.get('status', '--')} | {first_jira.get('sprint') or '--'} "
                 f"| {format_epic(first_jira.get('epic'), epics)} |"
             )
             for extra_jira in jira_list[1:]:
                 lines.append(
                     f"|  |  |  |  |  "
-                    f"| {format_jira_link(extra_jira)} | {extra_jira.get('priority', '--')} "
+                    f"| {format_jira_link(extra_jira)} | {format_priority(extra_jira.get('priority', ''))} "
                     f"| {extra_jira.get('status', '--')} | {extra_jira.get('sprint') or '--'} "
                     f"| {format_epic(extra_jira.get('epic'), epics)} |"
                 )
@@ -178,7 +179,7 @@ def generate_recommendations(table1, table2, table3, table4):
         if not jira_list:
             return ""
         j = jira_list[0]
-        return f" ({j.get('priority', '')} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
+        return f" ({format_priority(j.get('priority', ''))} — [{j['key']}]({JIRA_BASE}/{j['key']}))"
 
     def pr_title(pr):
         return truncate_title(pr.get("title", ""), 45)
@@ -189,11 +190,14 @@ def generate_recommendations(table1, table2, table3, table4):
 
     # My PRs needing action
     for pr in table1:
-        if "**" not in pr.get("review_status", ""):
+        rs = pr.get("review_status", "")
+        if "**" not in rs:
             continue
         title = pr_title(pr)
-        if "CI failed" in pr.get("review_status", ""):
-            detail = " — fix CI and address comments"
+        if "CI failed" in rs:
+            detail = " — fix CI and address feedback"
+        elif "Changes requested" in rs:
+            detail = " — address requested changes"
         else:
             detail = " — address review comments"
         scored.append((
@@ -204,11 +208,17 @@ def generate_recommendations(table1, table2, table3, table4):
 
     # Reviews I owe teammates WITH Jira
     for pr in table2:
-        if "**" not in pr.get("review_status", "") or not pr.get("jira"):
+        rs = pr.get("review_status", "")
+        if "**" not in rs or not pr.get("jira"):
             continue
         title = pr_title(pr)
-        action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
-        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
+        if "Needs approval" in rs:
+            action = "Approve"
+        elif "Needs review" in rs:
+            action = "Review"
+        else:
+            action = "Re-review"
+        conflict = " — has merge conflicts" if "conflicts" in rs else ""
         scored.append((
             jira_priority(pr), CAT_TEAMMATE_REVIEW,
             f"Unblock {pr.get('author', '?')}: {action} [{pr['repo']}#{pr['number']}]({pr['url']}) "
@@ -217,13 +227,19 @@ def generate_recommendations(table1, table2, table3, table4):
 
     # Sprint PRs needing review help
     for pr in table3:
-        status = pr.get("review_status", "")
-        if "Needs review" not in status and "Needs re-review" not in status:
+        rs = pr.get("review_status", "")
+        if "Needs review" not in rs and "Needs re-review" not in rs and "Needs approval" not in rs:
             continue
         title = pr_title(pr)
+        if "Needs approval" in rs:
+            action = "Approve"
+        elif "Needs review" in rs:
+            action = "Review"
+        else:
+            action = "Re-review"
         scored.append((
             jira_priority(pr), CAT_SPRINT_REVIEW,
-            f"Help unblock sprint: Review [{pr['repo']}#{pr['number']}]({pr['url']}) "
+            f"Help unblock sprint: {action} [{pr['repo']}#{pr['number']}]({pr['url']}) "
             f"\"{title}\" by {pr.get('author', '?')}{jira_ref(pr)}.",
         ))
 
@@ -242,11 +258,17 @@ def generate_recommendations(table1, table2, table3, table4):
 
     # Reviews I owe WITHOUT Jira
     for pr in table2:
-        if "**" not in pr.get("review_status", "") or pr.get("jira"):
+        rs = pr.get("review_status", "")
+        if "**" not in rs or pr.get("jira"):
             continue
         title = pr_title(pr)
-        action = "Review" if "Needs review" in pr.get("review_status", "") else "Re-review"
-        conflict = " — has merge conflicts" if "conflicts" in pr.get("review_status", "") else ""
+        if "Needs approval" in rs:
+            action = "Approve"
+        elif "Needs review" in rs:
+            action = "Review"
+        else:
+            action = "Re-review"
+        conflict = " — has merge conflicts" if "conflicts" in rs else ""
         recs.append(
             f"{action} [{pr['repo']}#{pr['number']}]({pr['url']}) "
             f"\"{title}\" by {pr.get('author', '?')}{conflict}."

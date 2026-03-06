@@ -15,7 +15,7 @@ from datetime import datetime, date
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '.shared-scripts'))
 from format_utils import (
     JIRA_BASE, truncate_title, format_date, format_pr_link,
-    reverse_date, read_stdin,
+    reverse_date, read_stdin, format_type, format_priority,
 )
 from jira_utils import parse_pr_url
 
@@ -75,24 +75,35 @@ def format_blocked(issue):
     return f"Yes: {text}"
 
 
+def strike(text, is_done):
+    """Wrap text in strikethrough markdown if issue is done."""
+    if not is_done or not text:
+        return text
+    return f"~~{text}~~"
+
+
 def render_issue_row(issue, today, pr_lookup, my_jira_username):
     """Render one issue (possibly multiple rows for multi-PR) as markdown table rows.
 
     All epic tables include State and Sprint columns.
+    Closed/Resolved issues render with all cell text struck through.
     """
     lines = []
-    jira_link = f"[{issue['key']}]({JIRA_BASE}/{issue['key']})"
-    issue_type = issue.get("type", "--")
-    priority = issue.get("priority", "--")
-    sp = str(issue["story_points"]) if issue.get("story_points") is not None else "--"
-    orig_sp = str(issue["original_story_points"]) if issue.get("original_story_points") is not None else "--"
-    assignee = issue.get("assignee", "") or "--"
-    title = truncate_title(issue.get("summary", ""), 40)
-    blocked_str = format_blocked(issue)
-    reporter = issue.get("reporter", "") or "--"
-    updated = format_date(issue.get("updated", ""), today)
-    sprint = issue.get("sprint") or "--"
-    state = issue.get("status", "--")
+    is_done = issue.get("status", "") in DONE_STATUSES
+    s = lambda t: strike(t, is_done)
+
+    jira_link = s(f"[{issue['key']}]({JIRA_BASE}/{issue['key']})")
+    issue_type = s(format_type(issue.get("type", "")))
+    priority = s(format_priority(issue.get("priority", "")))
+    sp = s(str(issue["story_points"]) if issue.get("story_points") is not None else "--")
+    orig_sp = s(str(issue["original_story_points"]) if issue.get("original_story_points") is not None else "--")
+    assignee = s(issue.get("assignee", "") or "--")
+    title = s(truncate_title(issue.get("summary", ""), 40))
+    blocked_str = s(format_blocked(issue))
+    reporter = s(issue.get("reporter", "") or "--")
+    updated = s(format_date(issue.get("updated", ""), today))
+    sprint = s(issue.get("sprint") or "--")
+    state = s(issue.get("status", "--"))
 
     pr_urls = issue.get("pr_urls", [])
     parsed_prs = [p for p in (parse_pr_url(u) for u in pr_urls) if p]
@@ -108,23 +119,23 @@ def render_issue_row(issue, today, pr_lookup, my_jira_username):
     empty_jira = "|  " * 12
 
     if not parsed_prs:
-        lines.append(f"{jira_cols} | -- | -- | -- |")
+        lines.append(f"{jira_cols} | {s('--')} | {s('--')} | {s('--')} |")
     else:
         first_pr = parsed_prs[0]
         pr_key = f"{first_pr['owner']}/{first_pr['repo']}#{first_pr['number']}"
         pr_meta = pr_lookup.get(pr_key, {})
-        pr_link = format_pr_link(first_pr)
-        pr_updated = format_date(pr_meta.get("updated_at", ""), today)
-        review_status = pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--")
+        pr_link = s(format_pr_link(first_pr))
+        pr_updated = s(format_date(pr_meta.get("updated_at", ""), today))
+        review_status = s(pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--"))
         lines.append(f"{jira_cols} | {pr_link} | {pr_updated} | {review_status} |")
 
         for extra_pr in parsed_prs[1:]:
             pr_key = f"{extra_pr['owner']}/{extra_pr['repo']}#{extra_pr['number']}"
             pr_meta = pr_lookup.get(pr_key, {})
-            pr_link = format_pr_link(extra_pr)
-            pr_updated = format_date(pr_meta.get("updated_at", ""), today)
-            review_status = pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--")
-            lines.append(f"{empty_jira} {pr_link} | {pr_updated} | {review_status} |")
+            pr_link = s(format_pr_link(extra_pr))
+            pr_updated = s(format_date(pr_meta.get("updated_at", ""), today))
+            review_status = s(pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--"))
+            lines.append(f"{empty_jira} | {pr_link} | {pr_updated} | {review_status} |")
 
     return lines
 
@@ -147,6 +158,7 @@ def render_status_table(issues, today, pr_lookup, my_jira_username):
     lines = [header, separator]
 
     sorted_issues = sorted(issues, key=lambda i: (
+        1 if i.get("status", "") in DONE_STATUSES else 0,
         i.get("priority_sort", 6),
         reverse_date(i.get("updated", "")),
     ))
@@ -180,7 +192,7 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
         pr_urls = issue.get("pr_urls", [])
         parsed_prs = [parse_pr_url(u) for u in pr_urls if parse_pr_url(u)]
         is_mine = issue.get("assignee_username", "") == my_jira_username
-        jira_ref = f"({issue['priority']} \u2014 [{issue['key']}]({JIRA_BASE}/{issue['key']}))"
+        jira_ref = f"({format_priority(issue['priority'])} \u2014 [{issue['key']}]({JIRA_BASE}/{issue['key']}))"
         title = truncate_title(issue.get("summary", ""), 40)
 
         # 1. My issues in Review with PR needing attention
@@ -191,7 +203,9 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
                 rs = meta.get("review_status_mine", "")
                 if "**" in rs:
                     if "CI failed" in rs:
-                        detail = " \u2014 fix CI and address comments"
+                        detail = " \u2014 fix CI and address feedback"
+                    elif "Changes requested" in rs:
+                        detail = " \u2014 address requested changes"
                     else:
                         detail = " \u2014 address review comments"
                     scored.append((priority, status_prox, CAT_MY_PR_ACTION,
@@ -205,8 +219,13 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
                 key = f"{pr['owner']}/{pr['repo']}#{pr['number']}"
                 meta = pr_lookup.get(key, {})
                 rs = meta.get("review_status_others", "")
-                if "Needs review" in rs or "Needs re-review" in rs:
-                    action = "Review" if "Needs review" in rs else "Re-review"
+                if "Needs review" in rs or "Needs re-review" in rs or "Needs approval" in rs:
+                    if "Needs approval" in rs:
+                        action = "Approve"
+                    elif "Needs review" in rs:
+                        action = "Review"
+                    else:
+                        action = "Re-review"
                     conflict = " \u2014 has merge conflicts" if "conflicts" in rs else ""
                     scored.append((priority, status_prox, CAT_REVIEW_NEEDED,
                         f"Unblock {issue.get('assignee', '?')}: {action} "
@@ -241,7 +260,7 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
         if status in ("New", "To Do", "Backlog") and priority <= 3:
             scored.append((priority, status_prox, CAT_BACKLOG,
                 f"High-priority backlog: [{issue['key']}]({JIRA_BASE}/{issue['key']}) "
-                f"\"{title}\" ({issue['priority']}).",
+                f"\"{title}\" ({format_priority(issue['priority'])}).",
                 None))
 
         # 6. Issues in Review/In Progress with no PR
@@ -286,6 +305,8 @@ def main():
             "state": meta.get("state", ""),
         }
 
+    show_closed = data.get("show_closed", False)
+
     # Split into my issues and others
     my_issues = [i for i in issues if i.get("assignee_username") == my_jira_username]
     other_issues = [i for i in issues if i.get("assignee_username") != my_jira_username]
@@ -314,13 +335,24 @@ def main():
     output.append("")
 
     # My assigned issues (single table with State column)
+    my_active = [i for i in my_issues if i.get("status") not in DONE_STATUSES]
+    my_closed = [i for i in my_issues if i.get("status") in DONE_STATUSES]
+    my_display = my_issues if show_closed else my_active
     my_sp = sum(i.get("story_points", 0) or 0 for i in my_issues)
     output.append(f"## My Assigned Issues ({len(my_issues)} issues, {my_sp} story points)")
     output.append("")
-    if my_issues:
-        output.extend(render_status_table(my_issues, today, pr_lookup, my_jira_username))
-    else:
+    if my_display:
+        output.extend(render_status_table(my_display, today, pr_lookup, my_jira_username))
+    elif not my_issues:
         output.append("_No issues assigned to you in this epic._")
+    if not show_closed and my_closed:
+        my_closed_sp = sum(i.get("story_points", 0) or 0 for i in my_closed)
+        output.append("")
+        output.append(
+            f"_{len(my_closed)} Closed/Resolved issues hidden"
+            f" ({my_closed_sp} story points)."
+            f' Say "show closed issues" to reveal them._'
+        )
     output.append("")
 
     # Other epic issues (grouped by status)
@@ -330,13 +362,27 @@ def main():
     output.append("")
 
     groups = group_issues(other_issues)
+    other_closed_count = 0
+    other_closed_sp = 0
     for group_name, group_issues_list in groups:
+        if group_name == "Closed / Resolved" and not show_closed:
+            other_closed_count = len(group_issues_list)
+            other_closed_sp = sum(i.get("story_points", 0) or 0 for i in group_issues_list)
+            continue
         group_sp = sum(i.get("story_points", 0) or 0 for i in group_issues_list)
         output.append(f"### {group_name} ({len(group_issues_list)} issues, {group_sp} story points)")
         output.append("")
         output.extend(render_status_table(
             group_issues_list, today, pr_lookup, my_jira_username
         ))
+        output.append("")
+
+    if not show_closed and other_closed_count:
+        output.append(
+            f"_{other_closed_count} Closed/Resolved issues hidden"
+            f" ({other_closed_sp} story points)."
+            f' Say "show closed issues" to reveal them._'
+        )
         output.append("")
 
     # Recommendations

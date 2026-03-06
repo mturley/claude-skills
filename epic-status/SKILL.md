@@ -112,12 +112,17 @@ The input JSON format:
 - `my_github`: GitHub username of the current user (e.g. `"mturley"`)
 - `issues`: the `issues` array from Phase 3 (all epic issues with full field data)
 - `pr_metadata`: the metadata array from Phase 4 (from `fetch-pr-metadata.py`), or `[]` if no PRs
+- `show_closed`: (optional, default `false`) set to `true` to include Closed/Resolved issues in the output
 
 Use `review_status_mine` from `fetch-pr-metadata.py` output for PRs on issues assigned to the current user, and `review_status_others` for all other PRs.
 
 The report renders in two main sections:
-- **My Assigned Issues**: A single table of all issues assigned to the current user, with Sprint and State columns
-- **Other Epic Issues**: Grouped by status (Review → In Progress → Backlog → Closed/Resolved), with Sprint and State columns
+- **My Assigned Issues**: A single table of active issues assigned to the current user, with Sprint and State columns
+- **Other Epic Issues**: Grouped by status (Review → In Progress → Backlog), with Sprint and State columns
+
+By default, Closed/Resolved issues are hidden. The report shows a summary line like _"4 Closed/Resolved issues hidden (13 story points). Say "show closed issues" to reveal them."_ after the My Assigned Issues table (if it had closed issues) and in place of the Closed/Resolved group.
+
+If the user says "show closed issues" after the initial render, re-run `render-epic-report.py` with the same data but with `"show_closed": true` added to the input JSON. You do NOT need to re-fetch anything from Jira or GitHub — just re-render with the cached data.
 
 **IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
 

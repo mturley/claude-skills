@@ -15,7 +15,7 @@ from datetime import datetime, date
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '.shared-scripts'))
 from format_utils import (
     JIRA_BASE, truncate_title, format_date, format_pr_link,
-    format_epic, reverse_date, read_stdin,
+    format_epic, reverse_date, read_stdin, format_type, format_priority,
 )
 from jira_utils import parse_pr_url
 
@@ -83,8 +83,8 @@ def render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_stat
     """Render one issue (possibly multiple rows for multi-PR) as markdown table rows."""
     lines = []
     jira_link = f"[{issue['key']}]({JIRA_BASE}/{issue['key']})"
-    issue_type = issue.get("type", "--")
-    priority = issue.get("priority", "--")
+    issue_type = format_type(issue.get("type", ""))
+    priority = format_priority(issue.get("priority", ""))
     sp = str(issue["story_points"]) if issue.get("story_points") is not None else "--"
     orig_sp = str(issue["original_story_points"]) if issue.get("original_story_points") is not None else "--"
     assignee = issue.get("assignee", "") or "--"
@@ -133,7 +133,7 @@ def render_issue_row(issue, today, epics, pr_lookup, my_jira_username, show_stat
             pr_link = format_pr_link(extra_pr)
             pr_updated = format_date(pr_meta.get("updated_at", ""), today)
             review_status = pr_meta.get("review_status_mine" if is_mine else "review_status_others", "--")
-            lines.append(f"{empty_jira} {pr_link} | {pr_updated} | {review_status} |")
+            lines.append(f"{empty_jira} | {pr_link} | {pr_updated} | {review_status} |")
 
     return lines
 
@@ -186,7 +186,7 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
         pr_urls = issue.get("pr_urls", [])
         parsed_prs = [parse_pr_url(u) for u in pr_urls if parse_pr_url(u)]
         is_mine = issue.get("assignee_username", "") == my_jira_username
-        jira_ref = f"({issue['priority']} \u2014 [{issue['key']}]({JIRA_BASE}/{issue['key']}))"
+        jira_ref = f"({format_priority(issue['priority'])} \u2014 [{issue['key']}]({JIRA_BASE}/{issue['key']}))"
         title = truncate_title(issue.get("summary", ""), 40)
 
         # 1. My issues in Review with PR needing attention
@@ -197,7 +197,9 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
                 rs = meta.get("review_status_mine", "")
                 if "**" in rs:
                     if "CI failed" in rs:
-                        detail = " \u2014 fix CI and address comments"
+                        detail = " \u2014 fix CI and address feedback"
+                    elif "Changes requested" in rs:
+                        detail = " \u2014 address requested changes"
                     else:
                         detail = " \u2014 address review comments"
                     scored.append((priority, status_prox, CAT_MY_PR_ACTION,
@@ -211,8 +213,13 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
                 key = f"{pr['owner']}/{pr['repo']}#{pr['number']}"
                 meta = pr_lookup.get(key, {})
                 rs = meta.get("review_status_others", "")
-                if "Needs review" in rs or "Needs re-review" in rs:
-                    action = "Review" if "Needs review" in rs else "Re-review"
+                if "Needs review" in rs or "Needs re-review" in rs or "Needs approval" in rs:
+                    if "Needs approval" in rs:
+                        action = "Approve"
+                    elif "Needs review" in rs:
+                        action = "Review"
+                    else:
+                        action = "Re-review"
                     conflict = " \u2014 has merge conflicts" if "conflicts" in rs else ""
                     scored.append((priority, status_prox, CAT_REVIEW_NEEDED,
                         f"Unblock {issue.get('assignee', '?')}: {action} "
@@ -247,7 +254,7 @@ def generate_recommendations(issues, pr_lookup, my_github, my_jira_username):
         if status in ("New", "To Do", "Backlog") and priority <= 3:
             scored.append((priority, status_prox, CAT_BACKLOG,
                 f"High-priority backlog: [{issue['key']}]({JIRA_BASE}/{issue['key']}) "
-                f"\"{title}\" ({issue['priority']}).",
+                f"\"{title}\" ({format_priority(issue['priority'])}).",
                 None))
 
         # 6. Issues in Review/In Progress with no PR
