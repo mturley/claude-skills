@@ -22,6 +22,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/.shared-scripts ~/.claude/skills/.shared-scripts
 
    # Link the skills you want to use:
+   ln -s ~/git/claude-skills/branch-worktree ~/.claude/skills/branch-worktree
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
    ln -s ~/git/claude-skills/pr-worktree ~/.claude/skills/pr-worktree
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
@@ -60,6 +61,10 @@ Exports Claude Code sessions to readable markdown files. Converts the raw JSONL 
 ### [/review](review/)
 
 Reviews pull requests by checking out the branch and analyzing changes file-by-file. Requires a clean working tree.
+
+### [/branch-worktree](branch-worktree/)
+
+Creates an isolated git worktree for a new branch and opens it in a new editor window. Useful for starting work on a new feature or fix without affecting your current working tree.
 
 ### [/pr-worktree](pr-worktree/)
 
