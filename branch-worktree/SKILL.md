@@ -44,17 +44,15 @@ Detect the user's editor environment and open a new window in the worktree direc
    - `env -u CLAUDECODE cursor --new-window <worktree-path>`
    - `cd <worktree-path>`
 
-### Phase 3: Offer to Install Dependencies
+### Phase 3: Determine How to Install Dependencies
 
-Investigate the worktree to determine how to install dependencies, then offer to do it for the user.
-
-#### Step 1: Investigate
+Investigate the worktree to figure out how to install dependencies, so you can tell the user.
 
 Check the following in the worktree root, in order of priority:
 
 1. **Documentation files** (`README.md`, `README.rst`, `README.txt`, `README`, `CONTRIBUTING.md`, `DEVELOPING.md`, `DEVELOPMENT.md`, `SETUP.md`): Scan for setup/installation sections (look for headings like "Getting Started", "Installation", "Setup", "Development", "Prerequisites", "Building"). Extract the recommended install commands.
 2. **Makefile / makefile**: Look for common targets like `install`, `setup`, `deps`, `dependencies`, `init`, `bootstrap`. Read the target recipes to understand what they do.
-3. **Lockfiles and manifest files** (fallback if READMEs/Makefiles don't have clear guidance):
+3. **Lockfiles and manifest files** (fallback if docs/Makefiles don't have clear guidance):
    - `package-lock.json` → `npm ci`
    - `yarn.lock` → `yarn install`
    - `pnpm-lock.yaml` → `pnpm install`
@@ -68,23 +66,18 @@ Check the following in the worktree root, in order of priority:
    - `Cargo.lock` → `cargo fetch`
    - `composer.lock` → `composer install`
 
-If none of these are found, skip this phase entirely.
-
-#### Step 2: Propose and confirm
-
-Tell the user what you found (e.g. "The README says to run `make install`, which runs `npm ci` and builds the project") and what command(s) you would run. Ask whether they want you to install dependencies now.
-
-#### Step 3: Install
-
-If the user approves, run the install command(s) in the worktree directory and report success or failure.
-
 ### Post-Setup
 
 After opening the editor window (or providing the path), tell the user:
 
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/<worktree-name>`
 2. **What branch was created**: the git branch name
-3. **Dependencies**: whether they were installed, or a reminder to install them if the user declined or no dependency manager was detected
+3. **How to install dependencies**: Based on what you found in Phase 3, tell the user what to run in their terminal. Provide copy-pasteable commands starting with `cd <absolute-worktree-path>`, followed by the install command(s). For example:
+   ```
+   cd /path/to/.claude/worktrees/<worktree-name>
+   npm ci
+   ```
+   If you found instructions in a README or CONTRIBUTING guide, briefly mention where you found them (e.g. "Per the CONTRIBUTING.md, run `make install`"). If nothing was found, just note that no dependency manager was detected.
 4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
    - `git worktree remove .claude/worktrees/<worktree-name>`
    - Or to list all worktrees: `git worktree list`
