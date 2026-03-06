@@ -41,10 +41,13 @@ def fetch_pr_data(owner, repo, number):
     # Extract labels
     labels = [label["name"] for label in data.get("labels", [])]
 
-    # Extract review info
+    # Extract review info, filtering out bot reviews
+    BOT_AUTHORS = {"coderabbitai", "dependabot", "github-actions"}
     reviews = data.get("reviews", [])
-    review_count = len(reviews)
-    sorted_reviews = sorted(reviews, key=lambda r: r.get("submittedAt", ""))
+    human_reviews = [r for r in reviews if r.get("author", {}).get("login", "").lower() not in BOT_AUTHORS]
+    bot_review_count = len(reviews) - len(human_reviews)
+    review_count = len(human_reviews)
+    sorted_reviews = sorted(human_reviews, key=lambda r: r.get("submittedAt", ""))
     last_review_at = sorted_reviews[-1]["submittedAt"] if sorted_reviews else None
 
     # Extract last commit date
@@ -75,6 +78,7 @@ def fetch_pr_data(owner, repo, number):
         "labels": labels,
         "mergeable_state": mergeable_state,
         "review_count": review_count,
+        "bot_review_count": bot_review_count,
         "last_review_at": last_review_at,
         "last_commit_at": last_commit_at,
         "ci_status": ci_status,
@@ -152,6 +156,11 @@ def compute_review_status(pr_data, is_mine):
         formatted += " **(conflicts)**"
     if ci_status == "Failed":
         formatted += " (CI failed)"
+
+    bot_count = pr_data.get("bot_review_count", 0)
+    if bot_count > 0:
+        label = "bot comment" if bot_count == 1 else "bot comments"
+        formatted += f" ({bot_count} {label})"
 
     return formatted
 
