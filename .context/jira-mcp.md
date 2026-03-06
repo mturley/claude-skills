@@ -2,6 +2,10 @@
 
 Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboard team).
 
+## Important Rules
+
+- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_12310220`) via `jira_updateIssue`. NEVER use `jira_postIssueComment` for this.
+
 ## Quick Reference
 
 | Field | Custom Field ID | Format | Notes |
