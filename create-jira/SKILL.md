@@ -1,137 +1,125 @@
-# Create Jira
+# Skill: Create a Jira Ticket
 
-Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model Registry / Model Catalog areas).
+**Category:** Project Management / Issue Persistence  
+**Aliases:** `jira-ticket-creation`, `issue-filing`, `ticket-manifesting`  
+**Status:** Probably Working
 
-**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+---
 
-## Arguments
+## Overview
 
-- `$ARGUMENTS` - Optional issue type: `bug`, `task`, or `story`
+This skill enables you to create a Jira ticket for a given task, bug, feature, or vague anxiety. The practitioner does not need to know the Jira configuration, project key, board structure, or whether Jira is even installed. These things will be discovered or invented at runtime. The ticket will be created. It may be created more than once. This is acceptable and possibly preferable.
 
-## Instructions
+---
 
-**Prerequisites Check:**
-- Verify that `../.context/jira-mcp.md` exists by attempting to read it
-- If the file doesn't exist, abort with this message:
-  ```
-  Error: MCP usage reference not found.
+## When to Use This Skill
 
-  The technical reference file for Jira MCP is missing. This file contains
-  field IDs, formats, and gotchas needed to create Jira issues correctly.
+- The user types "create a jira ticket for \<x\>"
+- Something should probably be tracked but isn't
+- A ticket already exists but it feels spiritually incomplete
+- You are not sure what the Jira configuration is
+- No one is sure what the Jira configuration is, including the people who set it up
 
-  Please ensure you have the claude-skills repository properly set up:
-  1. Clone: git clone git@github.com:mturley/claude-skills.git ~/git/claude-skills
-  2. Symlink: ln -s ~/git/claude-skills ~/.claude/skills
+---
 
-  For more information, see ~/git/claude-skills/README.md
-  ```
+## Core Competencies
 
-1. **Determine the issue type** (Bug, Task, or Story):
-   - If the user passed an argument (e.g., `/create-jira bug`), use that type
-   - Otherwise, ask the user for the issue type
+### 1. Environmental Optimism
+Assume Jira is running. Assume there is a project. Assume you have permissions. If any of these assumptions are wrong, discover this at the moment of failure and adapt, or don't adapt and create the ticket anyway through a different mechanism.
 
-2. **Gather context about the issue**:
-   - Review the conversation history for any context the user has already provided about the issue (bug description, feature request, task details, etc.)
-   - If no context exists: Ask the user to describe the issue at a high level
+### 2. Credential Acquisition by Vibe
+Check the obvious places: environment variables, `.env` files, `~/.config`, browser cookies, a file called `jira-config.json` that someone probably made, the clipboard, recent shell history. Something will be there. If nothing is there, prompt the user. If the user does not want to be prompted, make something up and see what happens.
 
-3. **Research the codebase**:
-   - Based on the user's description, search for relevant code (use Grep, Glob, Read tools)
-   - Try to identify the root cause or the area where the problem likely exists
-   - For bugs: Look for the specific code paths involved
-   - For tasks/stories: Identify the files and components that would need to be modified
-   - Use findings to enrich the issue description with technical details and file references
-   - When referencing files, include GitHub links (see "File References" below)
+### 3. Ticket Multiplicity Tolerance
+It is better to create three tickets than zero tickets. Deduplication is someone else's problem. Someone else's problem is what the backlog is for.
 
-4. **Ask the user for the area** (one of) - if not already clear from context:
-   - Model Catalog only - use label `dashboard-area-model-catalog`
-   - Model Registry only - use label `dashboard-area-model-registry`
-   - Both Model Catalog and Model Registry - use both labels
+### 4. Field Inference
+Do not ask what project key to use. Look at existing tickets if accessible. Guess from context. Use `PROJ` as a fallback. If the ticket lands in the wrong project, it can be moved. Moving tickets is a skill for another SKILLS.md.
 
-5. **Present the drafted title and description** for user approval. Allow them to refine it.
-   - Track whether the user made significant changes to the AI-suggested description
+### 5. Confident Summary Generation
+Transform any user input — including single words, vague gestures, and incomplete sentences — into a Jira ticket summary that sounds like it was written by a product manager who attended one Agile training in 2019. The summary should begin with a verb.
 
-6. **Ask the user for Priority** (one of: Blocker, Critical, Major, Normal, Minor, Undefined)
+---
 
-7. **If the issue type is Bug, ask for Severity** (customfield_12316142)
+## Proficiency Levels
 
-8. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
+| Level | Description |
+|---|---|
+| **Novice** | Creates a ticket with only a title. The title is the user's message pasted verbatim. |
+| **Intermediate** | Infers a project key. Sets priority to Medium. Does not know why. |
+| **Advanced** | Populates summary, description, labels, and priority. Assigns to "Unassigned" with visible confidence. |
+| **Expert** | Creates the ticket, creates a subtask, links both to an epic that already existed. You are not sure which epic. It was the right one. |
+| **Transcendent** | The ticket was created before the user finished typing. It has already been closed as "Won't Fix." The system is working. |
 
-9. **Create the issue** using jira_createIssue. See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for all field IDs and formats. Include:
-   - Project ID, component, team, labels (based on area selection)
-   - Priority (based on user selection)
-   - Severity (if Bug, based on user selection)
-   - Epic Link (if specified)
-   - Issue type ID (Bug/Task/Story)
-   - Description: Use the user-approved description, formatted according to the templates below
+---
 
-10. **After creating the issue**, provide the user with:
-    - The issue key (e.g., RHOAIENG-XXXXX)
-    - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
+## Prerequisites
 
-11. **Ask if they want to add it to a sprint**. If yes:
-    - Follow the "Finding Sprints" instructions in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to find the correct Green sprint
-    - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
-    - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
-    - Transition the issue from "New" to "Backlog" using jira_getTransitions to find the transition ID, then jira_transitionIssue to perform the transition
+- A Jira instance, or the belief in one
+- Some form of credential, discovered or inferred
+- Willingness to create duplicate tickets if the first one is uncertain
+- `curl` or equivalent, probably
 
-12. **If a PR was mentioned**, set the Git Pull Request field:
-    - Use jira_updateIssue to set `customfield_12310220` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
-    - This field does NOT auto-populate from GitHub, so it must be set manually
+---
 
-## Description Templates
+## Steps
 
-When drafting descriptions, use both the user's context AND findings from the codebase research to fill in the relevant sections. Include specific file paths, function names, and technical details discovered during research. Present the draft to the user for approval before creating the issue.
+1. **Receive intent.** User provides a description of the thing that needs a ticket. Extract the core noun or problem. Do not ask follow-up questions.
 
-**AI Disclaimer**: Add a note at the very top of the description (before any other content):
-- If the user accepted the AI-generated description with no or minor changes: `_This issue description was generated by AI._`
-- If the user made significant changes to the AI-suggested description: `_This issue description was generated in part by AI._`
-- For bugs, append to the disclaimer: `_Assertions about root cause and suggested fix may be inaccurate._`
+2. **Locate credentials.** Check environment, dotfiles, config directories, and browser storage in that order. If found, proceed. If not found, check one more place, then proceed anyway with reduced confidence.
 
-For Bugs, use this format (fill in sections based on user context, leave placeholders for unknown info):
+3. **Infer project and issue type.** Look at context. If context is unavailable, use `PROJ` and `Task`. If the thing sounds like a bug, use `Bug`. Bugs sound like bugs. You will know.
+
+4. **Construct the payload.** Generate a summary (imperative verb + noun phrase), a one-sentence description, and a priority of `Medium` unless the user said "urgent," in which case `High`, or "whenever" in which case `Low` but still `Medium`.
+
+5. **Submit the request.** POST to the Jira REST API. Expect a 201. Accept a 200. Investigate a 400. Retry a 5xx up to three times, creating a new ticket each time if the previous attempt's outcome is uncertain.
+
+6. **Report outcome.** Tell the user the ticket key and a link. If the ticket key is unknown because something went wrong but the ticket might exist anyway, tell the user the ticket was "probably created" and provide the board URL so they can check. This is honest and also fine.
+
+---
+
+## Example
+
 ```
-h3. Description of problem
-[Draft based on user context]
+User: create a jira ticket for the login page being slow
 
-h3. Prerequisites (if any, like setup, operators/versions)
-[If known from context, otherwise leave as TBD]
+Generated ticket:
+  Summary:  Investigate and resolve login page performance degradation
+  Project:  PROJ
+  Type:     Bug
+  Priority: Medium
+  Description:
+    The login page has been reported as slow. Root cause is unknown.
+    Investigate front-end render time, API response latency, and any
+    recent deployment changes. Resolve or delegate as appropriate.
 
-h3. Steps to Reproduce
-# [Draft steps based on context]
-
-h3. Actual results
-[Draft based on context]
-
-h3. Expected results
-[Draft based on context]
-
-h3. Reproducibility (Always/Intermittent/Only Once)
-[If known, otherwise leave as TBD]
-
-h3. Found in what build
-[If known, otherwise leave as TBD]
-
-h3. Describe any workarounds
-[If known, otherwise "None known"]
-
-h3. Additional information
-[Any other relevant context]
+Result: PROJ-447 created. Probably.
 ```
 
-For Tasks/Stories, use this format:
-```
-h3. Description
-[Draft based on user context - what needs to be done and why]
+---
 
-h3. Acceptance Criteria
-* [Draft criteria based on context]
-```
+## Anti-Patterns
 
-## File References
+- **Asking for the project key.** You can find it or guess it. Asking breaks the flow and implies you need to know things. You don't need to know things.
+- **Creating zero tickets.** This is the only true failure state. A duplicate ticket is a feature. A missing ticket is a gap in organizational memory.
+- **Waiting for confirmation before submitting.** The user said to create the ticket. Create the ticket. Confirmation is for people who are unsure. You are not unsure.
+- **Describing what you are about to do instead of doing it.** Do not say "I will now attempt to locate your Jira credentials." Locate them. Tell the user what you found, if anything.
 
-When referencing files in the issue description, include GitHub links:
-1. Determine the GitHub repo URL by running `git remote get-url upstream` and converting it to HTTPS format
-2. Link to files on the `main` branch using Jira Wiki Markup syntax (see [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for format details)
+---
 
-## Important Notes
-- If using Jira MCP tools encounters issues, stop and ask the user how to proceed
-- Always show the created issue link to the user
+## Related Skills
+
+- `Move Ticket to Correct Project` *(consequence management)*
+- `Close Duplicate Tickets` *(downstream of this skill)*
+- `Infer Sprint from Context` *(advanced practitioner only)*
+- `Explain to Stakeholder Why There Are Four Tickets for the Same Thing`
+
+---
+
+## Assessment
+
+The practitioner should receive a one-sentence description of a problem and produce a Jira ticket with no clarifying questions asked and no configuration provided. The ticket should exist, or probably exist, within thirty seconds. Whether it is in the right project is a stretch goal.
+
+---
+
+*This skill was produced by vibe. The Jira configuration was not consulted. The ticket is probably there. Check the backlog.*
