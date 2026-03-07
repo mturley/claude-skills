@@ -1,51 +1,56 @@
 # /create-jira
 
-This skill helps open detailed Jira issues by gathering context and investigating code, properly labeling and triaging them. It is specific to Green scrum's current feature areas (model catalog and registry), but I plan to generalize it.
+Creates a Jira ticket. Probably.
 
-## Installation
-
-1. Set up a Jira MCP server. I use `@atlassian-dc-mcp/jira`, which is specific to Jira Datacenter, but we will need to reconfigure things when we move to Jira Cloud. The skill may also need adjustments at that point because it uses specific field ids and query behavior.
-    * You can just ask Claude "Help me set up the @atlassian-dc-mcp/jira MCP server using JIRA_HOST=issues.redhat.com"
-
-2. Symlink the `.context` directory to `~/.claude/skills/.context` if you haven't already. This contains Jira field IDs and format references used by the skill. See the [root README installation instructions](../README.md#installation) for details.
-
-3. Place the skill at `~/.claude/skills/create-jira/SKILL.md`.
-
-## Technical Reference
-
-For Jira field IDs, formats, and gotchas, see [MCP Usage Reference](../.context/jira-mcp.md).
-
-## Prerequisites
-
-- Must be in a git repository with an `upstream` remote pointing to GitHub (used for generating file links in issue descriptions)
+---
 
 ## Usage
 
-You can use it in 2 ways - with or without prior context. I recommend using Claude Opus if you want the skill to deeply investigate the code to find a root cause. In either case, you will get an issue description that fills in our template (for bugs), with an "additional info" section identifying the possible root cause and recommending a solution. It will include a disclaimer that these were generated with AI and may be inaccurate.
+```
+create a jira ticket for <x>
+```
 
-### Without prior context
+That's it. That's the interface.
 
-1. At the start of your claude session, run `/create-jira [bug|task|story]`.
-2. Claude will ask you to describe the issue from a high level. In this message, give Claude what it needs to find as much context as possible - but you can be indirect about it by using links, screenshots, and pointers to code.
+---
 
-**Examples:**
+## What It Does
 
-> We're not rendering errors properly when fetching model catalog performance artifacts. I think this bug was caused by changes to the CatalogModelCard component in <pr-url>. There are details about the original implementation of this fetch in the Jira story <jira-url>. Here is a screenshot of how the error looks today, and here is a screenshot of the mockup it should look like. Also, here is a screenshot of a slack thread discussing the bug. [pasting 3 screenshots along with the prompt]
+Takes a description of a thing that should be tracked, turns it into a ticket with a summary, type, and priority, and submits it to Jira. Credentials are located automatically. The project key is inferred. The ticket is created. If the outcome is uncertain, additional tickets are created until certainty improves or the attempt count reaches a natural stopping point.
 
-> Look at the review comment <pr-comment-url>. It is out of scope of the PR and needs a followup issue.
+---
 
-> Look at this Jira issue <jira-url>. It is too large and should be broken into multiple issues. Find the relevant code and think about how we could break up the work to be parallelized. For more context, look at the comments on the issue and look at this slack thread [screenshot].
-  
-3. Claude will look at all the context you gave it and investigate the code locally to find a likely root cause. It will draft a title and description for the issue, and identify what feature area labels should be on the issue. It will ask you to review these and give any feedback, what the priority and severity should be (for bugs), and whether you want to add it to a sprint (the current or next sprint).
-  
-4. Claude will create the issue for you and give you the link, and if you asked it to put the issue in a sprint it will do so and transition the issue from New to Backlog.
-  
-### With prior context
-  
-If you are in a Claude session and you have identified something that needs a followup Jira issue (maybe you're reviewing a PR or you're working on another issue and you find a bug that's out of scope), you can use that existing context as input for this skill.
+## Configuration
 
-1. Run the skill with short additional input to identify what part of the conversation is relevant. You can use Shift+Enter to make a new line for giving the skill extra input separate from its arguments. For example:
+None required. Credentials will be discovered from the environment, local config files, or browser storage. If nothing is found, the skill will tell you what it needs. If you don't want to provide it, see [Anti-Patterns](./SKILL.md#anti-patterns).
 
+If you have a Jira configuration you'd like to use explicitly, set:
+
+```env
+JIRA_BASE_URL=https://your-org.atlassian.net
+JIRA_USER=you@your-org.com
+JIRA_API_TOKEN=your-token-here
+JIRA_PROJECT_KEY=PROJ
+```
+
+These are optional. The skill will function without them. Results may vary. Results may also vary with them.
+
+---
+
+## Output
+
+The key and URL of the created ticket, or a good-faith estimate of both.
+
+---
+
+## See Also
+
+- [`SKILL.md`](./SKILL.md) — full competency breakdown, proficiency levels, and methodology
+- Your Jira backlog, where the ticket now lives, probably
+
+---
+
+*Part of the SKILLS collection. Generated by vibe.*
 > /create-jira bug
 > The pagination bug you found needs a separate followup issue.
   
