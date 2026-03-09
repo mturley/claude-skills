@@ -22,7 +22,6 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/.shared-scripts ~/.claude/skills/.shared-scripts
 
    # Link the skills you want to use:
-   ln -s ~/git/claude-skills/activity ~/.claude/skills/activity
    ln -s ~/git/claude-skills/branch-worktree ~/.claude/skills/branch-worktree
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
    ln -s ~/git/claude-skills/pr-worktree ~/.claude/skills/pr-worktree
@@ -31,6 +30,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
    ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
    ln -s ~/git/claude-skills/epic-status ~/.claude/skills/epic-status
+   ln -s ~/git/claude-skills/jira-activity ~/.claude/skills/jira-activity
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -92,12 +92,12 @@ Requires: `.context/`, `.shared-scripts/`
 
 (`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
 
-### [/activity](activity/)
+### [/jira-activity](jira-activity/)
 
-Shows a summary of your personal activity on GitHub and Jira for a given day. Groups by activity type (shipped, opened, reviewed, Jira activity) with cross-references between PRs and Jira issues.
+Shows a chronological timeline of your Jira activity (changelog actions and comments) over a configurable time period. Renders with issue type/priority emojis, hyperlinked issues and PRs, times converted to Eastern Time, and merged rows for consecutive actions on the same issue. Defaults to 7 days; pass a number for a different lookback (e.g. `/jira-activity 14`).
 Requires: `.context/`, `.shared-scripts/`
 
-(`/activity` is specific to the RHOAIENG Jira project but could be generalized)
+(`/jira-activity` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/create-jira](create-jira/)
 
