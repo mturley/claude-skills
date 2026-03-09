@@ -147,7 +147,7 @@ Use `review_status_mine` from `fetch-pr-metadata.py` output for table1 PRs, and 
 
 The script handles sorting, title truncation, date formatting, multi-Jira rows, column formatting, table descriptions (Tables 3 and 4 each have a summary line), and generates the `## Recommended Actions` section automatically. Recommended actions are sorted by Jira priority across all categories (your PRs, teammate reviews, sprint PRs), with category as a tiebreaker (your PRs first at the same priority). Items without Jira (untracked team work, non-Jira reviews) are listed at the end.
 
-**IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the full report output and send it as your response text.
+**IMPORTANT:** Output the rendered report directly as text in the chat so the user can read it. Do NOT just leave the output in the tool result — the user cannot see tool results. Copy the render script's stdout output **verbatim, character-for-character** as your response text. Do NOT re-type, paraphrase, or reformat it — the script's output includes emojis and precise formatting that must be preserved exactly.
 
 The review status reference (for understanding the output):
 
