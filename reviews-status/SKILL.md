@@ -81,7 +81,7 @@ EOF
 
 When `exclude-jira`, omit `crossref_raw` and `sprint_review_raw` from the input. The script handles missing keys gracefully — Table 1/2 PRs will have no `jira` arrays, Table 3 will be empty, and Table 4 will include all team PRs.
 
-When a Jira tool result is persisted to a file (output too large for inline), read the file content and include it as the value. The script auto-detects the MCP wrapper format.
+When a Jira tool result is persisted to a file (output too large for inline), pass the **file path as a string** for `crossref_raw` and/or `sprint_review_raw`. The script detects string values and reads the file automatically. Example: `"crossref_raw":"/path/to/tool-results/toolu_xxx.json"`. Do NOT attempt to read persisted files with the Read tool — they often exceed its token limit.
 
 This handles Jira extraction, cross-ref matching to Table 1/2 PRs, sprint filtering, deduplication, age filtering, and PR URL parsing. It outputs:
 - `table1_prs` — with `jira` arrays attached from cross-ref matching (empty when `exclude-jira`)
@@ -172,4 +172,4 @@ The review status reference (for understanding the output):
   {"today":"2026-03-05","sprint_number":"35",...}
   EOF
   ```
-- When a Jira tool result is persisted to a file (output too large), read the file and include its content in the JSON payload — `assign-tables.py assign` auto-detects the MCP wrapper format.
+- When a Jira tool result is persisted to a file (output too large), pass the **file path as a string** for `crossref_raw` and/or `sprint_review_raw` in the `assign-tables.py assign` input. The script reads file paths automatically. Do NOT attempt to read persisted files with the Read tool.

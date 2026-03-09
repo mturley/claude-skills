@@ -195,12 +195,28 @@ def match_crossref_to_prs(crossref_issues, table1_prs, table2_prs):
                 pr["jira"].append(jira_data)
 
 
+def resolve_jira_value(value):
+    """Resolve a Jira value that may be inline data or a file path.
+
+    If the value is a string, treat it as a file path and read the contents.
+    Otherwise, return it as-is (already inline JSON data).
+    """
+    if isinstance(value, str):
+        with open(value) as f:
+            return json.load(f)
+    return value
+
+
 def cmd_assign(data):
     """Phase 2 → Phase 3 table assignment.
 
     Input (new format with raw Jira):
       {my_username, max_age_days, today, table1_prs, table2_prs,
        crossref_raw, sprint_review_raw, filter_sprint, team_prs}
+
+    crossref_raw and sprint_review_raw can be either:
+      - Inline JSON data (object/array) from the Jira MCP tool
+      - A string file path to a persisted tool result (read automatically)
 
     Input (legacy format with pre-extracted Jira):
       {my_username, max_age_days, today, table1_prs, table2_prs,
@@ -218,13 +234,15 @@ def cmd_assign(data):
 
     # --- Handle cross-ref Jira (raw or skip) ---
     if "crossref_raw" in data:
-        raw_issues = detect_and_parse_jira(data["crossref_raw"])
+        crossref_data = resolve_jira_value(data["crossref_raw"])
+        raw_issues = detect_and_parse_jira(crossref_data)
         crossref_extracted = [extract_jira_issue(i) for i in raw_issues]
         match_crossref_to_prs(crossref_extracted, table1_prs, table2_prs)
 
     # --- Handle sprint review Jira (raw or pre-extracted) ---
     if "sprint_review_raw" in data:
-        raw_issues = detect_and_parse_jira(data["sprint_review_raw"])
+        sprint_review_data = resolve_jira_value(data["sprint_review_raw"])
+        raw_issues = detect_and_parse_jira(sprint_review_data)
         sprint_issues = [extract_jira_issue(i) for i in raw_issues]
         filter_sprint = data.get("filter_sprint")
         if filter_sprint:
@@ -273,7 +291,7 @@ def cmd_assign(data):
                 "title": "",  # Will be filled by metadata fetch
                 "author": "",  # Will be filled by metadata fetch
                 "updated_at": "",  # Will be filled by metadata fetch
-                "jira": jira_data,
+                "jira": [jira_data],
             })
 
     # Build full exclusion set (Table 1+2+3)
