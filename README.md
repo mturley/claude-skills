@@ -30,6 +30,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
    ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
    ln -s ~/git/claude-skills/epic-status ~/.claude/skills/epic-status
+   ln -s ~/git/claude-skills/activity ~/.claude/skills/activity
    ln -s ~/git/claude-skills/github-activity ~/.claude/skills/github-activity
    ln -s ~/git/claude-skills/jira-activity ~/.claude/skills/jira-activity
    ```
@@ -92,6 +93,11 @@ Shows all issues in a selected epic, discovered from the current Green sprint. D
 Requires: `.context/`, `.shared-scripts/`
 
 (`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/activity](activity/)
+
+Shows a combined chronological timeline of your Jira and GitHub activity, merged into a single day-grouped report. Interleaves Jira changelog actions/comments and GitHub commits/PRs/reviews by timestamp. Jira entries are prefixed with issue type emojis; GitHub entries with the octopus emoji. Includes a combined summary. Defaults to 7 days; pass a number for a different lookback (e.g. `/activity 14`).
+Requires: `.context/`, `.shared-scripts/`, `jira-activity/`, `github-activity/`
 
 ### [/github-activity](github-activity/)
 
