@@ -6,11 +6,11 @@ Show a summary of your personal activity on GitHub and Jira for a given day.
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
-**Helper Script:** `~/.claude/skills/activity/fetch-github-activity.py` — fetches GitHub activity via the Events API (`/users/{username}/events`). Pass `{"username": "...", "date": "YYYY-MM-DD"}` on stdin, get back `{prs_opened, prs_merged, reviews, jira_search_paths}`.
+**Helper Script:** `~/.claude/skills/activity/fetch-github-activity.py` — fetches GitHub activity via the Events API (`/users/{username}/events`). Pass `{"username": "...", "date": "YYYY-MM-DD"}` on stdin, get back `{prs_opened, prs_merged, reviews, jira_search_paths, titles_needed}`. Note: the Events API returns truncated PR objects (no title/author) for most event types, so `titles_needed` lists PRs that need details fetched separately.
 
-**Helper Script:** `~/.claude/skills/activity/fetch-pr-titles.py` — fetches PR titles from GitHub API in parallel. Pass a JSON array of `{owner, repo, number}` on stdin, get back `{"owner/repo/pull/number": "title", ...}`.
+**Helper Script:** `~/.claude/skills/activity/fetch-pr-details.py` — fetches PR title and author from GitHub API in parallel. Pass a JSON array of `{owner, repo, number}` on stdin, get back `{"owner/repo/pull/number": {"title": "...", "author": "..."}, ...}`.
 
-**Helper Script:** `~/.claude/skills/activity/render-activity-report.py` — combines GitHub and Jira data into a rendered markdown report. Uses shared `jira_utils.py` and `format_utils.py` for parsing and formatting.
+**Helper Script:** `~/.claude/skills/activity/render-activity-report.py` — combines GitHub and Jira data into a rendered markdown report. Uses shared `jira_utils.py` and `format_utils.py` for parsing and formatting. Backfills missing titles/authors into GitHub data from `pr_details`, and filters out self-reviews.
 
 ## Instructions
 
@@ -35,9 +35,9 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run as a single `jira_searchIssues` call with `maxResults: 100`.
 
-### Phase 2: Cross-reference and PR Titles
+### Phase 2: Cross-reference and PR Details
 
-After Phase 1 completes, collect PR URLs from Jira issues (the `customfield_12310220` / `pr_urls` field) that are NOT already represented in the GitHub activity data (`prs_opened`, `prs_merged`, `reviews`). Parse these URLs to get `{owner, repo, number}` objects — these are PRs that need titles fetched.
+After Phase 1 completes, combine the `titles_needed` list from `fetch-github-activity.py` with any additional PRs found in Jira issue PR URL fields (`customfield_12310220`) that aren't already covered. Deduplicate by `owner/repo/number`.
 
 Run ALL of the following in parallel in a single tool-call round:
 
@@ -47,10 +47,11 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run as a single `jira_searchIssues` call.
 
-2. **Fetch PR titles** _(skip if no unknown PRs)_: Pipe the list of PRs needing titles to `fetch-pr-titles.py`:
+2. **Fetch PR details:** Pipe the combined list of PRs needing details to `fetch-pr-details.py`:
    ```bash
-   echo '[{"owner":"org","repo":"name","number":123},...]' | python3 ~/.claude/skills/activity/fetch-pr-titles.py
+   echo '[{"owner":"org","repo":"name","number":123},...]' | python3 ~/.claude/skills/activity/fetch-pr-details.py
    ```
+   This is almost always needed — the GitHub Events API returns truncated PR objects for most event types (PullRequestEvent, PullRequestReviewEvent, PullRequestReviewCommentEvent all lack title and author).
 
 ### Phase 3: Render Report
 
@@ -58,16 +59,17 @@ Assemble all data and pipe through `render-activity-report.py`. Use a heredoc fo
 
 ```bash
 cat <<'EOF' | python3 ~/.claude/skills/activity/render-activity-report.py
-{"date":"<YYYY-MM-DD>","github":<github_activity_json>,"jira_updated_raw":<raw_jira_result_or_null>,"jira_crossref_raw":<raw_crossref_result_or_null>,"pr_titles":<pr_titles_or_empty_object>}
+{"date":"<YYYY-MM-DD>","username":"<github_username>","github":<github_activity_json>,"jira_updated_raw":<raw_jira_result_or_null>,"jira_crossref_raw":<raw_crossref_result_or_null>,"pr_details":<pr_details_or_empty_object>}
 EOF
 ```
 
 The input JSON format:
 - `date`: the target date as `"YYYY-MM-DD"`
+- `username`: the GitHub username (used to filter out self-reviews)
 - `github`: the full output from `fetch-github-activity.py`
 - `jira_updated_raw`: the raw Jira search result from Phase 1 step 2 (or `null` if no results)
 - `jira_crossref_raw`: the raw Jira cross-ref result from Phase 2 (or `null` if skipped)
-- `pr_titles`: the output from `fetch-pr-titles.py` (or `{}` if skipped) — maps `"owner/repo/pull/number"` to title strings. The render script also builds titles from the GitHub activity data, so this only needs PRs not already in that data.
+- `pr_details`: the output from `fetch-pr-details.py` (or `{}` if skipped) — maps `"owner/repo/pull/number"` to `{"title": "...", "author": "..."}`. The render script uses this to backfill missing titles and authors into the GitHub activity data, and to show titles on Jira-linked PR cross-references.
 
 When a Jira tool result is persisted to a file (output too large for inline), read the file content and include it as the value. The scripts auto-detect the MCP wrapper format.
 
@@ -79,7 +81,7 @@ The report is grouped by activity type:
 
 - **Shipped** — PRs merged that day, with linked Jira issues shown as sub-items
 - **Opened** — PRs opened that day (even if also merged), with linked Jira issues
-- **Reviewed** — Reviews and comments on others' PRs (formal reviews, line comments, and general comments), with linked Jira issues
+- **Reviewed** — Reviews and comments on others' PRs (formal reviews, line comments, and general comments), with linked Jira issues. Self-reviews are filtered out.
 - **Jira Activity** — Issues where user is assignee or reporter that were updated that day, with linked PRs shown as sub-items. Issues created that day are tagged *Created today*.
 
 Empty sections are omitted.

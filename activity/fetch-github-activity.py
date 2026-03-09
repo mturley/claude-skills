@@ -67,15 +67,42 @@ def fetch_events(username, target_date):
     return all_events
 
 
+def make_html_url(repo_full, number):
+    """Construct GitHub PR URL from repo name and PR number."""
+    return f"https://github.com/{repo_full}/pull/{number}"
+
+
 def categorize_events(events, username):
-    """Categorize events into PRs opened, merged, and reviews submitted."""
+    """Categorize events into PRs opened, merged, and reviews submitted.
+
+    Note: PullRequestEvent, PullRequestReviewEvent, and
+    PullRequestReviewCommentEvent return truncated PR objects (no title,
+    html_url, or user). We construct html_url from the repo name and PR
+    number, and collect PRs needing title fetches in titles_needed.
+    IssueCommentEvent returns full issue objects with all fields.
+    """
     prs_opened = []
     prs_merged = []
     reviews = []
+    titles_needed = []  # [{owner, repo, number}] for PRs missing titles
 
     seen_opened = set()
     seen_merged = set()
     seen_reviews = set()
+    seen_titles = set()
+
+    def request_title(repo_full, number):
+        """Track a PR that needs its title fetched."""
+        path = f"{repo_full}/pull/{number}"
+        if path not in seen_titles:
+            seen_titles.add(path)
+            parts = repo_full.split("/")
+            if len(parts) == 2:
+                titles_needed.append({
+                    "owner": parts[0],
+                    "repo": parts[1],
+                    "number": number,
+                })
 
     for event in events:
         etype = event.get("type", "")
@@ -84,79 +111,81 @@ def categorize_events(events, username):
         repo_short = repo_name.split("/")[-1] if "/" in repo_name else repo_name
 
         if etype == "PullRequestEvent":
+            # Truncated PR object: only number, id, url (API), base, head
             action = payload.get("action", "")
             pr = payload.get("pull_request", {})
-            pr_key = f"{repo_name}#{pr.get('number', 0)}"
+            number = pr.get("number", 0)
+            pr_key = f"{repo_name}#{number}"
 
             if action == "opened" and pr_key not in seen_opened:
                 seen_opened.add(pr_key)
                 prs_opened.append({
                     "repo": repo_short,
                     "repo_full": repo_name,
-                    "number": pr.get("number", 0),
-                    "title": pr.get("title", ""),
-                    "url": pr.get("html_url", ""),
+                    "number": number,
+                    "title": "",
+                    "url": make_html_url(repo_name, number),
                 })
+                request_title(repo_name, number)
 
-            elif action == "closed" and pr.get("merged") and pr_key not in seen_merged:
+            elif action == "merged" and pr_key not in seen_merged:
                 seen_merged.add(pr_key)
                 prs_merged.append({
                     "repo": repo_short,
                     "repo_full": repo_name,
-                    "number": pr.get("number", 0),
-                    "title": pr.get("title", ""),
-                    "url": pr.get("html_url", ""),
+                    "number": number,
+                    "title": "",
+                    "url": make_html_url(repo_name, number),
                 })
+                request_title(repo_name, number)
 
         elif etype == "PullRequestReviewEvent":
+            # Truncated PR object: no title, html_url, or user
             pr = payload.get("pull_request", {})
             review = payload.get("review", {})
-            pr_author = pr.get("user", {}).get("login", "")
-            pr_key = f"{repo_name}#{pr.get('number', 0)}"
-
-            # Skip reviews on my own PRs
-            if pr_author.lower() == username.lower():
-                continue
+            number = pr.get("number", 0)
+            pr_key = f"{repo_name}#{number}"
 
             if pr_key not in seen_reviews:
                 seen_reviews.add(pr_key)
                 reviews.append({
                     "repo": repo_short,
                     "repo_full": repo_name,
-                    "number": pr.get("number", 0),
-                    "title": pr.get("title", ""),
-                    "url": pr.get("html_url", ""),
-                    "author": pr_author,
+                    "number": number,
+                    "title": "",
+                    "url": make_html_url(repo_name, number),
+                    "author": "",
                     "state": review.get("state", "commented"),
                 })
+                request_title(repo_name, number)
 
         elif etype == "PullRequestReviewCommentEvent":
+            # Truncated PR object: no title, html_url, or user
             pr = payload.get("pull_request", {})
-            pr_author = pr.get("user", {}).get("login", "")
-            pr_key = f"{repo_name}#{pr.get('number', 0)}"
-
-            if pr_author.lower() == username.lower():
-                continue
+            number = pr.get("number", 0)
+            pr_key = f"{repo_name}#{number}"
 
             if pr_key not in seen_reviews:
                 seen_reviews.add(pr_key)
                 reviews.append({
                     "repo": repo_short,
                     "repo_full": repo_name,
-                    "number": pr.get("number", 0),
-                    "title": pr.get("title", ""),
-                    "url": pr.get("html_url", ""),
-                    "author": pr_author,
+                    "number": number,
+                    "title": "",
+                    "url": make_html_url(repo_name, number),
+                    "author": "",
                     "state": "commented",
                 })
+                request_title(repo_name, number)
 
         elif etype == "IssueCommentEvent":
+            # Full issue object with title, html_url, user
             issue = payload.get("issue", {})
-            # Only include comments on PRs (issues with pull_request key)
             if "pull_request" not in issue:
                 continue
             issue_author = issue.get("user", {}).get("login", "")
-            pr_key = f"{repo_name}#{issue.get('number', 0)}"
+            number = issue.get("number", 0)
+            pr_key = f"{repo_name}#{number}"
 
             if issue_author.lower() == username.lower():
                 continue
@@ -166,14 +195,14 @@ def categorize_events(events, username):
                 reviews.append({
                     "repo": repo_short,
                     "repo_full": repo_name,
-                    "number": issue.get("number", 0),
+                    "number": number,
                     "title": issue.get("title", ""),
-                    "url": issue.get("html_url", ""),
+                    "url": issue.get("html_url", "") or make_html_url(repo_name, number),
                     "author": issue_author,
                     "state": "commented",
                 })
 
-    return prs_opened, prs_merged, reviews
+    return prs_opened, prs_merged, reviews, titles_needed
 
 
 def build_jira_search_paths(prs_opened, prs_merged, reviews):
@@ -194,7 +223,7 @@ def main():
     target_date = data["date"]
 
     events = fetch_events(username, target_date)
-    prs_opened, prs_merged, reviews = categorize_events(events, username)
+    prs_opened, prs_merged, reviews, titles_needed = categorize_events(events, username)
     jira_search_paths = build_jira_search_paths(prs_opened, prs_merged, reviews)
 
     result = {
@@ -202,6 +231,7 @@ def main():
         "prs_merged": prs_merged,
         "reviews": reviews,
         "jira_search_paths": jira_search_paths,
+        "titles_needed": titles_needed,
     }
 
     print(json.dumps(result))

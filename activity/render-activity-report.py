@@ -80,12 +80,16 @@ def fmt_jira_ref(jira_issue):
     return f"[{key}]({JIRA_BASE}/{key}) ({type_str}) {status}"
 
 
-def fmt_pr_ref(pr, pr_titles=None):
+def fmt_pr_ref(pr, pr_details=None):
     """Format a parsed PR URL as an inline cross-reference, with title if available."""
     path = f"{pr.get('owner', '')}/{pr['repo']}/pull/{pr['number']}" if 'owner' in pr else None
     title = None
-    if pr_titles and path:
-        title = pr_titles.get(path)
+    if pr_details and path:
+        detail = pr_details.get(path)
+        if isinstance(detail, dict):
+            title = detail.get("title")
+        elif isinstance(detail, str):
+            title = detail
     link = f"[{pr['repo']}#{pr['number']}]({pr['url']})"
     if title:
         return f"{link} — {title}"
@@ -100,7 +104,7 @@ REVIEW_STATE_LABEL = {
 }
 
 
-def render_pr_section(title, description, prs, crossref_map):
+def render_pr_section(title, description, prs, crossref_map, show_author=False):
     """Render a section of PRs with Jira cross-references."""
     if not prs:
         return ""
@@ -114,11 +118,16 @@ def render_pr_section(title, description, prs, crossref_map):
         path = f"{pr['repo_full']}/pull/{pr['number']}"
 
         # Build main line
-        if "author" in pr:
-            state_label = REVIEW_STATE_LABEL.get(pr.get("state", ""), pr.get("state", ""))
-            line = f"- [{pr['repo']}#{pr['number']}]({pr['url']}) by @{pr['author']} — {state_label} — {pr['title']}"
-        else:
-            line = f"- [{pr['repo']}#{pr['number']}]({pr['url']}) — {pr['title']}"
+        link = f"[{pr['repo']}#{pr['number']}]({pr['url']})"
+        parts = [f"- {link}"]
+        if show_author and pr.get("author"):
+            parts.append(f"by @{pr['author']}")
+        if pr.get("state"):
+            state_label = REVIEW_STATE_LABEL.get(pr["state"], pr["state"])
+            parts.append(state_label)
+        if pr.get("title"):
+            parts.append(pr["title"])
+        line = " — ".join(parts)
 
         lines.append(line)
 
@@ -181,12 +190,35 @@ def main():
             extracted["created"] = fields.get("created", "")
             jira_issues.append(extracted)
 
-    # Build PR title lookup from GitHub data + explicit pr_titles input
-    pr_titles = dict(data.get("pr_titles", {}))
+    # Build PR details lookup from fetched details + GitHub event data
+    # pr_details maps "owner/repo/pull/number" -> {"title": "...", "author": "..."}
+    pr_details = {}
+    for path, detail in data.get("pr_details", {}).items():
+        if isinstance(detail, dict):
+            pr_details[path] = detail
+        elif isinstance(detail, str):
+            pr_details[path] = {"title": detail, "author": ""}
+    # Also index titles from GitHub event data (IssueCommentEvent has full data)
     for pr in (github.get("prs_opened", []) + github.get("prs_merged", []) + github.get("reviews", [])):
         path = f"{pr['repo_full']}/pull/{pr['number']}"
-        if pr.get("title") and path not in pr_titles:
-            pr_titles[path] = pr["title"]
+        if path not in pr_details and pr.get("title"):
+            pr_details[path] = {"title": pr["title"], "author": pr.get("author", "")}
+
+    # Backfill missing titles/authors into GitHub data from pr_details
+    username = data.get("username", "")
+    for pr_list in [github.get("prs_opened", []), github.get("prs_merged", []), github.get("reviews", [])]:
+        for pr in pr_list:
+            path = f"{pr['repo_full']}/pull/{pr['number']}"
+            detail = pr_details.get(path, {})
+            if not pr.get("title") and detail.get("title"):
+                pr["title"] = detail["title"]
+            if not pr.get("author") and detail.get("author"):
+                pr["author"] = detail["author"]
+
+    # Filter out self-reviews (reviews on own PRs, detectable now that authors are filled)
+    reviews = github.get("reviews", [])
+    if username:
+        reviews = [r for r in reviews if r.get("author", "").lower() != username.lower()]
 
     # Build cross-reference maps
     crossref_map = build_crossref_map(jira_crossref_raw)
@@ -211,18 +243,18 @@ def main():
         sections.append(opened)
 
     reviewed = render_pr_section(
-        "Reviewed", "Reviews submitted on others' PRs.",
-        github.get("reviews", []), crossref_map
+        "Reviewed", "Reviews and comments on others' PRs.",
+        reviews, crossref_map, show_author=True
     )
     if reviewed:
         sections.append(reviewed)
 
-    jira_section = render_jira_section(jira_issues, jira_pr_map, target_date, pr_titles)
+    jira_section = render_jira_section(jira_issues, jira_pr_map, target_date, pr_details)
     if jira_section:
         sections.append(jira_section)
 
     # Empty state
-    total_gh = len(github.get("prs_merged", [])) + len(github.get("prs_opened", [])) + len(github.get("reviews", []))
+    total_gh = len(github.get("prs_merged", [])) + len(github.get("prs_opened", [])) + len(reviews)
     if total_gh == 0 and not jira_issues:
         sections.append("*No activity found for this date.*\n")
 

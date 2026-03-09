@@ -54,8 +54,8 @@ Each item is cross-referenced: GitHub PRs show linked Jira issues, and Jira issu
 
 ## Helper Scripts
 
-- `fetch-github-activity.py` — Fetches and categorizes GitHub events (PRs opened, merged, reviews/comments submitted)
-- `fetch-pr-titles.py` — Fetches PR titles from GitHub API in parallel for Jira-linked PRs
-- `render-activity-report.py` — Combines GitHub and Jira data, cross-references PRs with Jira issues, and renders the final report
+- `fetch-github-activity.py` — Fetches and categorizes GitHub events (PRs opened, merged, reviews/comments submitted). Note: the Events API returns truncated PR objects, so title/author are fetched separately.
+- `fetch-pr-details.py` — Fetches PR titles and authors from GitHub API in parallel
+- `render-activity-report.py` — Combines GitHub and Jira data, backfills missing PR details, filters self-reviews, cross-references PRs with Jira issues, and renders the final report
 
 (`/activity` is specific to the RHOAIENG Jira project but could be generalized)
