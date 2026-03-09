@@ -30,6 +30,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
    ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
    ln -s ~/git/claude-skills/epic-status ~/.claude/skills/epic-status
+   ln -s ~/git/claude-skills/github-activity ~/.claude/skills/github-activity
    ln -s ~/git/claude-skills/jira-activity ~/.claude/skills/jira-activity
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
@@ -91,6 +92,10 @@ Shows all issues in a selected epic, discovered from the current Green sprint. D
 Requires: `.context/`, `.shared-scripts/`
 
 (`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/github-activity](github-activity/)
+
+Shows a chronological timeline of your GitHub activity over a configurable time period. Renders day-grouped tables with timestamps in Eastern time, PR titles on every reference, commit SHA links with messages, and a summary section. Push events to branches with PRs link to the PR; review comments are consolidated into their parent review. Defaults to 7 days; pass a number for a different lookback (e.g. `/github-activity 14`).
 
 ### [/jira-activity](jira-activity/)
 
