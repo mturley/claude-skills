@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 """Discover unique Jira issue keys from multiple search results.
 
-Reads JSON from stdin with raw Jira search results from multiple queries
-(assignee, watcher, reporter, commenter). Deduplicates and outputs unique
-issue keys, identifying which ones had user comments.
+Reads persisted Jira search result files (one per query type) and
+deduplicates issue keys. Identifies which issues had user comments.
+
+Usage:
+    python3 discover-issues.py \
+        --assignee /path/to/assignee.json \
+        --watcher /path/to/watcher.json \
+        --reporter /path/to/reporter.json \
+        --commenter /path/to/commenter.json
+
+Each file should contain a raw Jira searchIssues result (possibly
+MCP-wrapped). Missing files are silently skipped.
 
 Uses only Python stdlib. No pip dependencies.
 """
 
+import argparse
 import json
 import os
 import sys
@@ -17,21 +27,25 @@ from jira_utils import detect_and_parse_jira
 
 
 def main():
-    raw = sys.stdin.read()
-    if not raw.strip():
-        print("Error: No input on stdin.", file=sys.stderr)
-        sys.exit(1)
-
-    data = json.loads(raw)
+    parser = argparse.ArgumentParser(description="Discover unique Jira issue keys from search results.")
+    parser.add_argument("--assignee", help="Path to assignee search result file")
+    parser.add_argument("--watcher", help="Path to watcher search result file")
+    parser.add_argument("--reporter", help="Path to reporter search result file")
+    parser.add_argument("--commenter", help="Path to commenter search result file")
+    args = parser.parse_args()
 
     all_keys = set()
     commented_keys = set()
 
     for query_name in ["assignee", "watcher", "reporter", "commenter"]:
-        raw_result = data.get(query_name)
-        if not raw_result:
+        file_path = getattr(args, query_name)
+        if not file_path or not os.path.exists(file_path):
             continue
-        issues = detect_and_parse_jira(raw_result)
+
+        with open(file_path) as f:
+            data = json.load(f)
+
+        issues = detect_and_parse_jira(data)
         for issue in issues:
             key = issue.get("key", "")
             if key:

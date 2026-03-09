@@ -27,11 +27,11 @@ The report is read-only and does not modify any Jira issues.
 
 ## Helper Scripts
 
-All scripts use stdin/stdout JSON, Python 3 stdlib only (no pip dependencies).
+All scripts use Python 3 stdlib only (no pip dependencies). Both accept file paths as CLI arguments, reading persisted Jira MCP tool-result files directly from disk.
 
-`discover-issues.py` takes raw Jira search results from 4 parallel queries (assignee, watcher, reporter, commenter) and deduplicates issue keys. Outputs `{issue_keys, commented_keys, total}` for driving the changelog/comment fetch phase.
+`discover-issues.py` reads 4 persisted search result files (`--assignee`, `--watcher`, `--reporter`, `--commenter`) and deduplicates issue keys. Outputs `{issue_keys, commented_keys, total}` for driving the comment fetch phase.
 
-`render-activity.py` takes raw `jira_getIssue` results (with `expand=changelog`) and raw `jira_getIssueComments` results. Extracts the specified user's changelog actions and comments, filters by date range, converts timestamps to the target timezone, groups by day, merges consecutive same-issue rows, and renders the full markdown timeline with emoji indicators.
+`render-activity.py` reads search result files (`--search-files`, containing issues with `expand=changelog`) and comment files (`--comment-files` as `ISSUE_KEY=/path/to/file.json`). Extracts the specified user's changelog actions and comments, filters by date range, converts timestamps to the target timezone, groups by day, merges consecutive same-issue rows, and renders the full markdown timeline with emoji indicators.
 
 ## What it shows
 

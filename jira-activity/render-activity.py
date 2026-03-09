@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Render a Jira activity timeline from changelog and comment data.
+"""Render a Jira activity timeline from search results and comment data.
 
-Reads JSON from stdin with raw Jira getIssue results (with changelogs)
-and getIssueComments results. Filters for the specified user's actions,
-converts timestamps to the target timezone, and renders a markdown
-timeline with merged consecutive rows, issue type/priority emojis,
-and hyperlinked Jira issues and PRs.
+Reads Jira searchIssues results (with expand=changelog) and
+getIssueComments results from persisted files. Filters for the specified
+user's actions, converts timestamps to the target timezone, and renders
+a markdown timeline with merged consecutive rows, issue type/priority
+emojis, and hyperlinked Jira issues and PRs.
+
+Usage:
+    python3 render-activity.py \
+        --username-keys mikejturley mturley \
+        --timezone America/New_York \
+        --cutoff 2026-03-02 \
+        --today 2026-03-09 \
+        --search-files /path/to/assignee.json /path/to/watcher.json ... \
+        --comment-files RHOAIENG-51543=/path/to/comments1.json ...
 
 Uses only Python stdlib. No pip dependencies.
 """
 
+import argparse
 import json
 import os
 import re
@@ -19,6 +29,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '.shared-scripts'))
 from format_utils import TYPE_EMOJI, PRIORITY_EMOJI, JIRA_BASE
+from jira_utils import detect_and_parse_jira
 
 try:
     from zoneinfo import ZoneInfo
@@ -59,21 +70,6 @@ def convert_tz(dt, tz_name):
         from datetime import timedelta
         return dt.astimezone(timezone(timedelta(hours=-5)))
     return dt
-
-
-def detect_single_issue(data):
-    """Parse a single getIssue result (possibly MCP-wrapped)."""
-    if isinstance(data, str):
-        data = json.loads(data)
-    if isinstance(data, list) and data and isinstance(data[0], dict) and "text" in data[0]:
-        inner = json.loads(data[0]["text"])
-        return detect_single_issue(inner)
-    if isinstance(data, dict):
-        if "data" in data and isinstance(data["data"], dict) and "key" in data["data"]:
-            return data["data"]
-        if "key" in data and "fields" in data:
-            return data
-    return None
 
 
 def detect_comments(data):
@@ -129,34 +125,84 @@ def format_action(field, from_str, to_str):
         return f"**{field}**: changed"
 
 
+def load_issues_from_search_files(search_files):
+    """Load and deduplicate issues from search result files.
+
+    Each file is a Jira searchIssues result (with expand=changelog),
+    possibly MCP-wrapped. Returns a dict of issue_key -> issue_data.
+    """
+    issues = {}
+    for file_path in search_files:
+        if not os.path.exists(file_path):
+            print(f"Warning: search file not found: {file_path}", file=sys.stderr)
+            continue
+        with open(file_path) as f:
+            data = json.load(f)
+        issue_list = detect_and_parse_jira(data)
+        for issue in issue_list:
+            key = issue.get("key", "")
+            if key and key not in issues:
+                issues[key] = issue
+    return issues
+
+
+def load_comments_from_files(comment_specs):
+    """Load comments from file paths.
+
+    Each spec is "ISSUE_KEY=/path/to/file.json".
+    Returns a dict of issue_key -> list of comment dicts.
+    """
+    comments = {}
+    for spec in comment_specs:
+        if "=" not in spec:
+            print(f"Warning: invalid comment spec (expected KEY=/path): {spec}", file=sys.stderr)
+            continue
+        issue_key, file_path = spec.split("=", 1)
+        if not os.path.exists(file_path):
+            print(f"Warning: comment file not found: {file_path}", file=sys.stderr)
+            continue
+        with open(file_path) as f:
+            data = json.load(f)
+        comments[issue_key] = detect_comments(data)
+    return comments
+
+
 def main():
-    raw = sys.stdin.read()
-    if not raw.strip():
-        print("Error: No input on stdin.", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Render Jira activity timeline.")
+    parser.add_argument("--username-keys", nargs="+", required=True,
+                        help="Jira username and key variants for the user")
+    parser.add_argument("--timezone", default="America/New_York",
+                        help="IANA timezone name (default: America/New_York)")
+    parser.add_argument("--cutoff", required=True,
+                        help="Start date for activity window (YYYY-MM-DD)")
+    parser.add_argument("--today", required=True,
+                        help="Today's date (YYYY-MM-DD)")
+    parser.add_argument("--search-files", nargs="+", required=True,
+                        help="Paths to Jira search result files (with expand=changelog)")
+    parser.add_argument("--comment-files", nargs="*", default=[],
+                        help="Comment file specs as ISSUE_KEY=/path/to/file.json")
+    args = parser.parse_args()
 
-    data = json.loads(raw)
-
-    username_keys = set(data.get("username_keys", []))
-    tz_name = data.get("timezone", "America/New_York")
-    cutoff_str = data.get("cutoff", "")
-    today_str = data.get("today", "")
-    issues_raw = data.get("issues", {})
-    comments_raw = data.get("comments", {})
+    username_keys = set(args.username_keys)
+    tz_name = args.timezone
+    cutoff_str = args.cutoff
+    today_str = args.today
 
     cutoff = None
     if cutoff_str:
         cutoff = datetime.fromisoformat(cutoff_str + "T00:00:00+00:00")
 
+    # Load issues from search result files (deduplicated)
+    issues_map = load_issues_from_search_files(args.search_files)
+
+    # Load comments from comment files
+    comments_map = load_comments_from_files(args.comment_files)
+
     timeline = []
     issue_meta = {}  # Cache issue metadata
 
     # Process each issue's changelog
-    for issue_key, raw_issue in issues_raw.items():
-        issue = detect_single_issue(raw_issue)
-        if not issue:
-            continue
-
+    for issue_key, issue in issues_map.items():
         fields = issue.get("fields", {})
         summary = fields.get("summary", "")
         issue_type_obj = fields.get("issuetype", {}) or {}
@@ -210,9 +256,7 @@ def main():
                 })
 
     # Process comments
-    for issue_key, raw_comments in comments_raw.items():
-        comments = detect_comments(raw_comments)
-
+    for issue_key, comments in comments_map.items():
         meta = issue_meta.get(issue_key, {})
         summary = meta.get("summary", "")
         issue_type = meta.get("type", "")
