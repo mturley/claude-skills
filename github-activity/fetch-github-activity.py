@@ -204,6 +204,7 @@ def process_events(events, username):
             pr = payload.get("pull_request", {})
             merged = pr.get("merged", False)
             pr_info = extract_pr_info(event)
+            pr_author = (pr.get("user") or {}).get("login", "")
 
             if action == "closed" and merged:
                 action = "merged"
@@ -221,11 +222,14 @@ def process_events(events, username):
                     "pr_repo": pr_repo,
                     "pr_number": pr_number,
                     "pr_url": f"https://github.com/{pr_owner}/{pr_repo}/pull/{pr_number}",
+                    "pr_author": pr_author,
                 })
 
         elif event_type == "PullRequestReviewEvent":
             review = payload.get("review", {})
             state = review.get("state", "")
+            pr = payload.get("pull_request", {})
+            pr_author = (pr.get("user") or {}).get("login", "")
             pr_info = extract_pr_info(event)
 
             if pr_info:
@@ -241,9 +245,12 @@ def process_events(events, username):
                     "pr_repo": pr_repo,
                     "pr_number": pr_number,
                     "pr_url": f"https://github.com/{pr_owner}/{pr_repo}/pull/{pr_number}",
+                    "pr_author": pr_author,
                 })
 
         elif event_type == "PullRequestReviewCommentEvent":
+            pr = payload.get("pull_request", {})
+            pr_author = (pr.get("user") or {}).get("login", "")
             pr_info = extract_pr_info(event)
             if pr_info:
                 pr_owner, pr_repo, pr_number = pr_info
@@ -257,6 +264,7 @@ def process_events(events, username):
                     "pr_repo": pr_repo,
                     "pr_number": pr_number,
                     "pr_url": f"https://github.com/{pr_owner}/{pr_repo}/pull/{pr_number}",
+                    "pr_author": pr_author,
                 })
 
         elif event_type == "IssueCommentEvent":
@@ -267,6 +275,7 @@ def process_events(events, username):
             number = issue.get("number")
 
             if number:
+                issue_author = (issue.get("user") or {}).get("login", "")
                 if is_pr:
                     pr_info = extract_pr_info(event)
                     if pr_info:
@@ -283,6 +292,7 @@ def process_events(events, username):
                         "pr_repo": pr_repo,
                         "pr_number": pr_number,
                         "pr_url": f"https://github.com/{pr_owner}/{pr_repo}/pull/{pr_number}",
+                        "pr_author": issue_author,
                     })
                 else:
                     entries.append({
@@ -293,6 +303,7 @@ def process_events(events, username):
                         "issue_number": number,
                         "issue_title": issue.get("title", ""),
                         "issue_url": issue.get("html_url", ""),
+                        "issue_author": issue_author,
                     })
 
         elif event_type == "CreateEvent":
@@ -375,7 +386,7 @@ def fetch_branch_pr(fork_owner, repo_name, branch, upstream_full, all_upstreams=
     for target in targets:
         stdout, rc = run_gh([
             "api", f"repos/{target}/pulls?head={fork_owner}:{branch}&state=all",
-            "--jq", ".[0] | {number, title}",
+            "--jq", ".[0] | {number, title, author: .user.login}",
         ])
         if rc == 0 and stdout.strip() and stdout.strip() != "null":
             try:
@@ -387,6 +398,7 @@ def fetch_branch_pr(fork_owner, repo_name, branch, upstream_full, all_upstreams=
                         "pr_repo": t_repo,
                         "pr_number": data["number"],
                         "pr_title": data.get("title", ""),
+                        "pr_author": data.get("author", ""),
                         "pr_url": f"https://github.com/{target}/pull/{data['number']}",
                     }
             except json.JSONDecodeError:
@@ -473,6 +485,7 @@ def apply_enrichment(entries, pr_titles, commit_messages, branch_prs):
                 entry["pr_repo"] = pr_info["pr_repo"]
                 entry["pr_number"] = pr_info["pr_number"]
                 entry["pr_title"] = pr_info["pr_title"]
+                entry["pr_author"] = pr_info.get("pr_author", "")
                 entry["pr_url"] = pr_info["pr_url"]
 
 

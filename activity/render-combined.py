@@ -151,6 +151,8 @@ def extract_jira_entries(search_files, comment_specs, username_keys, tz_name, cu
         summary = fields.get("summary", "")
         issue_type = (fields.get("issuetype") or {}).get("name", "")
         priority = (fields.get("priority") or {}).get("name", "")
+        assignee_obj = fields.get("assignee", {}) or {}
+        assignee = assignee_obj.get("displayName", "") or assignee_obj.get("name", "")
 
         type_emoji = TYPE_EMOJI.get(issue_type, "")
         ref_prefix = f"{type_emoji} " if type_emoji else ""
@@ -182,6 +184,7 @@ def extract_jira_entries(search_files, comment_specs, username_keys, tz_name, cu
                     "dt": dt_local,
                     "source": "jira",
                     "reference": reference,
+                    "person": assignee,
                     "action": action,
                     "issue_key": issue_key,
                 })
@@ -192,6 +195,8 @@ def extract_jira_entries(search_files, comment_specs, username_keys, tz_name, cu
         fields = issue.get("fields", {})
         summary = fields.get("summary", "")
         issue_type = (fields.get("issuetype") or {}).get("name", "")
+        assignee_obj = fields.get("assignee", {}) or {}
+        assignee = assignee_obj.get("displayName", "") or assignee_obj.get("name", "")
 
         type_emoji = TYPE_EMOJI.get(issue_type, "")
         ref_prefix = f"{type_emoji} " if type_emoji else ""
@@ -217,6 +222,7 @@ def extract_jira_entries(search_files, comment_specs, username_keys, tz_name, cu
                 "dt": dt_local,
                 "source": "jira",
                 "reference": reference,
+                "person": assignee,
                 "action": f"**Comment:** \"{preview}\"",
                 "issue_key": issue_key,
             })
@@ -347,10 +353,13 @@ def extract_github_entries(github_json_path, tz_name):
         reference = format_gh_reference(event)
         action = format_gh_action(event)
 
+        person = event.get("pr_author") or event.get("issue_author") or ""
+
         entries.append({
             "dt": dt_local,
             "source": "github",
             "reference": reference,
+            "person": person,
             "action": action,
         })
 
@@ -386,22 +395,28 @@ def render_timeline(jira_entries, github_entries, github_summary, today_str):
             heading += " (today)"
         lines.append(heading)
         lines.append("")
-        lines.append("| Time (ET) | Reference | Action |")
-        lines.append("|-----------|-----------|--------|")
+        lines.append("| Time (ET) | Assignee/Author | Reference | Action |")
+        lines.append("|-----------|-----------------|-----------|--------|")
 
         prev_ref = None
         for entry in day["entries"]:
             time_str = entry["dt"].strftime("%-I:%M %p")
             ref = entry["reference"]
+            person = entry.get("person", "")
 
-            display_ref = ref if ref != prev_ref else ""
+            if ref == prev_ref:
+                display_ref = ""
+                display_person = ""
+            else:
+                display_ref = ref
+                display_person = person
             prev_ref = ref
 
             # Escape pipes in content
             display_ref = display_ref.replace("|", "\\|")
             action = entry["action"].replace("|", "\\|")
 
-            lines.append(f"| {time_str} | {display_ref} | {action} |")
+            lines.append(f"| {time_str} | {display_person} | {display_ref} | {action} |")
 
         lines.append("")
 

@@ -82,6 +82,7 @@ The timeline is organized by day, with a table per day. Columns:
 | Column | Content |
 |--------|---------|
 | Time (ET) | 12-hour AM/PM format, converted to Eastern Time |
+| Assignee/Author | Jira: issue assignee display name. GitHub: PR/issue author username. Blank when same as previous row (visual merge). |
 | Reference | Jira: type emoji + hyperlinked issue key + title. GitHub: octopus emoji + PR/branch link + title. Blank when same as previous row (visual merge). |
 | Action | What changed: field transitions, status changes, comments, PR actions, commits, reviews, etc. |
 

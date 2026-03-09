@@ -23,7 +23,7 @@ If the output is too large for the tool result, it will be persisted to a file. 
 ## Output Format
 
 The report contains:
-- **Day-grouped tables** with columns: Time (12-hour ET) | PR / Branch | Action
+- **Day-grouped tables** with columns: Time (12-hour ET) | Author | PR / Branch | Action
 - **Push events** show the commit SHA link and first line of the commit message
 - **Non-main branch pushes** link to their associated PR (with title) when one exists
 - **Review events** are consolidated — individual review comments are rolled up into their parent review submission (e.g. "Requested changes (12 comments)")

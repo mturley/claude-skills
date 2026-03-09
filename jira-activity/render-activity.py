@@ -210,10 +210,14 @@ def main():
         priority_obj = fields.get("priority", {}) or {}
         priority = priority_obj.get("name", "")
 
+        assignee_obj = fields.get("assignee", {}) or {}
+        assignee = assignee_obj.get("displayName", "") or assignee_obj.get("name", "")
+
         issue_meta[issue_key] = {
             "summary": summary,
             "type": issue_type,
             "priority": priority,
+            "assignee": assignee,
         }
 
         changelog = issue.get("changelog", {})
@@ -252,6 +256,7 @@ def main():
                     "summary": summary,
                     "type": issue_type,
                     "priority": priority,
+                    "assignee": assignee,
                     "action": action,
                 })
 
@@ -261,6 +266,7 @@ def main():
         summary = meta.get("summary", "")
         issue_type = meta.get("type", "")
         priority = meta.get("priority", "")
+        assignee = meta.get("assignee", "")
 
         for comment in comments:
             author = comment.get("author", {})
@@ -289,6 +295,7 @@ def main():
                 "summary": summary,
                 "type": issue_type,
                 "priority": priority,
+                "assignee": assignee,
                 "action": f"**Comment:** \"{preview}\"",
             })
 
@@ -319,25 +326,26 @@ def main():
             heading += " (today)"
         lines.append(heading)
         lines.append("")
-        lines.append("| Time (ET) | Issue | Type | Priority | Action |")
-        lines.append("|-----------|-------|------|----------|--------|")
+        lines.append("| Time (ET) | Assignee | Issue | Type | Priority | Action |")
+        lines.append("|-----------|----------|-------|------|----------|--------|")
 
         prev_key = None
         for entry in day["entries"]:
             time_str = entry["dt"].strftime("%-I:%M %p")
 
             if entry["key"] == prev_key:
-                # Merge cells — leave issue/type/priority blank
-                lines.append(f"| {time_str} | | | | {entry['action']} |")
+                # Merge cells — leave assignee/issue/type/priority blank
+                lines.append(f"| {time_str} | | | | | {entry['action']} |")
             else:
                 type_str = format_type(entry["type"])
                 pri_str = format_priority(entry["priority"])
+                assignee_str = entry.get("assignee", "")
                 issue_link = (
                     f"[{entry['key']}]({JIRA_BASE}/{entry['key']})"
                     f" — {entry['summary']}"
                 )
                 lines.append(
-                    f"| {time_str} | {issue_link} | {type_str}"
+                    f"| {time_str} | {assignee_str} | {issue_link} | {type_str}"
                     f" | {pri_str} | {entry['action']} |"
                 )
                 prev_key = entry["key"]

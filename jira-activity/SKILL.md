@@ -80,6 +80,7 @@ The timeline is organized by day, with a table per day. Columns:
 | Column | Content |
 |--------|---------|
 | Time (ET) | 12-hour AM/PM format, converted to Eastern Time |
+| Assignee | Display name of the issue's assignee. Blank when same as previous row (visual merge). |
 | Issue | Hyperlinked `[KEY](url) — Full Issue Title`. Blank when same as previous row (visual merge). |
 | Type | Emoji + type name (🟥 Bug, 🟩 Story, ☑️ Task, ⚡ Epic, etc.) |
 | Priority | Emoji + priority name (⛔ Blocker, 🔺 Critical, 🔶 Major, 🔵 Normal, etc.) |

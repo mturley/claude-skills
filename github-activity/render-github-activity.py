@@ -182,26 +182,32 @@ def render_day_table(day_label, day_entries, today_str, tz_name):
     heading = f"## {day_label}"
     lines.append(heading)
     lines.append("")
-    lines.append("| Time | PR / Branch | Action |")
-    lines.append("|------|------------|--------|")
+    lines.append("| Time | Author | PR / Branch | Action |")
+    lines.append("|------|--------|------------|--------|")
 
     prev_pr_branch = None
     for entry in day_entries:
         dt = entry.get("_dt_local")
         time_str = dt.strftime("%-I:%M %p") if dt else ""
 
+        author = entry.get("pr_author") or entry.get("issue_author") or ""
         pr_branch = format_pr_branch(entry)
         action = format_action(entry)
 
-        # Visual merge: blank PR/Branch if same as previous row
-        display_pr_branch = pr_branch if pr_branch != prev_pr_branch else ""
+        # Visual merge: blank PR/Branch and Author if same as previous row
+        if pr_branch == prev_pr_branch:
+            display_pr_branch = ""
+            display_author = ""
+        else:
+            display_pr_branch = pr_branch
+            display_author = author
         prev_pr_branch = pr_branch
 
         # Escape pipes in content
         display_pr_branch = display_pr_branch.replace("|", "\\|")
         action = action.replace("|", "\\|")
 
-        lines.append(f"| {time_str} | {display_pr_branch} | {action} |")
+        lines.append(f"| {time_str} | {display_author} | {display_pr_branch} | {action} |")
 
     lines.append("")
     return lines
