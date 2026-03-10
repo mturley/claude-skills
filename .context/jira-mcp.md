@@ -21,6 +21,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 | Original Story Points | `customfield_12314040` | Numeric or null | Original estimate before refinement |
 | Blocked | `customfield_12316543` | Object: `{"value": "True"}` | Select field, True/False |
 | Blocked Reason | `customfield_12316544` | String | "None" or actual reason text |
+| Activity Type | `customfield_12320040` | Object: `{"id": "52756"}` | See Activity Type IDs below |
 | Flagged | `customfield_12315542` | null or flagged | For impediments |
 
 ---
@@ -102,6 +103,23 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 | Critical | `26750` |
 | Moderate | `26752` |
 | Low | `26753` |
+
+---
+
+### Activity Type (customfield_12320040)
+
+**Format:** Object with `id` key (using the option ID number)
+```json
+{"id": "52756"}
+```
+
+**Activity Type Values:**
+| Value | ID |
+|-------|------|
+| None | `-1` |
+| Tech Debt & Quality | `52756` |
+| New Features | `52757` |
+| Learning & Enablement | `52758` |
 
 ---
 
