@@ -42,7 +42,19 @@ Review a pull request by checking out its branch and analyzing the changes.
    - Provide a summary: "X of Y previous comments have been addressed"
    - For any unaddressed comments, explain what still needs to be done
 
-### Phase 5: Review the PR
+### Phase 5: Check CI Status
+
+1. Run `gh pr checks {pr_number}` to get the status of all CI checks
+2. If any checks have failed:
+   - For each failed check, fetch the failure logs: `gh run view {run_id} --log-failed` (extract the run ID from the check URL)
+   - Analyze the logs to determine the root cause of each failure
+   - Categorize failures: Is this caused by changes in this PR, or a pre-existing/infrastructure issue?
+3. Include a **CI Status** section in the review output:
+   - List all failing checks with their names and root causes
+   - For PR-caused failures, provide specific guidance on how to fix them (e.g. lint errors, test failures, type errors)
+   - For pre-existing/infrastructure failures, note that they appear unrelated to the PR changes
+
+### Phase 6: Review the PR
 
 Analyze the changes and provide a thorough code review:
 
@@ -61,7 +73,7 @@ Analyze the changes and provide a thorough code review:
 
 Be constructive and specific. Reference line numbers when pointing out issues.
 
-### Post-Review
+### Post-Review (after Phase 6)
 
 After completing the review:
 
