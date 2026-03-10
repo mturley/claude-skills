@@ -73,6 +73,14 @@ Analyze the changes and provide a thorough code review:
 
 Be constructive and specific. Reference line numbers when pointing out issues.
 
+Use emojis for emphasis throughout the review to make important information scannable:
+- 🔴 for critical issues, CI failures caused by the PR, and blockers
+- 🟡 for warnings, medium-severity concerns, and things that should be addressed
+- 🟢 for passing checks, addressed comments, and positive observations
+- ⚠️ for unaddressed review comments and remaining action items
+- 📝 for informational notes and suggestions
+- 🔧 for pre-existing/infrastructure CI failures unrelated to the PR
+
 ### Post-Review (after Phase 6)
 
 After completing the review:
