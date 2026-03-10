@@ -35,7 +35,10 @@ The review includes:
 - **Summary**: What the PR does based on title, description, and changes
 - **File-by-file analysis**: Code quality, potential bugs, security, performance
 - **Previous comments status**: Which review comments have been addressed
+- **CI status**: Failing checks with root cause analysis
 - **Overall assessment**: Does implementation match the goal? Missing pieces?
 - **Suggestions**: Concrete, actionable feedback with line numbers
+
+Reviews use emojis for scannable emphasis: 🔴 critical/blockers, 🟡 warnings, 🟢 passing/positive, ⚠️ unaddressed comments, 📝 notes, 🔧 infra failures.
 
 After the review, you remain on the PR branch to inspect the code further.
