@@ -208,6 +208,17 @@ project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-area-mode
 project = RHOAIENG AND component = "AI Core Dashboard" AND sprint in futureSprints() ORDER BY created DESC
 ```
 
+**For previous (most recently closed) sprint — two-step approach:**
+
+Sprint names are inconsistent (e.g. `Dashboard - Green - 34` vs `Dashboard - Green-35`), so do NOT guess the exact sprint name. Instead:
+
+1. Search for a recent issue from a closed Green sprint to discover the sprint name and ID:
+```jql
+project = RHOAIENG AND sprint in closedSprints() AND component = "AI Core Dashboard" AND labels = "dashboard-area-model-registry" ORDER BY updated DESC
+```
+2. Parse the `customfield_12310940` sprint string from the first result to extract the sprint `id` and `name`.
+3. Use the sprint ID (e.g. `sprint = 81753`) to query all issues from that sprint.
+
 ### Parsing Sprint Data
 
 The `customfield_12310940` field contains sprint data as strings like:
