@@ -32,17 +32,29 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 **IMPORTANT:** The project ID must ALSO be included in customFields as `"project": {"id": "12340620"}` when creating issues. The `projectId` parameter alone is not sufficient.
 
-**Component:** AI Core Dashboard (include via `customFields`)
-
 **Issue Type IDs:**
 - Bug: `1`
 - Task: `3`
 - Story: `17`
 
+### Dashboard Team Issues (default)
+
+For issues owned by the RHOAI Dashboard team (UI/frontend work):
+
+**Component:** AI Core Dashboard (ID `12391778`)
+**Team:** RHOAI Dashboard — `"4158"`
 **Labels:**
 - Model Registry only: `dashboard-area-model-registry`
 - Model Catalog only: `dashboard-area-model-catalog`
 - Both: Use both labels
+
+### AI Hub Team Issues
+
+For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
+
+**Component:** AI Hub (ID `12391775`)
+**Team:** RHOAI AI Hub — `"4154"`
+**Labels:** Typically none (no dashboard-area labels)
 
 ---
 
