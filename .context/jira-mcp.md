@@ -153,7 +153,9 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 
 **Value:** Full PR URL(s) as a string. Multiple PRs are comma-separated.
 
-**When to use:** Always set this field when creating a PR for a Jira issue. When the user asks to "link a PR to an issue", this is the field to update.
+**When to use:** This field is for PRs that **fix** the issue. When the user asks to "link a PR to an issue", this is the field to update.
+
+**When NOT to set:** Do not set this field when creating a new issue, even if a PR is mentioned in context. A PR that *caused* a bug is not the same as a PR that *fixes* it. Only populate this field when a fix PR exists or is being created for the issue.
 
 **How to set:**
 1. First, fetch the issue with `jira_getIssue` and check the current value of `customfield_12310220`
