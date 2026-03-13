@@ -28,6 +28,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
+   ln -s ~/git/claude-skills/claude-activity ~/.claude/skills/claude-activity
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -79,6 +80,10 @@ Requires: `.context/`
 
 Loads the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app via Puppeteer and summarizes recommended actions for PR reviews and team work. The dashboard app must be running locally at http://localhost:5173/ before invoking.
 Requires: Puppeteer MCP server
+
+### [/claude-activity](claude-activity/)
+
+Summarizes what was accomplished across all Claude Code sessions for a given day. Scans session JSONL files, extracts user messages, and generates a concise accomplishment report grouped by project.
 
 ### [/populate-people](populate-people/)
 
