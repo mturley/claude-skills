@@ -249,6 +249,26 @@ project = RHOAIENG AND sprint in closedSprints() AND component = "AI Core Dashbo
 2. Parse the `customfield_12310940` sprint string from the first result to extract the sprint `id` and `name`.
 3. Use the sprint ID (e.g. `sprint = 81753`) to query all issues from that sprint.
 
+### Sprint Board URL
+
+To link to a sprint's board view in Jira, use the RapidBoard URL format:
+```
+https://issues.redhat.com/secure/RapidBoard.jspa?rapidView={rapidViewId}&sprint={sprintId}
+```
+
+**Parameters:**
+- `rapidView` — The board ID. For the AI Core Dashboard board: `18687`
+- `sprint` — The sprint ID (integer, extracted from sprint field data)
+
+**Example:**
+```
+https://issues.redhat.com/secure/RapidBoard.jspa?rapidView=18687&sprint=82844
+```
+
+The `rapidViewId` can also be found in the sprint field string data (see "Parsing Sprint Data" below).
+
+---
+
 ### Parsing Sprint Data
 
 The `customfield_12310940` field contains sprint data as strings like:
@@ -269,6 +289,21 @@ Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns:
 - **Monarch sprints:** `Dashboard - Monarch-N` (different team)
 
 **Only use sprints matching your team's pattern.** For the Model Registry/Catalog team, filter for "Green" in the sprint name.
+
+### Green Scrum Quick Filter
+
+**Saved Filter ID:** `12439012`
+
+This saved filter contains the Green scrum's area labels. Use it in JQL queries instead of specifying individual `dashboard-area-*` labels:
+
+```jql
+filter = 12439012
+```
+
+**Example — Green scrum issues in current sprint:**
+```jql
+project = RHOAIENG AND sprint in openSprints() AND filter = 12439012 AND status = "Review" ORDER BY priority ASC
+```
 
 ---
 

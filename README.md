@@ -33,6 +33,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/activity ~/.claude/skills/activity
    ln -s ~/git/claude-skills/github-activity ~/.claude/skills/github-activity
    ln -s ~/git/claude-skills/jira-activity ~/.claude/skills/jira-activity
+   ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -116,6 +117,11 @@ Creates Jira issues in the RHOAIENG project. This skill is specific to the Red H
 Requires: `.context/`
 
 (`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
+
+### [/recommended-review](recommended-review/)
+
+Loads the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app via Puppeteer and summarizes recommended actions for PR reviews and team work. The dashboard app must be running locally at http://localhost:5173/ before invoking.
+Requires: Puppeteer MCP server
 
 ### [/populate-people](populate-people/)
 
