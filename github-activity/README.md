@@ -1,5 +1,7 @@
 # /github-activity
 
+> **Obsolete:** This skill has been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skill still works but will recommend using the dashboard instead when invoked.
+
 Generates a chronological timeline of your GitHub activity over a configurable time period.
 
 ## What it shows

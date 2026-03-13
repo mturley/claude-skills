@@ -27,12 +27,6 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/pr-worktree ~/.claude/skills/pr-worktree
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
-   ln -s ~/git/claude-skills/reviews-status ~/.claude/skills/reviews-status
-   ln -s ~/git/claude-skills/sprint-status ~/.claude/skills/sprint-status
-   ln -s ~/git/claude-skills/epic-status ~/.claude/skills/epic-status
-   ln -s ~/git/claude-skills/activity ~/.claude/skills/activity
-   ln -s ~/git/claude-skills/github-activity ~/.claude/skills/github-activity
-   ln -s ~/git/claude-skills/jira-activity ~/.claude/skills/jira-activity
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
@@ -74,43 +68,6 @@ Creates an isolated git worktree for a new branch and opens it in a new editor w
 
 Creates an isolated git worktree for a pull request and opens it in a new editor window. Use with `/review` to review PRs without affecting your working tree.
 
-### [/reviews-status](reviews-status/)
-
-Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues. Highlights where your action is needed with emoji indicators and links to Jira issues with type, status, sprint, and epic. Supports `exclude-jira` argument to skip Jira lookups for a faster report.
-Requires: `.context/`, `.shared-scripts/`
-
-(`/reviews-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
-
-### [/sprint-status](sprint-status/)
-
-Shows the current Green sprint status with all tickets grouped by workflow status (Review, In Progress, Backlog, Closed/Resolved). Each section includes a table with Jira issue details (story points, assignee, blocked status, epic) and linked GitHub PR metadata (review status, CI status).
-Requires: `.context/`, `.shared-scripts/`
-
-(`/sprint-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
-
-### [/epic-status](epic-status/)
-
-Shows all issues in a selected epic, discovered from the current Green sprint. Displays Jira issue details and GitHub PR metadata grouped by status, with sprint information for each issue.
-Requires: `.context/`, `.shared-scripts/`
-
-(`/epic-status` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
-
-### [/activity](activity/)
-
-Shows a combined chronological timeline of your Jira and GitHub activity, merged into a single day-grouped report. Interleaves Jira changelog actions/comments and GitHub commits/PRs/reviews by timestamp. Jira entries are prefixed with issue type emojis; GitHub entries with the octopus emoji. Includes a combined summary. Defaults to 7 days; pass a number for a different lookback (e.g. `/activity 14`).
-Requires: `.context/`, `.shared-scripts/`, `jira-activity/`, `github-activity/`
-
-### [/github-activity](github-activity/)
-
-Shows a chronological timeline of your GitHub activity over a configurable time period. Renders day-grouped tables with timestamps in Eastern time, PR titles on every reference, commit SHA links with messages, and a summary section. Push events to branches with PRs link to the PR; review comments are consolidated into their parent review. Defaults to 7 days; pass a number for a different lookback (e.g. `/github-activity 14`).
-
-### [/jira-activity](jira-activity/)
-
-Shows a chronological timeline of your Jira activity (changelog actions and comments) over a configurable time period. Renders with issue type/priority emojis, hyperlinked issues and PRs, times converted to Eastern Time, and merged rows for consecutive actions on the same issue. Defaults to 7 days; pass a number for a different lookback (e.g. `/jira-activity 14`).
-Requires: `.context/`, `.shared-scripts/`
-
-(`/jira-activity` is specific to RHOAI Dashboard team's Green Scrum, but could be generalized)
-
 ### [/create-jira](create-jira/)
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
@@ -126,6 +83,34 @@ Requires: Puppeteer MCP server
 ### [/populate-people](populate-people/)
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information by cross-referencing Confluence, Jira, and GitHub. Useful for populating team context that other skills can reference.
+
+## Obsolete Skills
+
+These skills have been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skills still work but will recommend using the dashboard instead when invoked.
+
+### [/reviews-status](reviews-status/)
+
+Shows the review status of open PRs across your work, your team's sprint, and your scrum members, cross-referenced with RHOAIENG Jira issues.
+
+### [/sprint-status](sprint-status/)
+
+Shows the current Green sprint status with all tickets grouped by workflow status, including Jira issue details and GitHub PR metadata.
+
+### [/epic-status](epic-status/)
+
+Shows all issues in a selected epic, discovered from the current Green sprint, with Jira details and GitHub PR metadata.
+
+### [/activity](activity/)
+
+Shows a combined chronological timeline of your Jira and GitHub activity, merged into a single day-grouped report.
+
+### [/github-activity](github-activity/)
+
+Shows a chronological timeline of your GitHub activity over a configurable time period.
+
+### [/jira-activity](jira-activity/)
+
+Shows a chronological timeline of your Jira activity (changelog actions and comments) over a configurable time period.
 
 ## Skills in Other Projects
 

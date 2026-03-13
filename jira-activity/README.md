@@ -1,5 +1,7 @@
 # /jira-activity
 
+> **Obsolete:** This skill has been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skill still works but will recommend using the dashboard instead when invoked.
+
 Shows a chronological timeline of your Jira activity over a configurable time period. Extracts changelog actions (status transitions, assignments, field changes, PR links) and comments from all issues you've touched, rendered with issue type/priority emojis, hyperlinked Jira issues and PRs, and times converted to Eastern Time.
 
 This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized.

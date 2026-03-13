@@ -1,5 +1,7 @@
 # /epic-status
 
+> **Obsolete:** This skill has been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skill still works but will recommend using the dashboard instead when invoked.
+
 Shows all issues in a selected epic, discovered from the current Green sprint. Displays Jira issue details and GitHub PR metadata grouped by workflow status, with sprint information for each issue.
 
 This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized.

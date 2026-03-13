@@ -1,5 +1,9 @@
 # Sprint Status
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show the current Green sprint status with all tickets grouped by status (Review, Testing, In Progress, Backlog, Closed/Resolved), including Jira issue details and GitHub PR metadata.
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)

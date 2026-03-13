@@ -1,5 +1,7 @@
 # /activity
 
+> **Obsolete:** This skill has been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skill still works but will recommend using the dashboard instead when invoked.
+
 Shows a combined chronological timeline of your Jira and GitHub activity over a configurable time period, merged into a single day-grouped report.
 
 This combines the data from `/jira-activity` and `/github-activity` into one interleaved timeline, so all work activity appears in chronological order regardless of source.

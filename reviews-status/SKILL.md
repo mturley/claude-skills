@@ -1,5 +1,9 @@
 # Reviews Status
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show the review status of open PRs across my work, my team's sprint, and my scrum members, cross-referenced with RHOAIENG Jira issues.
 
 **Optional argument:** `exclude-jira` — skip all Jira lookups and render a faster report without Jira columns, Table 3, or epic data. When this argument is present, skip all `jira_searchIssues` calls and Jira-dependent processing in every phase.

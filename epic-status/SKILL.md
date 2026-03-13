@@ -1,5 +1,9 @@
 # Epic Status
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show the status of all issues in a selected epic, discovered from the current Green sprint. Discovers which epics are referenced by sprint issues, asks which one to view, then fetches all issues in that epic across all sprints with Jira details and GitHub PR metadata.
 
 **Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)

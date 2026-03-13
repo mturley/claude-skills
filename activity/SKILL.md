@@ -1,5 +1,9 @@
 # Activity
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show a combined chronological timeline of your Jira and GitHub activity over a configurable time period, merged into a single day-grouped report.
 
 **Optional argument:** Number of days to look back (default: 7). Example: `/activity 14`

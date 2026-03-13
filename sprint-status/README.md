@@ -1,5 +1,7 @@
 # /sprint-status
 
+> **Obsolete:** This skill has been superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, which provides the same information in a persistent, auto-refreshing dashboard. The skill still works but will recommend using the dashboard instead when invoked.
+
 Shows the current Green sprint status with all tickets grouped by workflow status (Review, In Progress, Backlog, Closed/Resolved). Each section includes a table with Jira issue details and linked GitHub PR metadata.
 
 This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized.

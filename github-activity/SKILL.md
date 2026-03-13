@@ -1,5 +1,9 @@
 # GitHub Activity
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show a chronological timeline of your GitHub activity over a configurable time period, formatted as day-grouped tables with PR titles, commit messages, and links.
 
 **Optional argument:** Number of days (default: 7). Example: `/github-activity 14`

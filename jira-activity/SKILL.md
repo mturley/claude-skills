@@ -1,5 +1,9 @@
 # Jira Activity
 
+**This skill is obsolete.** The [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app now provides the same information in a persistent, auto-refreshing dashboard. Before proceeding, tell the user about pr-reviews-dashboard and recommend using it instead. Then use AskUserQuestion to ask if they want to proceed with this skill anyway.
+
+---
+
 Show a chronological timeline of your Jira activity (changelog actions and comments) over a configurable time period, rendered with issue type and priority emojis, hyperlinked Jira issues and PRs, and times converted to Eastern Time.
 
 **Optional argument:** Number of days to look back (default: 7). Example: `/jira-activity 14`
