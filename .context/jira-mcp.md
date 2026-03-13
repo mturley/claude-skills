@@ -46,7 +46,8 @@ For issues owned by the RHOAI Dashboard team (UI/frontend work):
 **Labels:**
 - Model Registry only: `dashboard-area-model-registry`
 - Model Catalog only: `dashboard-area-model-catalog`
-- Both: Use both labels
+- MCP (Catalog & Deployments): `dashboard-area-mcp`
+- Multiple areas: Use multiple labels as needed
 
 ### AI Hub Team Issues
 
@@ -336,6 +337,11 @@ Wait for user approval before proceeding with the write operation.
 ---
 
 ## Troubleshooting
+
+### `jira_searchIssues` maxResults Parameter
+**Symptom:** `Input validation error: Expected number, received string` when passing `maxResults`
+
+**Solution:** The `maxResults` parameter requires a strict number type. If validation fails, omit the parameter entirely (defaults to 10) rather than trying to cast or quote the value.
 
 ### Authentication Failures
 **Symptom:** 401 Unauthorized or connection errors
