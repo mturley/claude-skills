@@ -33,7 +33,7 @@ This combines the data from `/jira-activity` and `/github-activity` into one int
    gh auth status
    ```
 
-3. Symlink the required directories to `~/.claude/skills/` if you haven't already. See the [root README installation instructions](../README.md#installation).
+3. Symlink the required directories to `~/.claude/skills/` if you haven't already. See the [root README installation instructions](../../README.md#installation).
 
 4. Place the skill at `~/.claude/skills/activity/SKILL.md`.
 

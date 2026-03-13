@@ -6,7 +6,7 @@
 
 Show the current Green sprint status with all tickets grouped by status (Review, Testing, In Progress, Backlog, Closed/Resolved), including Jira issue details and GitHub PR metadata.
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../../.context/jira-mcp.md`](../../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/sprint-status/extract-sprint-issues.py` — parses raw Jira sprint search results, excludes sub-tasks, and extracts all fields. Pass raw Jira on stdin with `--filter-sprint Green`, get back `{issues, pr_metadata_input, epic_keys, sprint_name, sprint_full_name, sprint_goal}`.
 
@@ -26,7 +26,7 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run as a single `jira_searchIssues` call with `maxResults: 1`.
 
-2. **Look up the current Jira user:** Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
+2. **Look up the current Jira user:** Read `../../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username).
 
 After the discovery query returns, pipe it through `extract-sprint-issues.py` to get the full sprint name:
 

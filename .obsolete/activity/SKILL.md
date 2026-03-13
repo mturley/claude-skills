@@ -8,7 +8,7 @@ Show a combined chronological timeline of your Jira and GitHub activity over a c
 
 **Optional argument:** Number of days to look back (default: 7). Example: `/activity 14`
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../../.context/jira-mcp.md`](../../.context/jira-mcp.md)
 
 ## Instructions
 
@@ -16,7 +16,7 @@ Show a combined chronological timeline of your Jira and GitHub activity over a c
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Read people.md:** Read `../.context/people.md` to find the current user's Jira username (e.g. `mikejturley`), Jira key (e.g. `mturley`), and GitHub username. Look up the person matching the current GitHub user.
+1. **Read people.md:** Read `../../.context/people.md` to find the current user's Jira username (e.g. `mikejturley`), Jira key (e.g. `mturley`), and GitHub username. Look up the person matching the current GitHub user.
 
 2. **Run 4 Jira JQL searches** to find issues the user touched in the last N days (default 7, or the user-specified argument). Each should use `maxResults: 50` and `expand: ["changelog"]`:
    - **Assignee:** `project = RHOAIENG AND assignee = {jira_username} AND updated >= -{days}d`

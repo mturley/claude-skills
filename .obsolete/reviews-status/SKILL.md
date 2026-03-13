@@ -8,7 +8,7 @@ Show the review status of open PRs across my work, my team's sprint, and my scru
 
 **Optional argument:** `exclude-jira` — skip all Jira lookups and render a faster report without Jira columns, Table 3, or epic data. When this argument is present, skip all `jira_searchIssues` calls and Jira-dependent processing in every phase.
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../../.context/jira-mcp.md`](../../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/reviews-status/gather-prs.py` — runs three `gh search prs` queries in parallel (--author, --reviewed-by, --commenter) and deduplicates results. Pass `{my_username, max_age_days, today}` on stdin, get back `{table1_prs, table2_prs, excluded_count, all_prs, jira_search_paths}`.
 
@@ -32,7 +32,7 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    This runs all three `gh search prs` queries internally and outputs `table1_prs`, `table2_prs`, `excluded_count`, `all_prs`, and `jira_search_paths`.
 
-2. Read `../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
+2. Read `../../.context/people.md` (for Table 4 team data). If missing, Table 4 will be skipped.
 
 3. **Discover the active Green sprint name** _(skip if `exclude-jira`)_: Run a Jira search to find any one issue in the current Green sprint:
    ```

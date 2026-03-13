@@ -8,7 +8,7 @@ This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be g
 
 ## Installation
 
-Requires the [`.context/`](../.context/) and [`.shared-scripts/`](../.shared-scripts/) directories to be available as sibling directories. See the [root README installation instructions](../README.md#installation).
+Requires the [`.context/`](../../.context/) and [`.shared-scripts/`](../../.shared-scripts/) directories to be available as sibling directories. See the [root README installation instructions](../../README.md#installation).
 
 ### Prerequisites
 
@@ -63,7 +63,7 @@ All scripts use stdin/stdout JSON, Python 3 stdlib only.
 - `extract-epic-issues.py` — Parses raw Jira search results and extracts all fields for epic issues. Includes sub-tasks. Collects PR metadata input and sprint names.
 - `render-epic-report.py` — Takes fully assembled epic data and renders the markdown report with grouped tables and recommended actions.
 
-### Shared scripts (in `../.shared-scripts/`)
+### Shared scripts (in `../../.shared-scripts/`)
 
 - `fetch-pr-metadata.py` — Fetches GitHub PR metadata in parallel (shared with `/reviews-status` and `/sprint-status`)
 - `jira_utils.py` — Jira field parsing utilities (importable module)

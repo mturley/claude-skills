@@ -6,7 +6,7 @@
 
 Show the status of all issues in a selected epic, discovered from the current Green sprint. Discovers which epics are referenced by sprint issues, asks which one to view, then fetches all issues in that epic across all sprints with Jira details and GitHub PR metadata.
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../../.context/jira-mcp.md`](../../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/epic-status/extract-epic-issues.py` — parses raw Jira epic search results and extracts all fields. Pass raw Jira on stdin, get back `{issues, pr_metadata_input, sprints}`.
 
@@ -26,7 +26,7 @@ Run ALL of the following in parallel in a single tool-call round:
    ```
    Run as a single `jira_searchIssues` call with `maxResults: 1`.
 
-2. **Look up the current Jira user:** Read `../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username and GitHub username).
+2. **Look up the current Jira user:** Read `../../.context/people.md` and find the Green Scrum member matching the current GitHub user (to determine Jira username and GitHub username).
 
 After the discovery query returns, pipe it through `extract-sprint-issues.py` to get the full sprint name:
 

@@ -8,7 +8,7 @@ Show a chronological timeline of your Jira activity (changelog actions and comme
 
 **Optional argument:** Number of days to look back (default: 7). Example: `/jira-activity 14`
 
-**Technical Reference:** For Jira field IDs and formats, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For Jira field IDs and formats, see [`../../.context/jira-mcp.md`](../../.context/jira-mcp.md)
 
 **Helper Script:** `~/.claude/skills/jira-activity/discover-issues.py` — deduplicates issue keys from search result files. Accepts `--assignee`, `--watcher`, `--reporter`, `--commenter` file path args.
 
@@ -20,7 +20,7 @@ Show a chronological timeline of your Jira activity (changelog actions and comme
 
 Run ALL of the following in parallel in a single tool-call round:
 
-1. **Read people.md:** Read `../.context/people.md` to find the current user's Jira username (e.g. `mikejturley`) and Jira key (e.g. `mturley`). Look up the person matching the current GitHub user.
+1. **Read people.md:** Read `../../.context/people.md` to find the current user's Jira username (e.g. `mikejturley`) and Jira key (e.g. `mturley`). Look up the person matching the current GitHub user.
 
 2. **Run 4 JQL searches** to find issues the user touched in the last N days (default 7, or the user-specified argument). Each should use `maxResults: 50` and `expand: ["changelog"]`:
    - **Assignee:** `project = RHOAIENG AND assignee = {jira_username} AND updated >= -{days}d`

@@ -10,7 +10,7 @@ This skill is specific to the RHOAI Dashboard team's Green Scrum, but could be g
 
 1. Set up a Jira MCP server (e.g., `@atlassian-dc-mcp/jira` for Jira Datacenter).
 
-2. Symlink the `.context` directory to `~/.claude/skills/.context` if you haven't already. See the [root README installation instructions](../README.md#installation).
+2. Symlink the `.context` directory to `~/.claude/skills/.context` if you haven't already. See the [root README installation instructions](../../README.md#installation).
 
 3. Place the skill at `~/.claude/skills/reviews-status/SKILL.md`.
 
