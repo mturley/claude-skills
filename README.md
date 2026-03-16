@@ -29,6 +29,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
    ln -s ~/git/claude-skills/claude-activity ~/.claude/skills/claude-activity
+   ln -s ~/git/claude-skills/email-triage ~/.claude/skills/email-triage
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -84,6 +85,11 @@ Requires: Puppeteer MCP server
 ### [/claude-activity](claude-activity/)
 
 Summarizes what was accomplished across all Claude Code sessions for a given day. Scans session JSONL files, extracts user messages, and generates a concise accomplishment report grouped by project.
+
+### [/email-triage](email-triage/)
+
+Scans unread Gmail for important emails that need attention, filtering out noise from mailing lists, bots, calendar invitations, and expired reminders. Categorizes results by urgency and presents a scannable report.
+Requires: Google Workspace MCP server
 
 ### [/populate-people](populate-people/)
 
