@@ -1,32 +1,19 @@
 # Confluence MCP Reference
 
-Technical reference for using the Confluence Data Center MCP (`@atlassian-dc-mcp/confluence`) with spaces.redhat.com.
+Technical reference for using Confluence MCP with the RHOAI Dashboard team's Confluence spaces.
 
-## Resolving User References
+## Server Configuration
 
-Confluence pages store user references as opaque user keys (e.g., `<ri:user ri:userkey="8a808dbe..." />`). The MCP server does NOT provide a user lookup tool, but the Confluence REST API supports it directly.
+**Server:** Official Atlassian Cloud MCP (SSE transport) — same server as Jira
+**Instance:** `redhat.atlassian.net`
+**MCP server name:** `atlassian` (shared with Jira, tools are `mcp__atlassian__*`)
+**Auth:** OAuth via browser (no PAT needed)
 
-To resolve a user key to a display name, use curl with the PAT from the MCP config:
+## Resolving User References (Legacy Data Center)
 
-```bash
-curl -s -H "Authorization: Bearer $CONFLUENCE_API_TOKEN" \
-  "https://spaces.redhat.com/rest/api/user?key=<userkey>" \
-  | python3 -c "import sys,json; print(json.load(sys.stdin).get('displayName','UNKNOWN'))"
-```
+> **Note:** This section applied to Confluence Data Center (`spaces.redhat.com`). After the Cloud migration, user references may work differently. Verify and update as needed.
 
-To resolve multiple user keys at once:
-
-```bash
-TOKEN="$CONFLUENCE_API_TOKEN"
-for key in <key1> <key2> <key3>; do
-  name=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "https://spaces.redhat.com/rest/api/user?key=$key" \
-    | python3 -c "import sys,json; print(json.load(sys.stdin).get('displayName','UNKNOWN'))" 2>/dev/null)
-  echo "$key -> $name"
-done
-```
-
-The token value can be found in `~/.claude.json` under `mcpServers.confluence.env.CONFLUENCE_API_TOKEN`.
+Confluence pages store user references as opaque user keys (e.g., `<ri:user ri:userkey="8a808dbe..." />`). On Data Center, these could be resolved via the REST API with a PAT. On Cloud, user resolution may be handled differently by the official Atlassian MCP.
 
 ## Extracting Page IDs from URLs
 

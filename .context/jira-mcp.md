@@ -2,9 +2,26 @@
 
 Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboard team).
 
+## Server Configuration
+
+**Server:** Official Atlassian Cloud MCP (SSE transport)
+**Instance:** `redhat.atlassian.net`
+**Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432` (can also use `redhat.atlassian.net` as `cloudId` param)
+**MCP server name:** `atlassian` (tools are `mcp__atlassian__*`)
+**Auth:** OAuth via browser (no PAT needed)
+**User identifiers:** Atlassian Cloud `accountId` (not DC usernames). Look up via `lookupJiraAccountId` with email. See `people.md` for team roster with accountIds.
+
+> **SSE Deprecation:** After June 30, 2026, the SSE endpoint (`/v1/sse`) will be unsupported. Switch to Streamable HTTP: `https://mcp.atlassian.com/v1/mcp`
+
+> **Fallback:** If SSE transport has reliability issues (frequent re-auth), switch to mcp-remote wrapper:
+> ```bash
+> claude mcp remove atlassian -s user
+> claude mcp add atlassian -s user -- npx -y mcp-remote@latest https://mcp.atlassian.com/v1/sse
+> ```
+
 ## Important Rules
 
-- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_12310220`) via `jira_updateIssue`. NEVER use `jira_postIssueComment` for this.
+- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_12310220`) via `editJiraIssue`. NEVER use `addCommentToJiraIssue` for this.
 
 ## Quick Reference
 
@@ -28,14 +45,18 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 ## RHOAIENG Project Configuration
 
-**Project ID:** `12340620`
+**Project Key:** `RHOAIENG`
 
-**IMPORTANT:** The project ID must ALSO be included in customFields as `"project": {"id": "12340620"}` when creating issues. The `projectId` parameter alone is not sufficient.
+**Creating issues (Cloud API):** Use `createJiraIssue` with:
+- `projectKey`: `"RHOAIENG"`
+- `issueTypeName`: `"Bug"`, `"Task"`, or `"Story"` (string names, not IDs)
+- `assignee_account_id`: Cloud accountId from people.md
+- `additional_fields`: object for custom fields (replaces DC's `customFields`)
+- `contentFormat`: `"markdown"` (for markdown descriptions)
 
-**Issue Type IDs:**
-- Bug: `1`
-- Task: `3`
-- Story: `17`
+**Updating issues:** Use `editJiraIssue` with:
+- `fields`: object containing field updates (replaces DC's `customFields`)
+- `contentFormat`: `"markdown"`
 
 ### Dashboard Team Issues (default)
 
@@ -159,7 +180,7 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 **When NOT to set:** Do not set this field when creating a new issue, even if a PR is mentioned in context. A PR that *caused* a bug is not the same as a PR that *fixes* it. Only populate this field when a fix PR exists or is being created for the issue.
 
 **How to set:**
-1. First, fetch the issue with `jira_getIssue` and check the current value of `customfield_12310220`
+1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_12310220`
 2. If the field is empty/null, set it to the new PR URL
 3. If the field already has a value, append the new URL as a comma-separated entry
 
@@ -171,10 +192,10 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 "customfield_12310220": "https://github.com/opendatahub-io/odh-dashboard/pull/6466, https://github.com/kubeflow/model-registry/pull/2288"
 ```
 
-Use `jira_updateIssue` with the value in `customFields`:
+Use `editJiraIssue` with the value in `fields`:
 ```
-issueKey: "RHOAIENG-51543"
-customFields: {"customfield_12310220": "<url or comma-separated urls>"}
+issueIdOrKey: "RHOAIENG-51543"
+fields: {"customfield_12310220": "<url or comma-separated urls>"}
 ```
 
 **Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
@@ -254,21 +275,16 @@ project = RHOAIENG AND sprint in closedSprints() AND component = "AI Core Dashbo
 
 ### Sprint Board URL
 
-To link to a sprint's board view in Jira, use the RapidBoard URL format:
+To link to a sprint's board view in Jira Cloud, use the board URL format:
 ```
-https://issues.redhat.com/secure/RapidBoard.jspa?rapidView={rapidViewId}&sprint={sprintId}
+https://redhat.atlassian.net/jira/software/c/projects/RHOAIENG/boards/{boardId}?sprint={sprintId}
 ```
 
 **Parameters:**
-- `rapidView` — The board ID. For the AI Core Dashboard board: `18687`
+- `boardId` — The board ID. For the AI Core Dashboard board: `18687` (may differ on Cloud — verify)
 - `sprint` — The sprint ID (integer, extracted from sprint field data)
 
-**Example:**
-```
-https://issues.redhat.com/secure/RapidBoard.jspa?rapidView=18687&sprint=82844
-```
-
-The `rapidViewId` can also be found in the sprint field string data (see "Parsing Sprint Data" below).
+> **Note:** The Cloud URL format may differ from Data Center's `RapidBoard.jspa` format. Verify the board URL after migration.
 
 ---
 
@@ -310,22 +326,20 @@ project = RHOAIENG AND sprint in openSprints() AND filter = 12439012 AND status 
 
 ---
 
-## Jira Wiki Markup
+## Description Formatting
 
-When creating issue descriptions with file references, use Jira Wiki Markup syntax:
+On Jira Cloud, use `contentFormat: "markdown"` to write descriptions in standard Markdown.
 
-**File reference syntax:**
-- Basic file link: `[filename|https://github.com/OWNER/REPO/blob/main/path/to/file.ts]`
-- Specific line: `[filename:L42|https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42]`
-- Line range: `[filename:L42-L50|https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42-L50]`
-
-**Note:** Use Jira Wiki Markup link syntax `[text|url]`, NOT Markdown syntax `[text](url)`.
+**File reference syntax (Markdown):**
+- Basic file link: `[filename](https://github.com/OWNER/REPO/blob/main/path/to/file.ts)`
+- Specific line: `[filename:L42](https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42)`
+- Line range: `[filename:L42-L50](https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42-L50)`
 
 ---
 
 ## Write Operation Preview Requirement
 
-**Before any Jira write operation** (`jira_createIssue`, `jira_updateIssue`, `jira_postIssueComment`, `jira_transitionIssue`), always show the user a preview of what will be written. This includes:
+**Before any Jira write operation** (`createJiraIssue`, `editJiraIssue`, `addCommentToJiraIssue`, `transitionJiraIssue`), always show the user a preview of what will be written. This includes:
 
 - **Creating issues:** Show the full drafted title, description, and all fields (priority, severity, labels, sprint, assignee, etc.) before making the API call.
 - **Updating issues:** Show a diff or summary of what fields/content will change.
@@ -338,7 +352,7 @@ Wait for user approval before proceeding with the write operation.
 
 ## Troubleshooting
 
-### `jira_searchIssues` maxResults Parameter
+### `searchJiraIssuesUsingJql` maxResults Parameter
 **Symptom:** `Input validation error: Expected number, received string` when passing `maxResults`
 
 **Solution:** The `maxResults` parameter requires a strict number type. If validation fails, omit the parameter entirely (defaults to 10) rather than trying to cast or quote the value.
@@ -346,9 +360,13 @@ Wait for user approval before proceeding with the write operation.
 ### Authentication Failures
 **Symptom:** 401 Unauthorized or connection errors
 
-**Solutions:**
+**Solutions (Cloud/SSE):**
+- Re-authenticate via browser when prompted by the OAuth flow
+- If SSE drops frequently, consider switching to mcp-remote wrapper (see top of file)
+
+**Solutions (legacy Data Center):**
 - Verify API token is valid and not expired
-- Check JIRA_HOST environment variable is domain only (e.g., `issues.redhat.com` not `https://issues.redhat.com`)
+- Check JIRA_HOST environment variable is domain only (e.g., `issues.redhat.com` not `https://redhat.atlassian.net`)
 
 ---
 
