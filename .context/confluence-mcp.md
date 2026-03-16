@@ -4,7 +4,7 @@ Technical reference for using Confluence MCP with the RHOAI Dashboard team's Con
 
 ## Server Configuration
 
-**Server:** Official Atlassian Cloud MCP (SSE transport) — same server as Jira
+**Server:** Official Atlassian Cloud MCP (Streamable HTTP transport) — same server as Jira
 **Instance:** `redhat.atlassian.net`
 **MCP server name:** `atlassian` (shared with Jira, tools are `mcp__atlassian__*`)
 **Auth:** OAuth via browser (no PAT needed)

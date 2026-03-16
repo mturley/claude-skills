@@ -4,48 +4,44 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 ## Server Configuration
 
-**Server:** Official Atlassian Cloud MCP (SSE transport)
+**Server:** Official Atlassian Cloud MCP (Streamable HTTP transport)
 **Instance:** `redhat.atlassian.net`
 **Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432` (can also use `redhat.atlassian.net` as `cloudId` param)
 **MCP server name:** `atlassian` (tools are `mcp__atlassian__*`)
 **Auth:** OAuth via browser (no PAT needed)
 **User identifiers:** Atlassian Cloud `accountId` (not DC usernames). Look up via `lookupJiraAccountId` with email. See `people.md` for team roster with accountIds.
 
-> **SSE Deprecation:** After June 30, 2026, the SSE endpoint (`/v1/sse`) will be unsupported. Switch to Streamable HTTP: `https://mcp.atlassian.com/v1/mcp`
-
-> **Fallback:** If SSE transport has reliability issues (frequent re-auth), switch to mcp-remote wrapper:
-> ```bash
-> claude mcp remove atlassian -s user
-> claude mcp add atlassian -s user -- npx -y mcp-remote@latest https://mcp.atlassian.com/v1/sse
-> ```
+> **Note:** SSE endpoint (`/v1/sse`) deprecated after June 30, 2026. We use Streamable HTTP (`/v1/mcp`) which is the recommended transport.
 
 ## Important Rules
 
-- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_12310220`) via `editJiraIssue`. NEVER use `addCommentToJiraIssue` for this.
+- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_10875`) via `editJiraIssue`. NEVER use `addCommentToJiraIssue` for this.
+- **Custom fields not in getJiraIssue responses:** The official Atlassian Cloud MCP strips custom fields from issue responses. To read custom field values, use `searchJiraIssuesUsingJql` with explicit `fields` parameter, or use the REST API directly.
 
 ## Quick Reference
 
 | Field | Custom Field ID | Format | Notes |
 |-------|----------------|--------|-------|
-| Team | `customfield_12313240` | String: `"4158"` | NOT an object |
-| Priority | Built-in | Object: `{"id": "1"}` | See Priority IDs below |
-| Severity | `customfield_12316142` | Object: `{"id": "26752"}` | Use option ID, see table below |
-| Epic Link | `customfield_12311140` | String: `"RHOAIENG-12345"` | Epic key |
-| Parent Link | `customfield_12313140` | String: `"RHOAIENG-12345"` | For hierarchy, NOT epics |
-| Git Pull Request | `customfield_12310220` | String: `"https://github.com/..."` | Manual only, doesn't auto-populate |
-| Sprint | `customfield_12310940` | Integer: `82844` | Extract from sprint search results |
-| Story Points | `customfield_12310243` | Integer or null | Story points estimate |
-| Original Story Points | `customfield_12314040` | Numeric or null | Original estimate before refinement |
-| Blocked | `customfield_12316543` | Object: `{"value": "True"}` | Select field, True/False |
-| Blocked Reason | `customfield_12316544` | String | "None" or actual reason text |
-| Activity Type | `customfield_12320040` | Object: `{"id": "52756"}` | See Activity Type IDs below |
-| Flagged | `customfield_12315542` | null or flagged | For impediments |
+| Team | `customfield_10001` | Team object (TBD) | Atlassian Teams type — format needs verification |
+| Priority | Built-in | Object: `{"id": "10003"}` | See Priority IDs below |
+| Severity | `customfield_10840` | Object: `{"id": "19919"}` | Use option ID, see table below |
+| Epic Link | `customfield_10014` | String: `"RHOAIENG-12345"` | Epic key |
+| Parent Link | `customfield_10018` | String: `"RHOAIENG-12345"` | For hierarchy, NOT epics |
+| Git Pull Request | `customfield_10875` | String: `"https://github.com/..."` | Manual only, doesn't auto-populate |
+| Sprint | `customfield_10020` | Integer sprint ID | Extract from sprint search results |
+| Story Points | `customfield_10028` | Integer or null | Story points estimate |
+| Original Story Points | `customfield_10977` | Numeric or null | Original estimate before refinement |
+| Blocked | `customfield_10517` | Object: `{"id": "10852"}` | True=10852, False=10853 |
+| Blocked Reason | `customfield_10483` | String | "None" or actual reason text |
+| Activity Type | `customfield_10464` | Object: `{"id": "12228"}` | See Activity Type IDs below |
+| Flagged | `customfield_10021` | Array: `[{"id": "10019"}]` | Impediment |
 
 ---
 
 ## RHOAIENG Project Configuration
 
 **Project Key:** `RHOAIENG`
+**Project ID:** `10350`
 
 **Creating issues (Cloud API):** Use `createJiraIssue` with:
 - `projectKey`: `"RHOAIENG"`
@@ -58,12 +54,17 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 - `fields`: object containing field updates (replaces DC's `customFields`)
 - `contentFormat`: `"markdown"`
 
+**Issue Type IDs (for reference):**
+- Bug: `10016`
+- Task: `10014`
+- Story: `10009`
+
 ### Dashboard Team Issues (default)
 
 For issues owned by the RHOAI Dashboard team (UI/frontend work):
 
-**Component:** AI Core Dashboard (ID `12391778`)
-**Team:** RHOAI Dashboard — `"4158"`
+**Component:** AI Core Dashboard (ID `15570`)
+**Team:** RHOAI Dashboard (format TBD — `customfield_10001` is now Atlassian Teams type)
 **Labels:**
 - Model Registry only: `dashboard-area-model-registry`
 - Model Catalog only: `dashboard-area-model-catalog`
@@ -74,26 +75,19 @@ For issues owned by the RHOAI Dashboard team (UI/frontend work):
 
 For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
-**Component:** AI Hub (ID `12391775`)
-**Team:** RHOAI AI Hub — `"4154"`
+**Component:** AI Hub (ID `15556`)
+**Team:** RHOAI AI Hub (format TBD)
 **Labels:** Typically none (no dashboard-area labels)
 
 ---
 
 ## Custom Fields Reference
 
-### Team (customfield_12313240)
+### Team (customfield_10001)
 
-**Value:** `"4158"` (RHOAI Dashboard)
+**Type:** `atlassian-team` (Atlassian Teams integration)
 
-**Format:** String, NOT an object
-```json
-// ✅ Correct
-"customfield_12313240": "4158"
-
-// ❌ Wrong - will fail
-"customfield_12313240": {"id": "4158"}
-```
+> **TODO:** The Team field changed from a simple string ID on Data Center to an Atlassian Teams type on Cloud. The exact format for setting this field via API needs verification. Try fetching an issue that has a team set to see the format.
 
 ---
 
@@ -103,57 +97,53 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
 **Format:** Object with id
 ```json
-{"id": "1"}
+{"id": "10003"}
 ```
 
 **Priority IDs:**
 | Priority | ID |
 |----------|------|
-| Blocker | `1` |
-| Critical | `2` |
-| Major | `3` |
-| Minor | `4` |
-| Normal | `10200` |
-| Undefined | `10300` |
+| Blocker | `10000` |
+| Critical | `10001` |
+| Major | `10002` |
+| Normal | `10003` |
+| Minor | `10004` |
+| Undefined | `10005` |
 
 ---
 
-### Severity (customfield_12316142) - Bugs Only
+### Severity (customfield_10840) - Bugs Only
 
 **Format:** Object with `id` key (using the option ID number)
 ```json
-// ✅ Correct
-{"id": "26752"}
-
-// ❌ Wrong - will fail with "Option id 'null' is not valid"
-{"value": "Moderate"}
-{"name": "Moderate"}
+// Correct
+{"id": "19919"}
 ```
 
 **Severity Values:**
 | Value | ID |
 |-------|------|
-| Urgent | `26749` (unverified) |
-| Critical | `26750` |
-| Moderate | `26752` |
-| Low | `26753` |
+| Critical | `19917` |
+| Important | `19918` |
+| Moderate | `19919` |
+| Low | `19920` |
+| Informational | `19921` |
 
 ---
 
-### Activity Type (customfield_12320040)
+### Activity Type (customfield_10464)
 
 **Format:** Object with `id` key (using the option ID number)
 ```json
-{"id": "52756"}
+{"id": "12228"}
 ```
 
 **Activity Type Values:**
 | Value | ID |
 |-------|------|
-| None | `-1` |
-| Tech Debt & Quality | `52756` |
-| New Features | `52757` |
-| Learning & Enablement | `52758` |
+| Tech Debt & Quality | `12228` |
+| New Features | `12229` |
+| Learning & Enablement | `12230` |
 
 ---
 
@@ -163,15 +153,15 @@ These are **completely different fields** - use the correct one:
 
 | Field | ID | Purpose | Value Format |
 |-------|--------|---------|--------------|
-| **Epic Link** | `customfield_12311140` | Link issue to an epic | String: `"RHOAIENG-27992"` |
-| **Parent Link** | `customfield_12313140` | Parent-child hierarchy | String: `"RHOAIENG-27992"` |
+| **Epic Link** | `customfield_10014` | Link issue to an epic | String: `"RHOAIENG-27992"` |
+| **Parent Link** | `customfield_10018` | Parent-child hierarchy | String: `"RHOAIENG-27992"` |
 
 **Common Mistake:**
 Using Parent Link when you meant Epic Link will NOT properly associate the issue with the epic. They serve different purposes in Jira's data model.
 
 ---
 
-### Git Pull Request (customfield_12310220)
+### Git Pull Request (customfield_10875)
 
 **Value:** Full PR URL(s) as a string. Multiple PRs are comma-separated.
 
@@ -180,29 +170,29 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 **When NOT to set:** Do not set this field when creating a new issue, even if a PR is mentioned in context. A PR that *caused* a bug is not the same as a PR that *fixes* it. Only populate this field when a fix PR exists or is being created for the issue.
 
 **How to set:**
-1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_12310220`
+1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_10875`
 2. If the field is empty/null, set it to the new PR URL
 3. If the field already has a value, append the new URL as a comma-separated entry
 
 ```
 // Single PR
-"customfield_12310220": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"
+"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"
 
 // Multiple PRs (append to existing)
-"customfield_12310220": "https://github.com/opendatahub-io/odh-dashboard/pull/6466, https://github.com/kubeflow/model-registry/pull/2288"
+"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466, https://github.com/kubeflow/model-registry/pull/2288"
 ```
 
 Use `editJiraIssue` with the value in `fields`:
 ```
 issueIdOrKey: "RHOAIENG-51543"
-fields: {"customfield_12310220": "<url or comma-separated urls>"}
+fields: {"customfield_10875": "<url or comma-separated urls>"}
 ```
 
 **Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
 
 ---
 
-### Sprint (customfield_12310940)
+### Sprint (customfield_10020)
 
 **Value:** Integer sprint ID (e.g., `82844`)
 
@@ -210,7 +200,7 @@ fields: {"customfield_12310220": "<url or comma-separated urls>"}
 
 ---
 
-### Story Points (customfield_12310243)
+### Story Points (customfield_10028)
 
 **Value:** Integer or null (e.g., `5`, `8`, `null`)
 
@@ -218,7 +208,7 @@ Standard story point estimate for the issue.
 
 ---
 
-### Original Story Points (customfield_12314040)
+### Original Story Points (customfield_10977)
 
 **Value:** Numeric or null
 
@@ -226,18 +216,23 @@ Represents the original estimate before sprint refinement. Useful for tracking e
 
 ---
 
-### Blocked (customfield_12316543)
+### Blocked (customfield_10517)
 
 **Value:** Select field with object format
 ```json
-{"value": "True", "id": "..."}
+{"id": "10852"}
 ```
 
-Check the `value` field for `"True"` / `"False"` (case-insensitive). Used together with Blocked Reason.
+| Value | ID |
+|-------|------|
+| True | `10852` |
+| False | `10853` |
+
+Used together with Blocked Reason.
 
 ---
 
-### Blocked Reason (customfield_12316544)
+### Blocked Reason (customfield_10483)
 
 **Value:** String. `"None"` when not blocked, or actual reason text when blocked.
 
@@ -270,7 +265,7 @@ Sprint names are inconsistent (e.g. `Dashboard - Green - 34` vs `Dashboard - Gre
 ```jql
 project = RHOAIENG AND sprint in closedSprints() AND component = "AI Core Dashboard" AND labels = "dashboard-area-model-registry" ORDER BY updated DESC
 ```
-2. Parse the `customfield_12310940` sprint string from the first result to extract the sprint `id` and `name`.
+2. Parse the `customfield_10020` sprint data from the first result to extract the sprint `id` and `name`.
 3. Use the sprint ID (e.g. `sprint = 81753`) to query all issues from that sprint.
 
 ### Sprint Board URL
@@ -281,24 +276,14 @@ https://redhat.atlassian.net/jira/software/c/projects/RHOAIENG/boards/{boardId}?
 ```
 
 **Parameters:**
-- `boardId` — The board ID. For the AI Core Dashboard board: `18687` (may differ on Cloud — verify)
+- `boardId` — The board ID. For the AI Core Dashboard board: TBD (verify on Cloud)
 - `sprint` — The sprint ID (integer, extracted from sprint field data)
-
-> **Note:** The Cloud URL format may differ from Data Center's `RapidBoard.jspa` format. Verify the board URL after migration.
 
 ---
 
 ### Parsing Sprint Data
 
-The `customfield_12310940` field contains sprint data as strings like:
-```
-com.atlassian.greenhopper.service.sprint.Sprint@...[id=82844,rapidViewId=18687,state=FUTURE,name=Dashboard - Green-35,...]
-```
-
-**To extract sprint ID:**
-1. Parse the sprint string from search results
-2. Extract the `id=XXXXX` value
-3. Use the integer ID when updating issues
+On Cloud, the `customfield_10020` field returns sprint objects (not the DC string format). The sprint ID can be extracted from the object's `id` field.
 
 ### Filtering for Team Sprints
 
@@ -311,7 +296,7 @@ Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns:
 
 ### Green Scrum Quick Filter
 
-**Saved Filter ID:** `12439012`
+**Saved Filter ID:** `12439012` (may have changed on Cloud — verify)
 
 This saved filter contains the Green scrum's area labels. Use it in JQL queries instead of specifying individual `dashboard-area-*` labels:
 
@@ -360,13 +345,9 @@ Wait for user approval before proceeding with the write operation.
 ### Authentication Failures
 **Symptom:** 401 Unauthorized or connection errors
 
-**Solutions (Cloud/SSE):**
+**Solutions (Cloud):**
 - Re-authenticate via browser when prompted by the OAuth flow
-- If SSE drops frequently, consider switching to mcp-remote wrapper (see top of file)
-
-**Solutions (legacy Data Center):**
-- Verify API token is valid and not expired
-- Check JIRA_HOST environment variable is domain only (e.g., `issues.redhat.com` not `https://redhat.atlassian.net`)
+- Check `claude mcp list` to see if the server shows "Needs authentication"
 
 ---
 
