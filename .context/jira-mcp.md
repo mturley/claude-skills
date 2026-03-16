@@ -309,7 +309,7 @@ Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns:
 
 ### Green Scrum Quick Filter
 
-**Saved Filter ID:** TBD (DC filter `12439012` did not migrate — needs to be recreated or found on Cloud)
+**Saved Filter ID:** `94935`
 
 This saved filter contains the Green scrum's area labels. Use it in JQL queries instead of specifying individual `dashboard-area-*` labels:
 
