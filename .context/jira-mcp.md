@@ -27,12 +27,12 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 | Severity | `customfield_10840` | Object: `{"id": "19919"}` | Use option ID, see table below |
 | Epic Link | `customfield_10014` | String: `"RHOAIENG-12345"` | Epic key |
 | Parent Link | `customfield_10018` | String: `"RHOAIENG-12345"` | For hierarchy, NOT epics |
-| Git Pull Request | `customfield_10875` | String: `"https://github.com/..."` | Manual only, doesn't auto-populate |
+| Git Pull Request | `customfield_10875` | ADF document (read) / markdown string (write) | Manual only, see details below |
 | Sprint | `customfield_10020` | Integer sprint ID | Extract from sprint search results |
 | Story Points | `customfield_10028` | Integer or null | Story points estimate |
 | Original Story Points | `customfield_10977` | Numeric or null | Original estimate before refinement |
 | Blocked | `customfield_10517` | Object: `{"id": "10852"}` | True=10852, False=10853 |
-| Blocked Reason | `customfield_10483` | String | "None" or actual reason text |
+| Blocked Reason | `customfield_10483` | ADF document (rich text) | Returns ADF on read; use `contentFormat: "markdown"` on write |
 | Activity Type | `customfield_10464` | Object: `{"id": "12228"}` | See Activity Type IDs below |
 | Flagged | `customfield_10021` | Array: `[{"id": "10019"}]` | Impediment |
 
@@ -172,7 +172,28 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 
 ### Git Pull Request (customfield_10875)
 
-**Value:** Full PR URL(s) as a string. Multiple PRs are comma-separated.
+**Type:** Rich text field (ADF on Jira Cloud)
+
+**Reading:** On Cloud API v3, this field returns as an Atlassian Document Format (ADF) document, NOT a plain string. PR URLs are embedded as text nodes with `link` marks:
+```json
+{
+  "type": "doc",
+  "version": 1,
+  "content": [{
+    "type": "paragraph",
+    "content": [{
+      "type": "text",
+      "text": "https://github.com/opendatahub-io/odh-dashboard/pull/6466",
+      "marks": [{"type": "link", "attrs": {"href": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"}}]
+    }, {"type": "hardBreak"}, {
+      "type": "text",
+      "text": "https://github.com/kubeflow/model-registry/pull/2310",
+      "marks": [{"type": "link", "attrs": {"href": "https://github.com/kubeflow/model-registry/pull/2310"}}]
+    }]
+  }]
+}
+```
+To extract URLs, parse link marks from the ADF tree (`mark.attrs.href`).
 
 **When to use:** This field is for PRs that **fix** the issue. When the user asks to "link a PR to an issue", this is the field to update.
 
@@ -180,22 +201,15 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 
 **How to set:**
 1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_10875`
-2. If the field is empty/null, set it to the new PR URL
-3. If the field already has a value, append the new URL as a comma-separated entry
+2. Use `editJiraIssue` with `contentFormat: "markdown"` — pass URLs as markdown text (one per line), and the API will convert to ADF:
 
-```
-// Single PR
-"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"
-
-// Multiple PRs (append to existing)
-"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466, https://github.com/kubeflow/model-registry/pull/2288"
-```
-
-Use `editJiraIssue` with the value in `fields`:
 ```
 issueIdOrKey: "RHOAIENG-51543"
-fields: {"customfield_10875": "<url or comma-separated urls>"}
+contentFormat: "markdown"
+fields: {"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466\nhttps://github.com/kubeflow/model-registry/pull/2288"}
 ```
+
+3. If the field already has URLs, include ALL existing URLs plus the new one in the value (the field is overwritten, not appended to).
 
 **Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
 
@@ -243,7 +257,11 @@ Used together with Blocked Reason.
 
 ### Blocked Reason (customfield_10483)
 
-**Value:** String. `"None"` when not blocked, or actual reason text when blocked.
+**Type:** Rich text field (ADF on Jira Cloud)
+
+**Reading:** On Cloud API v3, this field returns as an ADF document (same format as description), not a plain string. Extract plain text by recursing through ADF nodes.
+
+**Writing:** Use `contentFormat: "markdown"` with `editJiraIssue` and pass the reason as a markdown string.
 
 ---
 
