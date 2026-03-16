@@ -22,7 +22,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 | Field | Custom Field ID | Format | Notes |
 |-------|----------------|--------|-------|
-| Team | `customfield_10001` | Object: `{"id": "..."}` | Atlassian Teams type, see IDs below |
+| Team | `customfield_10001` | String: `"team-uuid"` | Plain string ID (NOT object), see IDs below |
 | Priority | Built-in | Object: `{"id": "10003"}` | See Priority IDs below |
 | Severity | `customfield_10840` | Object: `{"id": "19919"}` | Use option ID, see table below |
 | Epic Link | `customfield_10014` | String: `"RHOAIENG-12345"` | Epic key |
@@ -87,9 +87,9 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
 **Type:** `atlassian-team` (Atlassian Teams integration)
 
-**Format:** Object with `id` key
+**Format:** Plain string (NOT an object — passing `{"id": "..."}` will fail with "Team id is not valid")
 ```json
-{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1809"}
+"ec74d716-af36-4b3c-950f-f79213d08f71-1809"
 ```
 
 **Team IDs:**
