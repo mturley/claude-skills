@@ -22,7 +22,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 | Field | Custom Field ID | Format | Notes |
 |-------|----------------|--------|-------|
-| Team | `customfield_10001` | Team object (TBD) | Atlassian Teams type — format needs verification |
+| Team | `customfield_10001` | Object: `{"id": "..."}` | Atlassian Teams type, see IDs below |
 | Priority | Built-in | Object: `{"id": "10003"}` | See Priority IDs below |
 | Severity | `customfield_10840` | Object: `{"id": "19919"}` | Use option ID, see table below |
 | Epic Link | `customfield_10014` | String: `"RHOAIENG-12345"` | Epic key |
@@ -64,7 +64,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 For issues owned by the RHOAI Dashboard team (UI/frontend work):
 
 **Component:** AI Core Dashboard (ID `15570`)
-**Team:** RHOAI Dashboard (format TBD — `customfield_10001` is now Atlassian Teams type)
+**Team:** RHOAI Dashboard — `{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1809"}`
 **Labels:**
 - Model Registry only: `dashboard-area-model-registry`
 - Model Catalog only: `dashboard-area-model-catalog`
@@ -76,7 +76,7 @@ For issues owned by the RHOAI Dashboard team (UI/frontend work):
 For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
 **Component:** AI Hub (ID `15556`)
-**Team:** RHOAI AI Hub (format TBD)
+**Team:** RHOAI AI Hub — `{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1712"}`
 **Labels:** Typically none (no dashboard-area labels)
 
 ---
@@ -87,7 +87,16 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
 **Type:** `atlassian-team` (Atlassian Teams integration)
 
-> **TODO:** The Team field changed from a simple string ID on Data Center to an Atlassian Teams type on Cloud. The exact format for setting this field via API needs verification. Try fetching an issue that has a team set to see the format.
+**Format:** Object with `id` key
+```json
+{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1809"}
+```
+
+**Team IDs:**
+| Team | ID |
+|------|------|
+| RHOAI Dashboard | `ec74d716-af36-4b3c-950f-f79213d08f71-1809` |
+| RHOAI AI Hub | `ec74d716-af36-4b3c-950f-f79213d08f71-1712` |
 
 ---
 
@@ -276,14 +285,18 @@ https://redhat.atlassian.net/jira/software/c/projects/RHOAIENG/boards/{boardId}?
 ```
 
 **Parameters:**
-- `boardId` — The board ID. For the AI Core Dashboard board: TBD (verify on Cloud)
+- `boardId` — The board ID. For the AI Core Dashboard board: `1133`
 - `sprint` — The sprint ID (integer, extracted from sprint field data)
 
 ---
 
 ### Parsing Sprint Data
 
-On Cloud, the `customfield_10020` field returns sprint objects (not the DC string format). The sprint ID can be extracted from the object's `id` field.
+On Cloud, the `customfield_10020` field returns sprint objects (not the DC string format):
+```json
+{"id": 17597, "name": "Dashboard - Green-35", "state": "active", "boardId": 1133}
+```
+Extract the `id` field to use when setting sprints on issues.
 
 ### Filtering for Team Sprints
 
@@ -296,7 +309,7 @@ Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns:
 
 ### Green Scrum Quick Filter
 
-**Saved Filter ID:** `12439012` (may have changed on Cloud — verify)
+**Saved Filter ID:** TBD (DC filter `12439012` did not migrate — needs to be recreated or found on Cloud)
 
 This saved filter contains the Green scrum's area labels. Use it in JQL queries instead of specifying individual `dashboard-area-*` labels:
 
