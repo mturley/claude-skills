@@ -201,13 +201,34 @@ To extract URLs, parse link marks from the ADF tree (`mark.attrs.href`).
 
 **How to set:**
 1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_10875`
-2. Use `editJiraIssue` with `contentFormat: "markdown"` — pass URLs as markdown text (one per line), and the API will convert to ADF:
+2. Use `editJiraIssue` with raw ADF (do NOT use `contentFormat: "markdown"` — it fails with "Operation value must be an Atlassian Document"):
 
+```json
+fields: {
+  "customfield_10875": {
+    "version": 1,
+    "type": "doc",
+    "content": [{
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "https://github.com/opendatahub-io/odh-dashboard/pull/6466",
+          "marks": [{"type": "link", "attrs": {"href": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"}}]
+        },
+        {"type": "hardBreak"},
+        {
+          "type": "text",
+          "text": "https://github.com/kubeflow/model-registry/pull/2288",
+          "marks": [{"type": "link", "attrs": {"href": "https://github.com/kubeflow/model-registry/pull/2288"}}]
+        }
+      ]
+    }]
+  }
+}
 ```
-issueIdOrKey: "RHOAIENG-51543"
-contentFormat: "markdown"
-fields: {"customfield_10875": "https://github.com/opendatahub-io/odh-dashboard/pull/6466\nhttps://github.com/kubeflow/model-registry/pull/2288"}
-```
+
+For a single PR URL, omit the `hardBreak` and second text node.
 
 3. If the field already has URLs, include ALL existing URLs plus the new one in the value (the field is overwritten, not appended to).
 
