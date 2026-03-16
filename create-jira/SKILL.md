@@ -52,33 +52,34 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
 
 6. **Ask the user for Priority** (one of: Blocker, Critical, Major, Normal, Minor, Undefined)
 
-7. **If the issue type is Bug, ask for Severity** (customfield_12316142)
+7. **If the issue type is Bug, ask for Severity** (customfield_10840)
 
 8. **Ask for Activity Type** (one of: Tech Debt & Quality, New Features, Learning & Enablement, or None). See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for field ID and option IDs.
 
 9. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
 
-10. **Create the issue** using jira_createIssue. See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for all field IDs and formats. Include:
-    - Project ID, component, team, labels (based on area selection)
+10. **Create the issue** using `createJiraIssue`. See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for all field IDs and formats. Include:
+    - `projectKey`, component, team, labels (based on area selection)
     - Priority (based on user selection)
     - Severity (if Bug, based on user selection)
     - Activity Type (based on user selection)
     - Epic Link (if specified)
-    - Issue type ID (Bug/Task/Story)
+    - `issueTypeName` (Bug/Task/Story as string)
+    - `contentFormat`: `"markdown"`
     - Description: Use the user-approved description, formatted according to the templates below
 
 11. **After creating the issue**, provide the user with:
     - The issue key (e.g., RHOAIENG-XXXXX)
-    - A link to the issue: `https://issues.redhat.com/browse/{issueKey}`
+    - A link to the issue: `https://redhat.atlassian.net/browse/{issueKey}`
 
 12. **Ask if they want to add it to a sprint**. If yes:
     - Follow the "Finding Sprints" instructions in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to find the correct Green sprint
     - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
-    - Update the issue's sprint field (customfield_12310940) with the sprint ID (integer)
-    - Transition the issue from "New" to "Backlog" using jira_getTransitions to find the transition ID, then jira_transitionIssue to perform the transition
+    - Update the issue's sprint field (customfield_10020) with the sprint ID (integer)
+    - Transition the issue from "New" to "Backlog" using `getTransitionsForJiraIssue` to find the transition ID, then `transitionJiraIssue` to perform the transition
 
 13. **If a PR was mentioned**, set the Git Pull Request field:
-    - Use jira_updateIssue to set `customfield_12310220` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
+    - Use `editJiraIssue` to set `customfield_10875` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
     - This field does NOT auto-populate from GitHub, so it must be set manually
 
 ## Description Templates
@@ -90,50 +91,50 @@ When drafting descriptions, use both the user's context AND findings from the co
 - If the user made significant changes to the AI-suggested description: `_This issue description was generated in part by AI._`
 - For bugs, append to the disclaimer: `_Assertions about root cause and suggested fix may be inaccurate._`
 
-For Bugs, use this format (fill in sections based on user context, leave placeholders for unknown info):
+For Bugs, use this Markdown format:
 ```
-h3. Description of problem
+### Description of problem
 [Draft based on user context]
 
-h3. Prerequisites (if any, like setup, operators/versions)
+### Prerequisites (if any, like setup, operators/versions)
 [If known from context, otherwise leave as TBD]
 
-h3. Steps to Reproduce
-# [Draft steps based on context]
+### Steps to Reproduce
+1. [Draft steps based on context]
 
-h3. Actual results
+### Actual results
 [Draft based on context]
 
-h3. Expected results
+### Expected results
 [Draft based on context]
 
-h3. Reproducibility (Always/Intermittent/Only Once)
+### Reproducibility (Always/Intermittent/Only Once)
 [If known, otherwise leave as TBD]
 
-h3. Found in what build
+### Found in what build
 [If known, otherwise leave as TBD]
 
-h3. Describe any workarounds
+### Describe any workarounds
 [If known, otherwise "None known"]
 
-h3. Additional information
+### Additional information
 [Any other relevant context]
 ```
 
-For Tasks/Stories, use this format:
+For Tasks/Stories, use this Markdown format:
 ```
-h3. Description
+### Description
 [Draft based on user context - what needs to be done and why]
 
-h3. Acceptance Criteria
-* [Draft criteria based on context]
+### Acceptance Criteria
+- [Draft criteria based on context]
 ```
 
 ## File References
 
-When referencing files in the issue description, include GitHub links:
+When referencing files in the issue description, include GitHub links using standard Markdown syntax:
 1. Determine the GitHub repo URL by running `git remote get-url upstream` and converting it to HTTPS format
-2. Link to files on the `main` branch using Jira Wiki Markup syntax (see [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for format details)
+2. Link to files on the `main` branch: `[filename](https://github.com/OWNER/REPO/blob/main/path/to/file.ts)`
 
 ## Important Notes
 - If using Jira MCP tools encounters issues, stop and ask the user how to proceed

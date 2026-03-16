@@ -42,7 +42,7 @@ The dashboard shows a progressive loading indicator that disappears when all dat
 
 4. Present a summary table of the recommended actions, ordered by priority. Include the action type, PR link, repo, author, and why action is needed.
 
-5. Render Jira issue keys as markdown links to `https://issues.redhat.com/browse/{key}` (e.g., `[RHOAIENG-46284](https://issues.redhat.com/browse/RHOAIENG-46284)`).
+5. Render Jira issue keys as markdown links to `https://redhat.atlassian.net/browse/{key}` (e.g., `[RHOAIENG-46284](https://redhat.atlassian.net/browse/RHOAIENG-46284)`).
 
 6. Offer to help with the first recommended action (e.g., "Would you like me to run `/review` on that PR?").
 

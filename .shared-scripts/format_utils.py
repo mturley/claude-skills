@@ -12,7 +12,7 @@ import sys
 from datetime import datetime
 
 
-JIRA_BASE = "https://issues.redhat.com/browse"
+JIRA_BASE = "https://redhat.atlassian.net/browse"
 
 TYPE_EMOJI = {
     "Bug": "\U0001f7e5",        # 🟥

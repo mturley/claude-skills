@@ -7,15 +7,14 @@ Technical Reference: Read `../.context/confluence-mcp.md` before using Confluenc
 ## Prerequisites
 
 Before starting, verify you have access to:
-1. **Confluence MCP** - `confluence_getContent` tool must be available
-2. **Jira MCP** - `jira_searchIssues` tool must be available
-3. **GitHub CLI** - `gh` command must work (run `gh auth status` to check)
+1. **Atlassian MCP** - `getConfluencePage` and `searchJiraIssuesUsingJql` tools must be available
+2. **GitHub CLI** - `gh` command must work (run `gh auth status` to check)
 
 If any prerequisite is missing, inform the user and stop.
 
 ## Overview
 
-The team structure is defined on a Confluence page (content ID `479331996`). Team members are stored as opaque user key references that must be resolved to names, then cross-referenced against Jira (for emails and usernames) and GitHub (for GitHub usernames).
+The team structure is defined on a Confluence page (content ID `479331996`). Team members are stored as opaque user key references that must be resolved to names, then cross-referenced against Jira (for accountIds and emails) and GitHub (for GitHub usernames).
 
 ## Phase 1: Identify the User
 
@@ -26,7 +25,7 @@ The team structure is defined on a Confluence page (content ID `479331996`). Tea
 
 1. Check if `.context/people.md` already exists.
 2. If it exists, read and parse it:
-   - Extract each person's scrum, Name, Role, Email, Jira, and GitHub values from the tables
+   - Extract each person's scrum, Name, Role, Email, Jira accountId, and GitHub values from the tables
    - Store this as the **existing roster** for comparison after fetching Confluence data
    - Parse the `## Known Issues` section at the end of the file (if present) and store the list of **previously failed lookups** — each entry records a person's name and which lookup failed (Confluence user key, Jira, or GitHub)
    - Tell the user you found an existing file and will check for changes
@@ -34,7 +33,7 @@ The team structure is defined on a Confluence page (content ID `479331996`). Tea
 
 ## Phase 3: Fetch Team Structure from Confluence
 
-1. Use `confluence_getContent` to fetch content ID `479331996` with `expand=body.storage`.
+1. Use `getConfluencePage` to fetch content ID `479331996`.
 2. The response contains an HTML table with rows for each scrum. Extract the following for each scrum:
    - **Scrum name** (Green, Razzmatazz, Zaffre, Monarch, Crimson, Teal, Indigo, Purple, Tangerine)
    - **Focus area** (from the "Team Links/Main area of focus" column)
@@ -46,23 +45,15 @@ The team structure is defined on a Confluence page (content ID `479331996`). Tea
 
 ## Phase 4: Resolve Confluence User Keys to Names
 
-The Confluence MCP does not have a user lookup tool. Use the REST API directly.
+The Confluence page may contain user references as `<ri:user>` tags with `ri:userkey` or `ri:account-id` attributes, or as plain text names.
 
-1. Get the Confluence API token:
-   ```bash
-   TOKEN=$(python3 -c "import json; c=json.load(open('$HOME/.claude.json')); print(c['mcpServers']['confluence']['env']['CONFLUENCE_API_TOKEN'])")
-   ```
+1. For Cloud Confluence (`redhat.atlassian.net`), user references use Atlassian account IDs. The page content from `getConfluencePage` may include display names inline or as user mentions.
 
-2. Resolve user keys in batches to avoid rate limiting. For each user key:
-   ```bash
-   curl -s -H "Authorization: Bearer $TOKEN" \
-     "https://spaces.redhat.com/rest/api/user?key=<userkey>"
-   ```
-   Extract `displayName` and `username` from the JSON response.
+2. Extract display names directly from the page HTML where possible. User mentions in Cloud Confluence typically render as `<ac:link><ri:user ri:account-id="..." /><ac:plain-text-link-body><![CDATA[Display Name]]></ac:plain-text-link-body></ac:link>` or similar patterns.
 
-3. **Rate limiting:** If you get HTTP 429, wait 5-10 seconds and retry. Process keys in batches of ~10 with a brief pause between batches.
+3. For any account IDs that need resolution, use `lookupJiraAccountId` with the person's email address (if known) to find their Atlassian account ID and display name.
 
-4. Some user keys may return a response with empty `displayName` but still include the `username`. In that case, try the full JSON response — the name might be in a different structure. See the "Resolving User References" section in `../.context/confluence-mcp.md`.
+4. See the "Resolving User References" section in `../.context/confluence-mcp.md` for additional details.
 
 ## Phase 5: Compare and Determine Scope
 
@@ -70,39 +61,34 @@ The Confluence MCP does not have a user lookup tool. Use the REST API directly.
    - **New members:** People in Confluence not in the existing file — these need full Jira and GitHub lookups
    - **Removed members:** People in the existing file not in Confluence — these will be dropped
    - **Scrum changes:** People who moved between scrums — update their scrum placement, preserve their existing data
-   - **Preserve existing data:** For members present in both, keep their Email, Jira, and GitHub values from the existing file
-   - **Incomplete entries:** Existing members with blank Email or Jira cells need Jira lookups; existing members with blank GitHub cells need GitHub lookups — **unless** the lookup is recorded as a known failure in the Known Issues section from Phase 2
+   - **Preserve existing data:** For members present in both, keep their Email, Jira accountId, and GitHub values from the existing file
+   - **Incomplete entries:** Existing members with blank Email or Jira accountId cells need Jira lookups; existing members with blank GitHub cells need GitHub lookups — **unless** the lookup is recorded as a known failure in the Known Issues section from Phase 2
    - Report all changes to the user (new members, departures, scrum moves)
 
 2. Build two lists:
-   - **Need Jira lookup:** New members + existing members with blank Email or blank Jira — **excluding** anyone with a known Jira lookup failure
+   - **Need Jira lookup:** New members + existing members with blank Email or blank Jira accountId — **excluding** anyone with a known Jira lookup failure
    - **Need GitHub lookup:** New members + existing members with blank GitHub — **excluding** anyone with a known GitHub lookup failure
 
 3. If no existing file was found, all members need both Jira and GitHub lookups.
 
 4. Known Issues entries for people who have been **removed** from the team should be dropped. Known Issues entries for **new members** do not apply (they are new, so always attempt their lookups).
 
-## Phase 6: Look Up Jira Usernames and Emails
+## Phase 6: Look Up Jira Account IDs and Emails
 
-**Only perform lookups for people identified in Phase 5 as needing Jira data.** Skip anyone who already has both Email and Jira filled in from the existing file.
+**Only perform lookups for people identified in Phase 5 as needing Jira data.** Skip anyone who already has both Email and Jira accountId filled in from the existing file.
 
 1. Search for issues in the current open sprints to discover assignee details:
+   Use `searchJiraIssuesUsingJql` with:
    ```jql
    project = RHOAIENG AND sprint in openSprints() AND component = "AI Core Dashboard"
    ```
-   Extract `assignee.name`, `assignee.displayName`, and `assignee.emailAddress` from each issue.
+   Extract `assignee.accountId`, `assignee.displayName`, and `assignee.emailAddress` from each issue.
 
-2. For any team members still not found as assignees, look them up directly via the Jira REST API:
-   ```bash
-   TOKEN_JIRA=$(python3 -c "import json; c=json.load(open('$HOME/.claude.json')); print(c['mcpServers']['jira']['env']['JIRA_API_TOKEN'])")
-   curl -s -H "Authorization: Bearer $TOKEN_JIRA" \
-     "https://issues.redhat.com/rest/api/2/user?username=<confluence_username>"
-   ```
-   The Confluence username and Jira username are usually the same.
+2. For any team members still not found as assignees, use `lookupJiraAccountId` with their email address to find their Atlassian account ID.
 
-3. Build a lookup table mapping each person to their email and Jira username.
+3. Build a lookup table mapping each person to their email and Jira accountId.
 
-4. **Track failures:** For anyone whose Jira lookup fails (not found as an assignee and not found via direct API lookup), record the failure with their name and the reason (e.g., "Jira lookup failed — no matching user found"). These will be written to the Known Issues section.
+4. **Track failures:** For anyone whose Jira lookup fails (not found as an assignee and not resolvable via email lookup), record the failure with their name and the reason (e.g., "Jira lookup failed — no matching user found"). These will be written to the Known Issues section.
 
 ## Phase 7: Find GitHub Usernames
 
@@ -156,15 +142,15 @@ Run `/populate-people` to update this file.
 | **Scrum** | <scrum name> |
 | **Focus** | <scrum focus area> |
 | **Email** | <email> |
-| **Jira** | <jira username> |
+| **Jira accountId** | <jira accountId> |
 | **GitHub** | <github username> |
 
 ## <Scrum Name> Scrum
 
 Focus: <focus area>
 
-| Name | Role | Email | Jira | GitHub |
-|------|------|-------|------|--------|
+| Name | Role | Email | Jira accountId | GitHub |
+|------|------|-------|----------------|--------|
 | ... | ... | ... | ... | ... |
 
 ## Known Issues
