@@ -77,6 +77,7 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
     - Use the active Green sprint for "current sprint" or the next future Green sprint for "next sprint"
     - Update the issue's sprint field (customfield_10020) with the sprint ID (integer)
     - Transition the issue from "New" to "Backlog" using `getTransitionsForJiraIssue` to find the transition ID, then `transitionJiraIssue` to perform the transition
+    - If no: **Ask if they want to transition it to Backlog** (without a sprint). If yes, transition from "New" to "Backlog" using `getTransitionsForJiraIssue` and `transitionJiraIssue`.
 
 13. **If a PR was mentioned**, set the Git Pull Request field:
     - Use `editJiraIssue` to set `customfield_10875` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
