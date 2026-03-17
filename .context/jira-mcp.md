@@ -174,26 +174,20 @@ Using Parent Link when you meant Epic Link will NOT properly associate the issue
 
 **Type:** Rich text field (ADF on Jira Cloud)
 
-**Reading:** On Cloud API v3, this field returns as an Atlassian Document Format (ADF) document, NOT a plain string. PR URLs are embedded as text nodes with `link` marks:
+**Reading:** On Cloud API v3, this field returns as an Atlassian Document Format (ADF) document, NOT a plain string. PR URLs appear in two different ADF node formats:
+
+*Format 1 — text node with link mark* (set via API with raw ADF):
 ```json
-{
-  "type": "doc",
-  "version": 1,
-  "content": [{
-    "type": "paragraph",
-    "content": [{
-      "type": "text",
-      "text": "https://github.com/opendatahub-io/odh-dashboard/pull/6466",
-      "marks": [{"type": "link", "attrs": {"href": "https://github.com/opendatahub-io/odh-dashboard/pull/6466"}}]
-    }, {"type": "hardBreak"}, {
-      "type": "text",
-      "text": "https://github.com/kubeflow/model-registry/pull/2310",
-      "marks": [{"type": "link", "attrs": {"href": "https://github.com/kubeflow/model-registry/pull/2310"}}]
-    }]
-  }]
-}
+{"type": "text", "text": "https://github.com/org/repo/pull/123",
+ "marks": [{"type": "link", "attrs": {"href": "https://github.com/org/repo/pull/123"}}]}
 ```
-To extract URLs, parse link marks from the ADF tree (`mark.attrs.href`).
+
+*Format 2 — inlineCard / Smart Link* (set via Jira web UI):
+```json
+{"type": "inlineCard", "attrs": {"url": "https://github.com/org/repo/pull/123"}}
+```
+
+To extract URLs, check for both: `mark.attrs.href` on text nodes with link marks, and `node.attrs.url` on inlineCard nodes.
 
 **When to use:** This field is for PRs that **fix** the issue. When the user asks to "link a PR to an issue", this is the field to update.
 
@@ -233,6 +227,12 @@ For a single PR URL, omit the `hardBreak` and second text node.
 3. If the field already has URLs, include ALL existing URLs plus the new one in the value (the field is overwritten, not appended to).
 
 **Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
+
+**Searching by PR URL:** To find the Jira issue associated with a GitHub PR, search the Git Pull Request field using JQL text search (`~`). Use the repo path and PR number (not the full URL):
+```jql
+project = RHOAIENG AND "Git Pull Request" ~ "kubeflow/model-registry/pull/2302" ORDER BY updated DESC
+```
+This is more reliable than searching by title or description text, since the PR may not reference the Jira issue key (especially in upstream repos where Jira references are prohibited).
 
 ---
 
