@@ -32,7 +32,44 @@ Review a pull request by checking out its branch and analyzing the changes.
 2. Get the list of changed files: `gh pr diff --name-only`
 3. Get the full diff: `gh pr diff`
 
-### Phase 4: Check for Existing Reviews
+### Phase 4: Gather Jira Context
+
+Look for related Jira issues to understand the requirements and acceptance criteria behind the PR.
+
+**Read `~/.claude/skills/.context/jira-mcp.md`** before making any Jira MCP calls — it contains the cloudId, custom field IDs, and JQL patterns needed below.
+
+#### Step 1: Search the PR description for Jira links
+
+Scan the PR body (from Phase 3) for URLs matching `issues.redhat.com/browse/` or `redhat.atlassian.net/browse/`. Extract any issue keys (e.g. `RHOAIENG-12345`).
+
+#### Step 2: If no Jira links found, search by PR author
+
+This handles upstream PRs or PRs that don't reference Jira directly.
+
+1. Get the PR author's GitHub username (from Phase 3's `author` field)
+2. Read `~/.claude/skills/.context/people.md` and find the row matching that GitHub username
+3. If found, extract their Jira `accountId`
+4. Search for open Jira issues assigned to that person that link to this PR. Use `searchJiraIssuesUsingJql` with:
+   - JQL: `project = RHOAIENG AND assignee = "<accountId>" AND status != Done AND "Git Pull Request" ~ "<owner>/<repo>/pull/<pr_number>"` (extract owner/repo from the repository, pr_number from the PR)
+   - `fields`: `["summary", "status", "customfield_10875"]`
+5. If the PR-link search returns no results, broaden: search for issues assigned to that person in active sprints:
+   - JQL: `project = RHOAIENG AND assignee = "<accountId>" AND sprint in openSprints() ORDER BY updated DESC`
+   - Review the results and look for issues whose title/description appears related to the PR's changes
+6. If no match is found by any method, skip this phase — not all PRs have Jira issues
+
+#### Step 3: Fetch Jira issue details
+
+For each Jira issue found (from either step), use `getJiraIssue` with `responseContentFormat: "markdown"` to get the full description, acceptance criteria, and status.
+
+#### Step 4: Include Jira context in the review
+
+When writing the review in Phase 7:
+- Reference the Jira issue(s) with links
+- Check the PR's changes against any acceptance criteria listed in the Jira description
+- Note any open questions or scope items from the Jira issue that are relevant to the review
+- If acceptance criteria exist, include a checklist showing which are met by the PR
+
+### Phase 5: Check for Existing Reviews
 
 1. Fetch existing review comments: `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments`
 2. Fetch existing PR reviews: `gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews`
@@ -42,7 +79,7 @@ Review a pull request by checking out its branch and analyzing the changes.
    - Provide a summary: "X of Y previous comments have been addressed"
    - For any unaddressed comments, explain what still needs to be done
 
-### Phase 5: Check CI Status
+### Phase 6: Check CI Status
 
 1. Run `gh pr checks {pr_number}` to get the status of all CI checks
 2. If any checks have failed:
@@ -54,7 +91,7 @@ Review a pull request by checking out its branch and analyzing the changes.
    - For PR-caused failures, provide specific guidance on how to fix them (e.g. lint errors, test failures, type errors)
    - For pre-existing/infrastructure failures, note that they appear unrelated to the PR changes
 
-### Phase 6: Review the PR
+### Phase 7: Review the PR
 
 Analyze the changes and provide a thorough code review:
 
@@ -81,7 +118,7 @@ Use emojis for emphasis throughout the review to make important information scan
 - 📝 for informational notes and suggestions
 - 🔧 for pre-existing/infrastructure CI failures unrelated to the PR
 
-### Post-Review (after Phase 6)
+### Post-Review (after Phase 7)
 
 After completing the review:
 
