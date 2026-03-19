@@ -13,12 +13,19 @@ Review a pull request by checking out its branch and analyzing the changes.
 1. If `$ARGUMENTS` is empty, check the current branch: `git branch --show-current`
    - If the branch matches the pattern `review/pr-<number>-*` (e.g. `review/pr-123-fix-login`), extract the PR number and use it as `$ARGUMENTS`. Note that the checkout in Phase 2 should be skipped since we're already on the correct branch.
    - If it doesn't match, **abort** with a message explaining that a PR number or branch name is required
-2. Run `git status` to check for uncommitted changes
-3. If there are uncommitted changes, **abort** with a message asking the user to commit or stash their changes first
-4. Verify the PR belongs to the current repository:
+2. Verify the PR belongs to the current repository:
    - Get the current repo: `gh repo view --json nameWithOwner --jq '.nameWithOwner'`
    - Get the PR's base repo: If `$ARGUMENTS` is a URL (contains "github.com"), parse the owner/repo from the URL path. Otherwise, assume it's a local PR number/branch.
    - If they don't match, **abort** with a message explaining that the PR is from a different repository and cannot be checked out here
+3. Check whether a worktree is needed. Run `git branch --show-current` and `git status --short`. A worktree is needed if **any** of these are true:
+   - The current branch is not `main`
+   - There are uncommitted changes (staged, unstaged, or untracked files shown by `git status`)
+   - The user explicitly asked to use a worktree
+   If a worktree is needed:
+   - If the user already asked for a worktree, proceed directly
+   - Otherwise, ask the user: "You have uncommitted changes / are not on main. Want me to use a worktree so the review doesn't interfere with your work?"
+   - If the user agrees (or already asked), use the `EnterWorktree` tool with name `review-pr-{number}` (extract the PR number from `$ARGUMENTS`). After entering the worktree, continue to Phase 2.
+   - If the user declines, **abort** with a message suggesting they commit or stash their changes first
 
 ### Phase 2: Checkout PR Branch
 
