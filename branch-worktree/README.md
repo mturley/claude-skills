@@ -16,6 +16,7 @@ The skill will:
 1. Create a git worktree at `.claude/worktrees/<repo-name>-<branch-name>` with a new branch
 2. Detect your editor (VS Code, Cursor, or terminal)
 3. Open a new editor window in the worktree directory
+4. Offer to copy gitignored files (e.g. `node_modules/`, build artifacts) from the main working tree so the worktree is ready to use immediately
 
 If a worktree with that name already exists, the skill offers to reuse it or recreate it.
 

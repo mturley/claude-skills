@@ -24,7 +24,8 @@ The skill will:
 3. Check out the PR branch in the worktree
 4. Detect your editor (VS Code, Cursor, or terminal)
 5. Open a new editor window in the worktree directory
-6. Tell you to run `/review` in the new window
+6. Offer to copy gitignored files (e.g. `node_modules/`, build artifacts) from the main working tree so the worktree is ready to use immediately
+7. Tell you to run `/review` in the new window
 
 If a worktree for the PR already exists, the skill fetches the latest PR ref and compares it to the worktree's HEAD. If the worktree is behind, it offers to update (hard reset), recreate from scratch, or reuse as-is.
 

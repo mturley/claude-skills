@@ -20,10 +20,10 @@ Review a pull request by checking out its branch and analyzing the changes.
 3. **STOP AND ASK before creating a worktree.** Check whether the working tree is clean and on `main`:
    - Run `git branch --show-current` and `git status --short`
    - If already on `main` with no changes, proceed directly to Phase 2 — no worktree needed.
-   - Otherwise (not on `main`, or uncommitted changes exist), **you MUST ask the user before proceeding**. Do NOT create a worktree or check out the PR without explicit confirmation. Use `AskUserQuestion` to ask something like: "You're on branch X (with uncommitted changes). I can either create a worktree for this review, or you can switch to main first. Which do you prefer?"
-   - If the user chooses a worktree, use `EnterWorktree` with name `review-pr-{number}` (extract the PR number from `$ARGUMENTS`). After entering the worktree, continue to Phase 2.
+   - Otherwise (not on `main`, or uncommitted changes exist), **you MUST ask the user before proceeding**. Do NOT create a worktree or check out the PR without explicit confirmation. Use `AskUserQuestion` to ask something like: "You're on branch X (with uncommitted changes). I recommend running `/pr-worktree <PR>` to set up an isolated worktree with dependencies copied over, then running `/review` in the new window. Or you can switch to main first. Which do you prefer?"
+   - If the user chooses a worktree, run the `/pr-worktree` skill (which handles worktree creation, editor opening, and dependency copying). After `/pr-worktree` completes, tell the user to run `/review` in the new editor window and stop — do not continue to Phase 2 in this session.
    - If the user declines, **abort** with a message suggesting they commit or stash their changes first, or switch to main manually.
-   - **Exception:** If the user explicitly asked to use a worktree in their original message, proceed directly without asking.
+   - **Exception:** If the user explicitly asked to use a worktree in their original message, proceed directly to run `/pr-worktree` without asking.
 
 ### Phase 2: Checkout PR Branch
 
