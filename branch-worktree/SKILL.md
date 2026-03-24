@@ -27,7 +27,26 @@ Set up an isolated git worktree for a new branch and open it in a new editor win
    - If the branch already exists (exit code non-zero), try without `-b`: `git worktree add .claude/worktrees/<worktree-name> <branch-name>`
    - If that also fails, report the error and abort
 
-### Phase 2: Detect Editor and Open New Window
+### Phase 2: Copy Gitignored Files
+
+Offer to copy gitignored files (installed dependencies, build artifacts, etc.) from the main working tree to the new worktree so it's ready to use immediately without reinstalling.
+
+1. Get the main working tree root (the directory where the `git worktree add` command was run, not the worktree itself)
+2. List top-level gitignored files and directories in the main working tree:
+   ```bash
+   git -C <main-tree-root> ls-files --others --ignored --exclude-standard --directory
+   ```
+   This lists gitignored entries with directories collapsed (e.g. `node_modules/` instead of every file inside it).
+3. If there are no gitignored entries, skip this phase silently and proceed to Phase 3
+4. Show the user the list and ask if they want to copy these to the worktree
+5. If the user agrees, copy each entry from the main working tree to the same relative path in the worktree:
+   ```bash
+   rsync -a <main-tree-root>/<entry> <worktree-path>/<entry>
+   ```
+   Use `rsync -a` for directories (preserves structure and handles trailing slashes correctly). For individual files, `cp` is fine.
+6. Report what was copied and note any errors
+
+### Phase 3: Detect Editor and Open New Window
 
 Detect the user's editor environment and open a new window in the worktree directory.
 
@@ -43,25 +62,6 @@ Detect the user's editor environment and open a new window in the worktree direc
    - `env -u CLAUDECODE code --new-window <worktree-path>`
    - `env -u CLAUDECODE cursor --new-window <worktree-path>`
    - `cd <worktree-path>`
-
-### Phase 3: Copy Gitignored Files
-
-Offer to copy gitignored files (installed dependencies, build artifacts, etc.) from the main working tree to the new worktree so it's ready to use immediately without reinstalling.
-
-1. Get the main working tree root (the directory where the `git worktree add` command was run, not the worktree itself)
-2. List top-level gitignored files and directories in the main working tree:
-   ```bash
-   git -C <main-tree-root> ls-files --others --ignored --exclude-standard --directory
-   ```
-   This lists gitignored entries with directories collapsed (e.g. `node_modules/` instead of every file inside it).
-3. If there are no gitignored entries, skip this phase silently and proceed to Phase 4
-4. Show the user the list and ask if they want to copy these to the worktree
-5. If the user agrees, copy each entry from the main working tree to the same relative path in the worktree:
-   ```bash
-   rsync -a <main-tree-root>/<entry> <worktree-path>/<entry>
-   ```
-   Use `rsync -a` for directories (preserves structure and handles trailing slashes correctly). For individual files, `cp` is fine.
-6. Report what was copied and note any errors
 
 ### Phase 4: Determine How to Install Dependencies
 
@@ -92,7 +92,7 @@ After opening the editor window (or providing the path), tell the user:
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/<worktree-name>`
 2. **What branch was created**: the git branch name
 3. **Dependencies**:
-   - If gitignored files were copied in Phase 3: note that dependencies and other gitignored files have been copied from the main working tree. Mention that if the new branch will change dependencies (e.g. modified `package.json`), they may still need to run the install command to pick up differences.
+   - If gitignored files were copied in Phase 2: note that dependencies and other gitignored files have been copied from the main working tree. Mention that if the new branch will change dependencies (e.g. modified `package.json`), they may still need to run the install command to pick up differences.
    - If gitignored files were not copied (none found or user declined): Based on what you found in Phase 4, tell the user what to run. Provide copy-pasteable commands starting with `cd <absolute-worktree-path>`, followed by the install command(s). If you found instructions in a README or CONTRIBUTING guide, briefly mention where you found them. If nothing was found, just note that no dependency manager was detected.
 4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
    - `git worktree remove .claude/worktrees/<worktree-name>`
