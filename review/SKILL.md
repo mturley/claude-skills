@@ -17,15 +17,13 @@ Review a pull request by checking out its branch and analyzing the changes.
    - Get the current repo: `gh repo view --json nameWithOwner --jq '.nameWithOwner'`
    - Get the PR's base repo: If `$ARGUMENTS` is a URL (contains "github.com"), parse the owner/repo from the URL path. Otherwise, assume it's a local PR number/branch.
    - If they don't match, **abort** with a message explaining that the PR is from a different repository and cannot be checked out here
-3. Check whether a worktree is needed. Run `git branch --show-current` and `git status --short`. A worktree is needed if **any** of these are true:
-   - The current branch is not `main`
-   - There are uncommitted changes (staged, unstaged, or untracked files shown by `git status`)
-   - The user explicitly asked to use a worktree
-   If a worktree is needed:
-   - If the user already asked for a worktree, proceed directly
-   - Otherwise, ask the user: "You have uncommitted changes / are not on main. Want me to use a worktree so the review doesn't interfere with your work?"
-   - If the user agrees (or already asked), use the `EnterWorktree` tool with name `review-pr-{number}` (extract the PR number from `$ARGUMENTS`). After entering the worktree, continue to Phase 2.
-   - If the user declines, **abort** with a message suggesting they commit or stash their changes first
+3. **STOP AND ASK before creating a worktree.** Check whether the working tree is clean and on `main`:
+   - Run `git branch --show-current` and `git status --short`
+   - If already on `main` with no changes, proceed directly to Phase 2 — no worktree needed.
+   - Otherwise (not on `main`, or uncommitted changes exist), **you MUST ask the user before proceeding**. Do NOT create a worktree or check out the PR without explicit confirmation. Use `AskUserQuestion` to ask something like: "You're on branch X (with uncommitted changes). I can either create a worktree for this review, or you can switch to main first. Which do you prefer?"
+   - If the user chooses a worktree, use `EnterWorktree` with name `review-pr-{number}` (extract the PR number from `$ARGUMENTS`). After entering the worktree, continue to Phase 2.
+   - If the user declines, **abort** with a message suggesting they commit or stash their changes first, or switch to main manually.
+   - **Exception:** If the user explicitly asked to use a worktree in their original message, proceed directly without asking.
 
 ### Phase 2: Checkout PR Branch
 
