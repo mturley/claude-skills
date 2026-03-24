@@ -66,7 +66,11 @@ Offer to copy gitignored files (installed dependencies, build artifacts, etc.) f
    ```
    This lists gitignored entries with directories collapsed (e.g. `node_modules/` instead of every file inside it).
 3. If there are no gitignored entries, skip this phase silently and proceed to Phase 4
-4. Show the user the list and ask if they want to copy these to the worktree
+4. Get the total disk usage of the gitignored entries:
+   ```bash
+   du -sh <main-tree-root>/<entry1> <main-tree-root>/<entry2> ...
+   ```
+   Show the user the list of entries with their sizes and the total, then ask if they want to copy these to the worktree
 5. If the user agrees, copy each entry from the main working tree to the same relative path in the worktree:
    ```bash
    rsync -a <main-tree-root>/<entry> <worktree-path>/<entry>
