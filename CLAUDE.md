@@ -23,6 +23,7 @@ When modifying skills:
 When creating new skills:
 - Create a README.md in the skill directory explaining usage and installation
 - Add a reference to the new skill in the root README.md under "## Skills"
+- Do NOT create symlinks into `~/.claude/skills/` — the entire `claude-skills` repo is already symlinked there, so new skill directories are automatically available
 - Commit and push all changes
 
 # Shared Scripts (`.shared-scripts/`)
