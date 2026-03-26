@@ -19,36 +19,34 @@ Set up an isolated git worktree for a new branch and open it in a new editor win
 4. Generate the worktree directory name: `<repo-name>-<branch-name>` (e.g. `odh-dashboard-fix-login-validation`)
    - Replace any `/` in the branch name with `-` for the directory name
 5. The git branch name is just `$ARGUMENTS` as provided (do NOT include the repo name in the branch)
-6. Check if a worktree already exists at `.claude/worktrees/<worktree-name>`:
-   - If it does, tell the user and ask whether to:
+6. Run the shared worktree-ensure script to check/create the worktree in a single step:
+   ```bash
+   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
+   "$SCRIPTS_DIR/worktree-ensure.sh" branch .claude/worktrees/<worktree-name> <branch-name>
+   ```
+   - If status is `"exists"`: tell the user and ask whether to:
      - **Reuse**: just open the existing worktree in a new editor window
-     - **Recreate**: remove and recreate the worktree from scratch (`git worktree remove <existing-path> --force`)
-7. Create the worktree with a new branch: `git worktree add .claude/worktrees/<worktree-name> -b <branch-name>`
-   - If the branch already exists (exit code non-zero), try without `-b`: `git worktree add .claude/worktrees/<worktree-name> <branch-name>`
-   - If that also fails, report the error and abort
+     - **Recreate**: remove and recreate the worktree from scratch (`git worktree remove <existing-path> --force`), then re-run the script
+   - If status is `"created"`: proceed to Phase 2
+   - If status is `"error"`: report the error and abort
 
 ### Phase 2: Copy Gitignored Files
 
 Offer to copy gitignored files (installed dependencies, build artifacts, etc.) from the main working tree to the new worktree so it's ready to use immediately without reinstalling.
 
 1. Get the main working tree root (the directory where the `git worktree add` command was run, not the worktree itself)
-2. List top-level gitignored files and directories in the main working tree:
+2. Run the shared gitignored-sizes script to list gitignored entries with their sizes:
    ```bash
-   git -C <main-tree-root> ls-files --others --ignored --exclude-standard --directory
+   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
+   "$SCRIPTS_DIR/gitignored-sizes.sh" <main-tree-root>
    ```
-   This lists gitignored entries with directories collapsed (e.g. `node_modules/` instead of every file inside it).
-3. If there are no gitignored entries, skip this phase silently and proceed to Phase 3
-4. Get the total disk usage of the gitignored entries:
+   - If no output, skip this phase silently and proceed to Phase 3
+   - Otherwise, show the user the output (list of entries with sizes and total) and ask if they want to copy these to the worktree
+3. If the user agrees, run the shared copy-gitignored script:
    ```bash
-   du -sh <main-tree-root>/<entry1> <main-tree-root>/<entry2> ...
+   "$SCRIPTS_DIR/copy-gitignored.sh" <main-tree-root> <worktree-path>
    ```
-   Show the user the list of entries with their sizes and the total, then ask if they want to copy these to the worktree
-5. If the user agrees, copy each entry from the main working tree to the same relative path in the worktree:
-   ```bash
-   rsync -a <main-tree-root>/<entry> <worktree-path>/<entry>
-   ```
-   Use `rsync -a` for directories (preserves structure and handles trailing slashes correctly). For individual files, `cp` is fine.
-6. Report what was copied and note any errors
+4. Report what was copied based on the script output and note any errors
 
 ### Phase 3: Detect Editor and Open New Window
 

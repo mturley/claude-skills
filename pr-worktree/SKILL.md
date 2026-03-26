@@ -36,49 +36,38 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
    - Trim leading/trailing hyphens
    - Truncate to 40 characters (at a word boundary if possible)
    - The worktree name is `pr-<number>-<slug>` (e.g. `pr-123-fix-login-validation`)
-7. Check if a worktree for this PR already exists at `.claude/worktrees/pr-<number>-*` (glob match on the PR number prefix):
-   - If it does, check whether it's up to date with the PR's latest changes:
-     1. Fetch the latest PR ref: `git fetch https://github.com/<base_repo>.git refs/pull/<number>/head`
-     2. Compare `FETCH_HEAD` with the worktree's current HEAD: `git -C <existing-path> rev-parse HEAD`
-     3. If they match, the worktree is up to date — tell the user and ask whether to reuse or recreate
-     4. If they differ, tell the user the worktree is behind the PR's latest changes and ask whether to:
-        - **Update**: hard reset the worktree to the latest PR state: fetch into the existing branch (`git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:<branch-name>` with `--force`), then `git -C <existing-path> reset --hard <branch-name>`
-        - **Recreate**: remove and recreate the worktree from scratch (`git worktree remove <existing-path> --force`)
-        - **Reuse as-is**: keep the worktree in its current state (e.g. if the user has local changes they want to keep)
-   - To remove (if recreating): `git worktree remove <existing-path> --force`
+7. Run the shared worktree-ensure script to check/create the worktree in a single step:
+   ```bash
+   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
+   "$SCRIPTS_DIR/worktree-ensure.sh" pr .claude/worktrees/pr-<number>-<slug> <number> <slug> <base_repo>
+   ```
+   - If status is `"exists"`: the worktree is up to date — tell the user and ask whether to reuse or recreate
+   - If status is `"exists-outdated"`: tell the user the worktree is behind the PR's latest changes (show local_head vs remote_head) and ask whether to:
+     - **Update**: hard reset the worktree to the latest PR state: fetch into the existing branch (`git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:<branch-name>` with `--force`), then `git -C <existing-path> reset --hard <branch-name>`
+     - **Recreate**: remove and recreate the worktree from scratch (`git worktree remove <existing-path> --force`), then re-run the script
+     - **Reuse as-is**: keep the worktree in its current state (e.g. if the user has local changes they want to keep)
+   - If status is `"created"`: proceed to Phase 2
+   - If status is `"error"`: report the error and abort
 
-### Phase 2: Create Worktree and Checkout PR Branch
-
-1. Extract the base repo from the PR URL (e.g. `https://github.com/org/repo/pull/123` → `org/repo`)
-2. Fetch the PR ref into a local branch: `git fetch https://github.com/<base_repo>.git refs/pull/<number>/head:review/pr-<number>-<slug>`
-   - This works regardless of fork configuration since PR refs always exist on the base repository
-3. Create the worktree: `git worktree add .claude/worktrees/pr-<number>-<slug> review/pr-<number>-<slug>`
-4. If the worktree creation fails, report the error and abort
-
-### Phase 3: Copy Gitignored Files
+### Phase 2: Copy Gitignored Files
 
 Offer to copy gitignored files (installed dependencies, build artifacts, etc.) from the main working tree to the new worktree so it's ready to use immediately without reinstalling.
 
 1. Get the main working tree root (the directory where the `git worktree add` command was run, not the worktree itself)
-2. List top-level gitignored files and directories in the main working tree:
+2. Run the shared gitignored-sizes script to list gitignored entries with their sizes:
    ```bash
-   git -C <main-tree-root> ls-files --others --ignored --exclude-standard --directory
+   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
+   "$SCRIPTS_DIR/gitignored-sizes.sh" <main-tree-root>
    ```
-   This lists gitignored entries with directories collapsed (e.g. `node_modules/` instead of every file inside it).
-3. If there are no gitignored entries, skip this phase silently and proceed to Phase 4
-4. Get the total disk usage of the gitignored entries:
+   - If no output, skip this phase silently and proceed to Phase 3
+   - Otherwise, show the user the output (list of entries with sizes and total) and ask if they want to copy these to the worktree
+3. If the user agrees, run the shared copy-gitignored script:
    ```bash
-   du -sh <main-tree-root>/<entry1> <main-tree-root>/<entry2> ...
+   "$SCRIPTS_DIR/copy-gitignored.sh" <main-tree-root> <worktree-path>
    ```
-   Show the user the list of entries with their sizes and the total, then ask if they want to copy these to the worktree
-5. If the user agrees, copy each entry from the main working tree to the same relative path in the worktree:
-   ```bash
-   rsync -a <main-tree-root>/<entry> <worktree-path>/<entry>
-   ```
-   Use `rsync -a` for directories (preserves structure and handles trailing slashes correctly). For individual files, `cp` is fine.
-6. Report what was copied and note any errors
+4. Report what was copied based on the script output and note any errors
 
-### Phase 4: Detect Editor and Open New Window
+### Phase 3: Detect Editor and Open New Window
 
 Detect the user's editor environment and open a new window in the worktree directory.
 
@@ -95,7 +84,7 @@ Detect the user's editor environment and open a new window in the worktree direc
    - `env -u CLAUDECODE cursor --new-window <worktree-path>`
    - `cd <worktree-path>`
 
-### Phase 5: Determine How to Install Dependencies
+### Phase 4: Determine How to Install Dependencies
 
 Investigate the worktree to figure out how to install dependencies, so you can tell the user.
 
@@ -123,8 +112,8 @@ After opening the editor window (or providing the path), tell the user:
 
 1. **Where the worktree is**: provide the absolute path to `.claude/worktrees/pr-<number>-<slug>`
 2. **Dependencies**:
-   - If gitignored files were copied in Phase 3: note that dependencies and other gitignored files have been copied from the main working tree. Mention that if the PR changes dependencies (e.g. modified `package.json`), they may still need to run the install command to pick up differences.
-   - If gitignored files were not copied (none found or user declined): Based on what you found in Phase 5, tell the user what to run. Provide copy-pasteable commands starting with `cd <absolute-worktree-path>`, followed by the install command(s). If you found instructions in a README or CONTRIBUTING guide, briefly mention where you found them. If nothing was found, just note that no dependency manager was detected.
+   - If gitignored files were copied in Phase 2: note that dependencies and other gitignored files have been copied from the main working tree. Mention that if the PR changes dependencies (e.g. modified `package.json`), they may still need to run the install command to pick up differences.
+   - If gitignored files were not copied (none found or user declined): Based on what you found in Phase 4, tell the user what to run. Provide copy-pasteable commands starting with `cd <absolute-worktree-path>`, followed by the install command(s). If you found instructions in a README or CONTRIBUTING guide, briefly mention where you found them. If nothing was found, just note that no dependency manager was detected.
 3. **What to do next**: "Run `/review` in the new window to start the code review"
 4. **How to clean up when done**: You can ask Claude to clean up the worktree for you, or do it manually:
    - `git worktree remove .claude/worktrees/pr-<number>-<slug>`
