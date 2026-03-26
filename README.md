@@ -52,6 +52,11 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
 
 See each skill directory's README.md for more information.
 
+### [/work](work/)
+
+Starts working on a Jira issue. Identifies the issue (from argument, branch name, or conversation), validates the workspace and branch state, gathers full context from Jira, explores the relevant codebase, and begins implementation.
+Requires: `.context/`
+
 ### [/export](export/)
 
 Exports Claude Code sessions to readable markdown files. Converts the raw JSONL session format into clean documentation.
