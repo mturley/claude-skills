@@ -37,8 +37,9 @@ Ensure the working branch is clean and ready for development.
 2. Run `git status --short` to check for uncommitted changes.
 3. Run `git branch --show-current` to get the current branch name.
 4. Check if the branch is up to date with the upstream main branch:
-   - Run `git fetch origin main` (or `upstream main` if an `upstream` remote exists)
-   - Run `git log HEAD..origin/main --oneline` (or `upstream/main`) to see if there are upstream commits not in the current branch
+   - Run `git remote` to list remotes. If an `upstream` remote exists, use it; otherwise fall back to `origin`.
+   - Run `git fetch <remote> main` using the chosen remote.
+   - Run `git log HEAD..<remote>/main --oneline` to see if there are upstream commits not in the current branch.
 5. **If there are uncommitted changes**, abort with a message:
    > "Your working tree has uncommitted changes. Please commit, stash, or discard them before starting work."
 6. **If the branch is behind upstream main**, abort with a message:
