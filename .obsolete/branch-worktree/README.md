@@ -1,4 +1,6 @@
-# /branch-worktree
+# /branch-worktree (Obsolete)
+
+> **This skill has been replaced by the standalone `branch-worktree` CLI command in [mturley/work-scripts](https://github.com/mturley/work-scripts).** Install it via PATH and run `branch-worktree <name>` directly from your terminal.
 
 Creates an isolated git worktree for a new branch and opens it in a new editor window. Useful for starting work on a new feature or fix without affecting your current working tree.
 

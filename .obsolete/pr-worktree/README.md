@@ -1,4 +1,6 @@
-# /pr-worktree
+# /pr-worktree (Obsolete)
+
+> **This skill has been replaced by the standalone `pr-worktree` CLI command in [mturley/work-scripts](https://github.com/mturley/work-scripts).** Install it via PATH and run `pr-worktree <url>` directly from your terminal.
 
 Creates an isolated git worktree for a pull request and opens it in a new editor window. Designed to be used with `/review` -- set up the worktree first with `/pr-worktree`, then run `/review` in the new window.
 

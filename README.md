@@ -22,9 +22,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/.shared-scripts ~/.claude/skills/.shared-scripts
 
    # Link the skills you want to use:
-   ln -s ~/git/claude-skills/branch-worktree ~/.claude/skills/branch-worktree
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
-   ln -s ~/git/claude-skills/pr-worktree ~/.claude/skills/pr-worktree
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
@@ -62,14 +60,6 @@ Exports Claude Code sessions to readable markdown files. Converts the raw JSONL 
 
 Reviews pull requests by checking out the branch and analyzing changes file-by-file. Requires a clean working tree.
 
-### [/branch-worktree](branch-worktree/)
-
-Creates an isolated git worktree for a new branch and opens it in a new editor window. Useful for starting work on a new feature or fix without affecting your current working tree.
-
-### [/pr-worktree](pr-worktree/)
-
-Creates an isolated git worktree for a pull request and opens it in a new editor window. Use with `/review` to review PRs without affecting your working tree.
-
 ### [/create-jira](create-jira/)
 
 Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
@@ -97,7 +87,7 @@ Generates or updates `.context/people.md` with RHOAI Dashboard team member infor
 
 ## Obsolete Skills
 
-Several skills have been moved to [`.obsolete/`](.obsolete/) after being superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app. They still work but will recommend using the dashboard instead when invoked.
+Several skills have been moved to [`.obsolete/`](.obsolete/). Some were superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, and others were replaced by standalone CLI commands in [mturley/work-scripts](https://github.com/mturley/work-scripts).
 
 ## Skills in Other Projects
 

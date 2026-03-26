@@ -25,3 +25,15 @@ Shows a chronological timeline of your GitHub activity over a configurable time 
 ## [/jira-activity](jira-activity/)
 
 Shows a chronological timeline of your Jira activity (changelog actions and comments) over a configurable time period.
+
+---
+
+The following skills have been replaced by standalone CLI commands in [mturley/work-scripts](https://github.com/mturley/work-scripts):
+
+## [/pr-worktree](pr-worktree/)
+
+Creates an isolated git worktree for a pull request and opens it in a new editor window. Replaced by the `pr-worktree` CLI command.
+
+## [/branch-worktree](branch-worktree/)
+
+Creates an isolated git worktree for a new branch and opens it in a new editor window. Replaced by the `branch-worktree` CLI command.
