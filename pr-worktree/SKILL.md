@@ -38,8 +38,7 @@ Set up an isolated git worktree for a pull request and open it in a new editor w
    - The worktree name is `pr-<number>-<slug>` (e.g. `pr-123-fix-login-validation`)
 7. Run the shared worktree-ensure script to check/create the worktree in a single step:
    ```bash
-   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
-   "$SCRIPTS_DIR/worktree-ensure.sh" pr .claude/worktrees/pr-<number>-<slug> <number> <slug> <base_repo>
+   "$(readlink -f ~/.claude/skills)/.shared-scripts/worktree-ensure.sh" pr .claude/worktrees/pr-<number>-<slug> <number> <slug> <base_repo>
    ```
    - If status is `"exists"`: the worktree is up to date — tell the user and ask whether to reuse or recreate
    - If status is `"exists-outdated"`: tell the user the worktree is behind the PR's latest changes (show local_head vs remote_head) and ask whether to:
@@ -56,14 +55,13 @@ Offer to copy gitignored files (installed dependencies, build artifacts, etc.) f
 1. Get the main working tree root (the directory where the `git worktree add` command was run, not the worktree itself)
 2. Run the shared gitignored-sizes script to list gitignored entries with their sizes:
    ```bash
-   SCRIPTS_DIR="$(dirname "$(readlink -f ~/.claude/skills)")"/.shared-scripts
-   "$SCRIPTS_DIR/gitignored-sizes.sh" <main-tree-root>
+   "$(readlink -f ~/.claude/skills)/.shared-scripts/gitignored-sizes.sh" <main-tree-root>
    ```
    - If no output, skip this phase silently and proceed to Phase 3
    - Otherwise, show the user the output (list of entries with sizes and total) and ask if they want to copy these to the worktree
 3. If the user agrees, run the shared copy-gitignored script:
    ```bash
-   "$SCRIPTS_DIR/copy-gitignored.sh" <main-tree-root> <worktree-path>
+   "$(readlink -f ~/.claude/skills)/.shared-scripts/copy-gitignored.sh" <main-tree-root> <worktree-path>
    ```
 4. Report what was copied based on the script output and note any errors
 
