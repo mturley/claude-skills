@@ -194,7 +194,10 @@ To extract URLs, check for both: `mark.attrs.href` on text nodes with link marks
 **When NOT to set:** Do not set this field when creating a new issue, even if a PR is mentioned in context. A PR that *caused* a bug is not the same as a PR that *fixes* it. Only populate this field when a fix PR exists or is being created for the issue.
 
 **How to set:**
-1. First, fetch the issue with `getJiraIssue` and check the current value of `customfield_10875`
+
+> **CRITICAL: This field is overwrite-only — always read before writing.** The API replaces the entire field value; it does not append. If you skip reading the current value, you will destroy existing PR links. Use `searchJiraIssuesUsingJql` with `fields: ["customfield_10875"]` and `responseContentFormat: "adf"` to read the current ADF content, then include all existing `inlineCard` nodes alongside the new one.
+
+1. **Read the current value** using `searchJiraIssuesUsingJql` with `fields: ["customfield_10875"]` and `responseContentFormat: "adf"`. Extract any existing `inlineCard` URLs from the ADF content.
 2. Use `editJiraIssue` with raw ADF (do NOT use `contentFormat: "markdown"` — it fails with "Operation value must be an Atlassian Document")
 3. **Prefer `inlineCard` format** — this renders as a Smart Link in the Jira UI (showing PR title, status, etc.):
 
@@ -217,7 +220,7 @@ fields: {
 
 For a single PR URL, omit the `hardBreak` and second `inlineCard` node.
 
-3. If the field already has URLs, include ALL existing URLs plus the new one in the value (the field is overwritten, not appended to).
+4. **Include ALL existing URLs plus the new one** in the value. Separate each with a `hardBreak` node.
 
 **Important:** This field does NOT auto-populate from GitHub integrations. It must be set manually via the API.
 
