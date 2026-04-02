@@ -2,6 +2,10 @@
 
 Read this file before interacting with the GitHub API via `gh` CLI.
 
+## WIP PRs
+
+When marking a PR as Work In Progress, use brackets in the title: `[WIP] PR title here`. Do not use `WIP:` prefix.
+
 ## Creating Pending PR Reviews with Inline Comments
 
 The REST API (`gh api repos/{owner}/{repo}/pulls/{number}/reviews`) has quirks with inline comments. Use the **GraphQL API** instead for reliable multi-line, line-anchored review comments.
