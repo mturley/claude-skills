@@ -1,6 +1,6 @@
 # Create Jira
 
-Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model Registry / Model Catalog areas).
+Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team.
 
 **Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
@@ -42,10 +42,9 @@ Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team (Model 
    - Use findings to enrich the issue description with technical details and file references
    - When referencing files, include GitHub links (see "File References" below)
 
-4. **Ask the user for the area** (one of) - if not already clear from context:
-   - Model Catalog only - use label `dashboard-area-model-catalog`
-   - Model Registry only - use label `dashboard-area-model-registry`
-   - Both Model Catalog and Model Registry - use both labels
+4. **Ask the user for the area label(s)** - if not already clear from context:
+   - Read the **Labels** section under "Dashboard Team Issues" in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to get the current list of `dashboard-area-*` labels and their descriptions
+   - Present the available labels to the user and allow them to select one or more
 
 5. **Present the drafted title and description** for user approval. Allow them to refine it.
    - Track whether the user made significant changes to the AI-suggested description

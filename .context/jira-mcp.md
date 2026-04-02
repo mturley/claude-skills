@@ -17,6 +17,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 
 - **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_10875`) via `editJiraIssue`. NEVER use `addCommentToJiraIssue` for this.
 - **Custom fields not in getJiraIssue responses:** The official Atlassian Cloud MCP strips custom fields from issue responses. To read custom field values, use `searchJiraIssuesUsingJql` with explicit `fields` parameter, or use the REST API directly.
+- **No issue type prefix in titles:** Do NOT prefix issue summaries with `BUG:`, `TASK:`, or `STORY:`. The issue type is already captured by the `issueTypeName` field — repeating it in the title is redundant.
 
 ## Quick Reference
 
