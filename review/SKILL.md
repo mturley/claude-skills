@@ -45,7 +45,7 @@ Look for related Jira issues to understand the requirements and acceptance crite
 
 #### Step 1: Search the PR description for Jira links
 
-Scan the PR body (from Phase 3) for URLs matching `issues.redhat.com/browse/` or `redhat.atlassian.net/browse/`. Extract any issue keys (e.g. `RHOAIENG-12345`).
+Scan the PR body (from Phase 3) for URLs matching `redhat.atlassian.net/browse/`. Extract any issue keys (e.g. `RHOAIENG-12345`).
 
 #### Step 2: If no Jira links found, search by PR author
 

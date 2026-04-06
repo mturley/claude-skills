@@ -13,7 +13,7 @@ Start working on a Jira issue by identifying the issue, validating the workspace
 Determine the Jira issue key using the following sources, in priority order:
 
 1. **From `$ARGUMENTS`**: If provided, extract the issue key.
-   - If it's a full URL (`issues.redhat.com/browse/RHOAIENG-12345` or `redhat.atlassian.net/browse/RHOAIENG-12345`), extract the key.
+   - If it's a full URL (`redhat.atlassian.net/browse/RHOAIENG-12345`), extract the key.
    - If it's an issue key (e.g. `RHOAIENG-12345`), use it directly.
 2. **From the current branch name**: Run `git branch --show-current` and look for a Jira issue key pattern (e.g. `RHOAIENG-12345`) in the branch name.
 3. **From conversation history**: Check if a Jira issue key was mentioned earlier in the conversation.

@@ -6,7 +6,7 @@ Start working on a Jira issue. Identifies the issue, validates the workspace, ga
 
 ```
 /work RHOAIENG-12345
-/work https://issues.redhat.com/browse/RHOAIENG-12345
+/work https://redhat.atlassian.net/browse/RHOAIENG-12345
 /work                  # auto-detects from branch name or asks
 ```
 
