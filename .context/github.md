@@ -70,6 +70,21 @@ gh api graphql \
 - **Pending state**: The review is created in `PENDING` state by default. The author can submit it from the GitHub UI, or you can submit it via a separate `submitPullRequestReview` mutation.
 - **Line numbers must be within the diff**: The `line` and `startLine` values must reference lines that appear in the PR diff. Comments on unchanged lines will fail.
 
+## `gh pr checks --json` Fields
+
+The `--json` flag on `gh pr checks` supports a **different set of fields** than you might expect. There is no `conclusion` field — use `state` instead.
+
+**Available fields:** `bucket`, `completedAt`, `description`, `event`, `link`, `name`, `startedAt`, `state`, `workflow`
+
+**`state` values:** `SUCCESS`, `FAILURE`, `PENDING`, `QUEUED`, `IN_PROGRESS`, `SKIPPING`, `STARTUP_FAILURE`, `STALE`, `WAITING`
+
+**Example — get structured check results:**
+```bash
+gh pr checks 123 --json name,state,link --jq '.[] | select(.state == "FAILURE")'
+```
+
+**Without `--json`:** The default tabular output uses columns: `name`, `status` (pass/fail/pending/skipping), `elapsed`, `link`. Parse with `grep` for simple checks.
+
 ### Deleting a pending review (if needed)
 
 ```bash
