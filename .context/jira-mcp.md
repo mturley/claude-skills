@@ -235,7 +235,7 @@ This is more reliable than searching by title or description text, since the PR 
 
 ### Sprint (customfield_10020)
 
-**Value:** Integer sprint ID (e.g., `82844`)
+**Value:** Plain integer sprint ID (e.g., `82844`). Do NOT wrap in an object — passing `{"id": 17613}` will fail with "Number value expected as the Sprint id." Pass the integer directly: `17613`.
 
 **Important:** Sprint IDs must be extracted from search results. See "Finding Sprints" section below.
 
@@ -390,6 +390,15 @@ Wait for user approval before proceeding with the write operation.
 **Symptom:** `Input validation error: Expected number, received string` when passing `maxResults`
 
 **Solution:** The `maxResults` parameter requires a strict number type. If validation fails, omit the parameter entirely (defaults to 10) rather than trying to cast or quote the value.
+
+### `editJiraIssue` description must go inside `fields`
+**Symptom:** `Input validation error: Required` for `fields`, or description silently ignored.
+
+**Solution:** The `description` is NOT a top-level parameter on `editJiraIssue`. It must be passed inside the `fields` object:
+```json
+fields: {"description": "..."}
+```
+The `fields` parameter is required and must be an object (not a string). The `contentFormat` parameter IS top-level and controls how the description markdown is interpreted.
 
 ### Authentication Failures
 **Symptom:** 401 Unauthorized or connection errors
