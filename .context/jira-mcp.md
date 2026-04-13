@@ -292,6 +292,8 @@ The operator '~' is not supported by the 'sprint' field
 
 ### Workaround: Search for Issues in Sprints
 
+Use `searchJiraIssuesUsingJql` (MCP) or `POST /rest/api/3/search/jql` (REST API) with the JQL queries below. Include `customfield_10020` in the fields list to get sprint data. See the REST API section for the correct POST syntax — the old `GET /rest/api/3/search` endpoint has been removed.
+
 **For current sprint** (search for issues in open sprints):
 ```jql
 project = RHOAIENG AND sprint in openSprints() AND labels = "dashboard-area-model-registry" ORDER BY created DESC
@@ -478,12 +480,19 @@ source ~/git/claude-skills/.env && curl -s -X POST \
 ```
 
 **Search with JQL:**
+
+> **IMPORTANT:** The `GET /rest/api/3/search` endpoint has been removed. Use `POST /rest/api/3/search/jql` instead.
+
 ```bash
-source ~/git/claude-skills/.env && curl -s -G \
-  "https://${JIRA_HOST}/rest/api/3/search" \
+source ~/git/claude-skills/.env && curl -s -X POST \
+  "https://${JIRA_HOST}/rest/api/3/search/jql" \
   -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)" \
-  --data-urlencode "jql=project = RHOAIENG AND key = RHOAIENG-12345" \
-  --data-urlencode "fields=summary,status,customfield_10020"
+  -H "Content-Type: application/json" \
+  -d '{
+    "jql": "project = RHOAIENG AND key = RHOAIENG-12345",
+    "fields": ["summary", "status", "customfield_10020"],
+    "maxResults": 1
+  }'
 ```
 
 ### Notes
