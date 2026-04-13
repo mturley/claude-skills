@@ -406,6 +406,93 @@ The `fields` parameter is required and must be an object (not a string). The `co
 **Solutions (Cloud):**
 - Re-authenticate via browser when prompted by the OAuth flow
 - Check `claude mcp list` to see if the server shows "Needs authentication"
+- If MCP auth continues to fail, use the REST API fallback (see below)
+
+---
+
+## REST API Fallback
+
+When the Atlassian MCP server's OAuth flow fails (e.g. "Access denied" errors, callback URL issues), fall back to direct REST API calls using `curl`.
+
+### Setup
+
+Credentials are stored in `~/git/claude-skills/.env` (gitignored). Source this file before making API calls:
+
+```bash
+source ~/git/claude-skills/.env
+```
+
+If the file is missing, ask the user to create it based on `~/git/claude-skills/.env.example`. The required variables are `JIRA_EMAIL`, `JIRA_TOKEN`, and `JIRA_HOST`.
+
+### Authentication Header
+
+All requests use Basic auth:
+```bash
+-H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)"
+```
+
+**IMPORTANT:** Always `source` the `.env` file in the same `bash` command as the `curl` call, so credentials are not echoed or stored in Claude's transcript. Combine them in a single Bash tool call.
+
+### Common Operations
+
+**Create an issue:**
+```bash
+source ~/git/claude-skills/.env && curl -s -X POST \
+  "https://${JIRA_HOST}/rest/api/3/issue" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)" \
+  -H "Content-Type: application/json" \
+  -d '{ "fields": { ... } }'
+```
+Use ADF format for the description (same as Jira Cloud v3 API). The response includes `key` (e.g. `RHOAIENG-12345`).
+
+**Get an issue:**
+```bash
+source ~/git/claude-skills/.env && curl -s \
+  "https://${JIRA_HOST}/rest/api/3/issue/RHOAIENG-12345" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)"
+```
+
+**Edit an issue:**
+```bash
+source ~/git/claude-skills/.env && curl -s -X PUT \
+  "https://${JIRA_HOST}/rest/api/3/issue/RHOAIENG-12345" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)" \
+  -H "Content-Type: application/json" \
+  -d '{ "fields": { ... } }'
+```
+
+**Get transitions:**
+```bash
+source ~/git/claude-skills/.env && curl -s \
+  "https://${JIRA_HOST}/rest/api/3/issue/RHOAIENG-12345/transitions" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)"
+```
+
+**Transition an issue:**
+```bash
+source ~/git/claude-skills/.env && curl -s -X POST \
+  "https://${JIRA_HOST}/rest/api/3/issue/RHOAIENG-12345/transitions" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)" \
+  -H "Content-Type: application/json" \
+  -d '{"transition": {"id": "111"}}'
+```
+
+**Search with JQL:**
+```bash
+source ~/git/claude-skills/.env && curl -s -G \
+  "https://${JIRA_HOST}/rest/api/3/search" \
+  -H "Authorization: Basic $(echo -n "${JIRA_EMAIL}:${JIRA_TOKEN}" | base64)" \
+  --data-urlencode "jql=project = RHOAIENG AND key = RHOAIENG-12345" \
+  --data-urlencode "fields=summary,status,customfield_10020"
+```
+
+### Notes
+
+- The REST API uses the same field IDs, formats, and values documented above for the MCP tools
+- Descriptions must be in ADF (Atlassian Document Format) JSON — the REST API v3 does not accept markdown directly
+- HTTP 204 on transitions means success (no response body)
+- HTTP 201 on issue creation means success (response includes `id`, `key`, `self`)
+- Always prefer MCP tools when they're working — only fall back to REST when MCP auth fails
 
 ---
 
