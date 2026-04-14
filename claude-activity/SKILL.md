@@ -1,3 +1,9 @@
+---
+name: claude-activity
+description: Summarize what was accomplished across all Claude Code sessions for a given day
+disable-model-invocation: true
+---
+
 # Claude Activity
 
 Summarize what was accomplished across all Claude Code sessions for a given day.

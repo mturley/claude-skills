@@ -1,3 +1,9 @@
+---
+name: work
+description: Start working on a Jira issue by gathering context and beginning implementation
+disable-model-invocation: true
+---
+
 # Work on Jira Issue
 
 Start working on a Jira issue by identifying the issue, validating the workspace, gathering context, and beginning implementation.

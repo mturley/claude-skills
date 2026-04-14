@@ -1,3 +1,9 @@
+---
+name: recommended-review
+description: Load the PR Reviews Dashboard and summarize recommended actions
+disable-model-invocation: true
+---
+
 # Recommended Review
 
 Load the PR Reviews Dashboard from http://localhost:5173/, wait for it to finish loading, and summarize the recommended actions.

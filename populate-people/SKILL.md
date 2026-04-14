@@ -1,3 +1,9 @@
+---
+name: populate-people
+description: Generate or update .context/people.md with RHOAI Dashboard team member information
+disable-model-invocation: true
+---
+
 # Populate People
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information sourced from Confluence, Jira, and GitHub.

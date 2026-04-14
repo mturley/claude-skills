@@ -1,3 +1,8 @@
+---
+name: review
+description: Review a pull request by checking out its branch and analyzing the changes
+---
+
 # Review Pull Request
 
 Review a pull request by checking out its branch and analyzing the changes.

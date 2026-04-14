@@ -1,3 +1,9 @@
+---
+name: export
+description: Export the current Claude Code session to a readable markdown file
+disable-model-invocation: true
+---
+
 # Export Session
 
 Export the current Claude Code session to a readable markdown file.

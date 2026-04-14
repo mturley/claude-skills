@@ -1,3 +1,8 @@
+---
+name: slackfmt-firefox
+description: Format Markdown for Slack (Firefox) - Convert markdown to Slack's native rich text format using Firefox's Clipboard API
+---
+
 # Format Markdown for Slack (Firefox)
 
 Convert markdown to Slack's native rich text format and copy to clipboard using Firefox's Clipboard API. Works with Slack's web interface in Firefox.

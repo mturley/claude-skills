@@ -1,3 +1,8 @@
+---
+name: create-jira
+description: Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team
+---
+
 # Create Jira
 
 Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team.

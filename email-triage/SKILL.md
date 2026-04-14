@@ -1,3 +1,9 @@
+---
+name: email-triage
+description: Scan unread Gmail for important emails that need attention, filtering out noise
+disable-model-invocation: true
+---
+
 # Email Triage
 
 Scan unread Gmail for important emails that need attention, filtering out noise from mailing lists, bots, and calendar invitations.
