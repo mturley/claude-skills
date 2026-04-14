@@ -92,7 +92,7 @@ Generates or updates `.context/people.md` with RHOAI Dashboard team member infor
 
 ### [/slackfmt-firefox](slackfmt-firefox/)
 
-Converts markdown to Slack's native rich text format using Firefox's Clipboard API. A stopgap solution for pasting into Slack's web interface in Firefox, which uses a different clipboard format than Chrome/Chromium. Automates the [slackfmt web app](https://slackfmt.labs.caue.dev/) using Playwright Firefox.
+Converts markdown to Slack's native rich text format using Firefox's Clipboard API. A stopgap solution for pasting into Slack's web interface in Firefox — the [slackfmt CLI](https://www.npmjs.com/package/@slackfmt/cli) only creates Chromium's clipboard format, which doesn't work in Firefox. Automates the [slackfmt web app](https://slackfmt.labs.caue.dev/) using Playwright Firefox.
 Requires: Playwright MCP server with Firefox
 
 ## Obsolete Skills

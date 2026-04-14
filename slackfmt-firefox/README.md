@@ -8,7 +8,7 @@ The [slackfmt](https://github.com/cauethenorio/slackfmt) project provides excell
 - [CLI tool](https://www.npmjs.com/package/@slackfmt/cli): `npx @slackfmt/cli@latest`
 - [Agent skill](https://skills.sh/cauethenorio/slackfmt/slackfmt): installable via `npx skills add`
 
-However, these tools use **Chromium's clipboard format** (`org.chromium.web-custom-data`), which doesn't work when pasting into **Slack's web interface in Firefox** (which expects `org.mozilla.custom-clipdata`).
+However, **the slackfmt CLI only creates Chromium's clipboard format** (`org.chromium.web-custom-data`), which doesn't work when pasting into **Slack's web interface in Firefox** (which expects `org.mozilla.custom-clipdata`). The CLI works perfectly with Chrome/Chromium browsers and the Slack desktop app (which is Electron/Chromium-based), but fails silently in Firefox.
 
 This skill is a **stopgap solution** that automates the [slackfmt web app](https://slackfmt.labs.caue.dev/) using Playwright Firefox. The web app's JavaScript Clipboard API automatically creates the correct format for whichever browser you're using.
 
