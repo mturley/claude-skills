@@ -90,6 +90,11 @@ Requires: Google Workspace MCP server
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information by cross-referencing Confluence, Jira, and GitHub. Useful for populating team context that other skills can reference.
 
+### [/slackfmt-firefox](slackfmt-firefox/)
+
+Converts markdown to Slack's native rich text format using Firefox's Clipboard API. A stopgap solution for pasting into Slack's web interface in Firefox, which uses a different clipboard format than Chrome/Chromium. Automates the [slackfmt web app](https://slackfmt.labs.caue.dev/) using Playwright Firefox.
+Requires: Playwright MCP server with Firefox
+
 ## Obsolete Skills
 
 Several skills have been moved to [`.obsolete/`](.obsolete/). Some were superseded by the [pr-reviews-dashboard](https://github.com/mturley/pr-reviews-dashboard) web app, and others were replaced by standalone CLI commands in [mturley/work-scripts](https://github.com/mturley/work-scripts).
