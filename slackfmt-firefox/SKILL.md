@@ -81,6 +81,13 @@ Tell the user:
 Paste into Slack now - you should see native Slack bullets with proper nesting and formatting.
 ```
 
+### Phase 5: Clean Up
+
+Close the browser:
+```
+mcp__playwright-firefox__browser_close()
+```
+
 ## Example
 
 ```bash
