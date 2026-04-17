@@ -70,6 +70,7 @@ For issues owned by the RHOAI Dashboard team (UI/frontend work):
 - Model Registry only: `dashboard-area-model-registry`
 - Model Catalog only: `dashboard-area-model-catalog`
 - MCP (Catalog & Deployments): `dashboard-area-mcp`
+- E2E/Cypress tests: `dashboard-area-e2e`
 - Multiple areas: Use multiple labels as needed
 
 ### AI Hub Team Issues
