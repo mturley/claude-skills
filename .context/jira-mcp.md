@@ -66,12 +66,7 @@ For issues owned by the RHOAI Dashboard team (UI/frontend work):
 
 **Component:** AI Core Dashboard (ID `15570`)
 **Team:** RHOAI Dashboard — `{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1809"}`
-**Labels:**
-- Model Registry only: `dashboard-area-model-registry`
-- Model Catalog only: `dashboard-area-model-catalog`
-- MCP (Catalog & Deployments): `dashboard-area-mcp`
-- E2E/Cypress tests: `dashboard-area-e2e`
-- Multiple areas: Use multiple labels as needed
+**Labels:** Use `dashboard-area-*` labels to categorize by functional area. See the "Area Labels" section in `jira-project-reference.md` (referenced below) for the full taxonomy. Multiple area labels can be applied to a single issue.
 
 ### AI Hub Team Issues
 
@@ -286,7 +281,7 @@ Used together with Blocked Reason.
 
 ## Finding Sprints
 
-The Jira sprint field **does NOT support text search operators** like `~` or `*`. Queries like `sprint ~ "Green*"` will fail with:
+The Jira sprint field **does NOT support text search operators** like `~` or `*`. Queries like `sprint ~ "Zaffre*"` will fail with:
 ```
 The operator '~' is not supported by the 'sprint' field
 ```
@@ -309,7 +304,7 @@ project = RHOAIENG AND component = "AI Core Dashboard" AND sprint in futureSprin
 
 Sprint names are inconsistent (e.g. `Dashboard - Green - 34` vs `Dashboard - Green-35`), so do NOT guess the exact sprint name. Instead:
 
-1. Search for a recent issue from a closed Green sprint to discover the sprint name and ID:
+1. Determine the user's scrum team from the "About Me" section of `people.md`, then search for a recent issue from a closed sprint for that team to discover the sprint name and ID:
 ```jql
 project = RHOAIENG AND sprint in closedSprints() AND component = "AI Core Dashboard" AND labels = "dashboard-area-model-registry" ORDER BY updated DESC
 ```
@@ -339,27 +334,33 @@ Extract the `id` field to use when setting sprints on issues.
 
 ### Filtering for Team Sprints
 
-Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns:
-- **Green sprints:** `Dashboard - Green - N` or `Dashboard - Green-N` (Model Registry/Catalog team)
-- **Razzmatazz sprints:** `Dashboard - Razzmatazz - N` (different team)
-- **Monarch sprints:** `Dashboard - Monarch-N` (different team)
+Multiple scrum teams share the AI Core Dashboard board. Sprint naming patterns follow `Dashboard - <Scrum> - N` or `Dashboard - <Scrum>-N` (e.g. `Dashboard - Green-35`, `Dashboard - Zaffre-12`).
 
-**Only use sprints matching your team's pattern.** For the Model Registry/Catalog team, filter for "Green" in the sprint name.
+**Determine the user's scrum team** from the "About Me" section of `people.md` and filter for that team's name in the sprint name. Only use sprints matching the user's team pattern.
 
-### Green Scrum Quick Filter
+### Jira Project Reference (detailed)
 
-**Saved Filter ID:** `94935`
+The odh-dashboard repo contains a comprehensive Jira project reference file at:
+`opendatahub-io/odh-dashboard/.claude/skills/jira-triage/jira-project-reference.md`
 
-This saved filter contains the Green scrum's area labels. Use it in JQL queries instead of specifying individual `dashboard-area-*` labels:
+This ~630-line file is the source of truth for area labels, scrum mappings, issue classification criteria, and triage taxonomy. **Read specific sections on demand** rather than loading the full file. Key sections:
 
-```jql
-filter = 12439012
-```
+| Section | What it contains |
+|---|---|
+| Project Constants | Board ID, component IDs, team IDs |
+| Standard Query Filters | Saved JQL filters for common queries |
+| Issue Type Classification Criteria | Rules for Bug vs Task vs Story |
+| Activity Type | `customfield_10464` option IDs |
+| Description Quality Criteria | Templates for bug/story/task descriptions |
+| Severity / Priority | Severity scale, priority guidelines by issue type |
+| Triage Labels | `needs-*` labels, process labels, AI analysis labels |
+| Scrum Team Labels | `dashboard-*-scrum` label list |
+| Area Labels | Full `dashboard-area-*` label taxonomy |
+| Area Label Signal Mapping | Keywords, K8s kinds, and code paths per area |
+| **Area-to-Scrum Default Mapping** | Which area labels belong to which scrum team |
+| Team keyword / feature associations | Keyword-based scrum assignment when no area labels |
 
-**Example — Green scrum issues in current sprint:**
-```jql
-project = RHOAIENG AND sprint in openSprints() AND filter = 12439012 AND status = "Review" ORDER BY priority ASC
-```
+**To filter issues by scrum team:** Look up the user's scrum from `people.md`, then read the "Area-to-Scrum Default Mapping" section to find the area labels for that team. Use those labels in JQL.
 
 ---
 

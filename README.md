@@ -1,6 +1,6 @@
 # Claude Code Skills
 
-Custom skills (slash commands) for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that I'm experimenting with. Some of these may be useful to others, but some are team-specific workflows (e.g., `/create-jira` is tailored to the Green scrum's feature areas).
+Custom skills (slash commands) for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that I'm experimenting with. Some of these may be useful to others, but some are team-specific workflows (e.g., `/create-jira` is tailored to the RHOAI Dashboard team).
 
 ## Compatibility
 
@@ -67,10 +67,8 @@ Reviews pull requests by checking out the branch and analyzing changes file-by-f
 
 ### [/create-jira](create-jira/)
 
-Creates Jira issues in the RHOAIENG project. This skill is specific to the Red Hat AI (RHOAI) Dashboard team's Green scrum but serves as an example of a team-specific skill that gathers context from conversation history and drafts structured issues.
+Creates Jira issues in the RHOAIENG project for the RHOAI Dashboard team. Gathers context from conversation history, investigates code, and drafts structured issues. Uses `people.md` to determine the user's scrum team for sprint assignment.
 Requires: `.context/`
-
-(`/create-jira` is specific to the RHOAI Dashboard team's Green Scrum, but could be generalized)
 
 ### [/recommended-review](recommended-review/)
 

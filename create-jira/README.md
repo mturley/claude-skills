@@ -1,6 +1,6 @@
 # /create-jira
 
-This skill helps open detailed Jira issues by gathering context and investigating code, properly labeling and triaging them. It is specific to Green scrum's current feature areas (model catalog and registry), but I plan to generalize it.
+This skill helps open detailed Jira issues by gathering context and investigating code, properly labeling and triaging them. It uses the user's scrum team context from `people.md` to determine the correct feature areas and sprints.
 
 ## Installation
 
