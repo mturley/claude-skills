@@ -26,6 +26,12 @@ When using Playwright with odh-dashboard, if instructed to enable a feature flag
   - Multiple flags: `?devFeatureFlags=deploymentWizardYAMLViewer=true,vLLMDeploymentOnMaaS=true`
 - Only include these in the first navigation per session - the UI retains flags across page navigation
 
-## Gotchas
+## Session Lifecycle
 
-(To be filled in as issues are discovered)
+### Closing the browser when done
+
+When the browser testing goal appears to be accomplished (e.g., a visual verification is complete, a feature has been confirmed working, or the user says they're done with browser testing), **always offer to close the Playwright session** before finishing:
+
+> "The browser testing looks complete. Would you like me to close the browser session?"
+
+If the user agrees, close the browser with `browser_close`. If they decline, leave it open.
