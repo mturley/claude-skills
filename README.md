@@ -28,6 +28,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
    ln -s ~/git/claude-skills/claude-activity ~/.claude/skills/claude-activity
    ln -s ~/git/claude-skills/email-triage ~/.claude/skills/email-triage
+   ln -s ~/git/claude-skills/milestones ~/.claude/skills/milestones
    ```
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
@@ -83,6 +84,11 @@ Summarizes what was accomplished across all Claude Code sessions for a given day
 
 Scans unread Gmail for important emails that need attention, filtering out noise from mailing lists, bots, calendar invitations, and expired reminders. Categorizes results by urgency and presents a scannable report.
 Requires: Google Workspace MCP server
+
+### [/milestones](milestones/)
+
+Shows upcoming RHOAI release milestones from Product Pages. Supports filtering by date range or version, with optional z-stream/patch release inclusion.
+Requires: Product Pages MCP server
 
 ### [/populate-people](populate-people/)
 
