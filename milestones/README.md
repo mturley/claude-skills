@@ -24,4 +24,4 @@ Markdown table with milestone dates, emoji markers for freeze milestones (🧊),
 
 ## How It Works
 
-The skill queries the Product Pages MCP server (`mcp__productpages__*` tools) for RHOAI schedule data, deduplicates results across multiple release entities, and filters by version or date range.
+The skill queries the Product Pages MCP server (`mcp__productpages__*` tools) for RHOAI schedule data, then pipes the raw JSON through `format-milestones.py` which handles deduplication, major/minor classification, version filtering, and markdown table rendering. This keeps the LLM focused on argument parsing and MCP calls while the deterministic logic runs instantly in Python.

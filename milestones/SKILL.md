@@ -95,54 +95,28 @@ Call `list_schedule_tasks` with:
 
 For **version range mode** (e.g. `through 3.6`): don't set `date_finish__lte`. Instead, you'll filter by version in Step 3.
 
-### Step 3: Filter and Deduplicate
+### Step 3: Format and Output
 
-#### Deduplication
+Pipe the raw JSON result from the MCP call through `format-milestones.py` (in the skill's base directory) and output the result verbatim.
 
-Apply the deduplication algorithm from [`../.context/productpages-mcp.md`](../.context/productpages-mcp.md#deduplication-algorithm).
+The script handles deduplication, major/minor classification, version filtering, and markdown table rendering.
 
-#### Major vs Minor Classification
+**Build the command based on the parsed arguments:**
 
-Apply the major vs minor classification from [`../.context/productpages-mcp.md`](../.context/productpages-mcp.md#major-vs-minor-patch-classification).
-
-#### Apply filters
-
-- If `include_minor` is false: remove all minor milestones
-- If **version range mode** (e.g. `through 3.6`): keep milestones whose names start with any version up to and including the target. For `through 3.6`, keep milestones starting with `3.5`, `3.5.EA`, `3.6`, `3.6.EA`, and (if `include_minor`) patch versions like `3.3.4`, `3.4.1`, etc.
-  - To determine which versions are "current": include any version whose milestones appear in the results after date filtering
-- If **single version mode**: results are already scoped from `browse_schedule`
-
-### Step 4: Format Output
-
-Render a markdown table with these columns:
-
-**When `include_minor` is false** (major only, no star column):
-
-```
-| # | Date | Milestone |
-|---|------|-----------|
+```bash
+echo '<raw JSON from MCP tool result>' | python3 <base_dir>/format-milestones.py \
+  --today <today YYYY-MM-DD> \
+  [--end-date <end YYYY-MM-DD>] \
+  [--include-minor] \
+  [--through <version>] \
+  [--version <version>]
 ```
 
-**When `include_minor` is true** (star column to distinguish):
+Flags:
+- `--today`: always required (today's date)
+- `--end-date`: for date mode, the computed end date
+- `--include-minor`: if `all` was in the arguments
+- `--through VERSION`: for version range mode
+- `--version VERSION`: for single version mode
 
-```
-| # | Date | | Milestone |
-|---|------|-|-----------|
-```
-
-For each milestone row:
-- `#`: sequential row number
-- `Date`: **bold** the date. Use `Mon D` format (e.g. `Jun 17`). For date ranges, show `Mon D–D` or `Mon D – Mon D`
-- ⭐ column (only when `include_minor`): `⭐` for major milestones, empty for minor
-- `Milestone`: the milestone name, cleaned up:
-  - Prefix with 🧊 if the name contains "Code Freeze" or "Feature Freeze"
-  - Bold GA milestones (names containing "RHOAI GA" or "RHOAI RELEASE")
-
-### Step 5: Present Results
-
-Output the table. Before the table, include a one-line summary of what's shown, e.g.:
-- "RHOAI major milestones, next 3 months (May 26 – Aug 26, 2026):"
-- "RHOAI 3.5 milestones:"
-- "RHOAI milestones through 3.6 (all releases):"
-
-If there are no milestones matching the criteria, say so.
+Output the script's stdout as-is — it contains the summary line and markdown table.
