@@ -60,12 +60,11 @@ When the user says they are done:
 
 If the user says "abort" or wants to cancel:
 
-1. Kill the vibediff process:
-   ```bash
-   kill -9 <VIBEDIFF_PID>
+1. Run the abort script with the PID:
    ```
-2. Tell the user: "vibediff killed, comments discarded."
-3. **Stop** — do not process any comments.
+   ~/.claude/skills/review/abort.sh <VIBEDIFF_PID>
+   ```
+2. **Stop** — do not process any comments.
 
 ### Phase 3: Address Comments
 
