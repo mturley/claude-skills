@@ -24,6 +24,7 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    # Link the skills you want to use:
    ln -s ~/git/claude-skills/export ~/.claude/skills/export
    ln -s ~/git/claude-skills/review ~/.claude/skills/review
+   ln -s ~/git/claude-skills/pr-review ~/.claude/skills/pr-review
    ln -s ~/git/claude-skills/create-jira ~/.claude/skills/create-jira
    ln -s ~/git/claude-skills/recommended-review ~/.claude/skills/recommended-review
    ln -s ~/git/claude-skills/claude-activity ~/.claude/skills/claude-activity
@@ -63,6 +64,11 @@ Requires: `.context/`
 Exports Claude Code sessions to readable markdown files. Converts the raw JSONL session format into clean documentation.
 
 ### [/review](review/)
+
+Launch [vibediff](https://github.com/malvex/vibediff) for interactive code review with inline comments. Opens a browser-based diff viewer where you leave comments, then Claude collects and addresses them. Say "abort" to cancel.
+Requires: `vibediff` (`brew install malvex/tap/vibediff`)
+
+### [/pr-review](pr-review/)
 
 Reviews pull requests by checking out the branch and analyzing changes file-by-file. Requires a clean working tree.
 
