@@ -1,6 +1,6 @@
 ---
 name: review
-description: Launch vibediff for interactive code review with inline comments, then address the feedback
+description: Launch vibediff for interactive code review with inline comments, then address the feedback. Use when the user wants to review changes before committing, when asked to review a diff, or for standalone code reviews of uncommitted changes.
 ---
 
 # Interactive Code Review with vibediff
