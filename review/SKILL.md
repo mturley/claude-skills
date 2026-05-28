@@ -21,7 +21,7 @@ Launch [vibediff](https://github.com/malvex/vibediff) to let the user review the
    ```
    Use `run_in_background: true` on the Bash tool. Save the output file path.
 
-2. Read the output file to get the PID from the `VIBEDIFF_PID=<pid>` line. If the output instead contains an error (e.g. "command not found"), tell the user:
+2. Read the output file to get the PID from the `VIBEDIFF_PID=<pid>` line and the port from the `VIBEDIFF_PORT=<port>` line. If the output instead contains an error (e.g. "command not found"), tell the user:
    ```
    vibediff is not installed. Install it with:
 
@@ -44,9 +44,9 @@ Launch [vibediff](https://github.com/malvex/vibediff) to let the user review the
 
 When the user says they are done:
 
-1. Run the stop script with the PID and output file path:
+1. Run the stop script with the PID, port, and output file path:
    ```
-   ~/.claude/skills/review/stop.sh <VIBEDIFF_PID> <output_file_path>
+   ~/.claude/skills/review/stop.sh <VIBEDIFF_PID> <VIBEDIFF_PORT> <output_file_path>
    ```
 
 2. Parse the JSON array of comments from the output. Each comment has:
@@ -60,9 +60,9 @@ When the user says they are done:
 
 If the user says "abort" or wants to cancel:
 
-1. Run the abort script with the PID:
+1. Run the abort script with the PID and port:
    ```
-   ~/.claude/skills/review/abort.sh <VIBEDIFF_PID>
+   ~/.claude/skills/review/abort.sh <VIBEDIFF_PID> <VIBEDIFF_PORT>
    ```
 2. **Stop** — do not process any comments.
 
