@@ -20,6 +20,7 @@ while [ -f "$LOCK_DIR/$PORT" ]; do
   PORT=$((PORT + 1))
 done
 
+cd "$(git rev-parse --show-toplevel)" || exit 1
 vibediff --format json --port "$PORT" &
 VIBEDIFF_PID=$!
 
