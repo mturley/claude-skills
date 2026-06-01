@@ -1,6 +1,6 @@
 # Jira MCP Reference
 
-Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboard team).
+Technical reference for using Jira MCP with the RHOAIENG project (RHAI Zaffre scrum / RHOAI Dashboard).
 
 ## Server Configuration
 
@@ -60,12 +60,12 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHOAI Dashboar
 - Task: `10014`
 - Story: `10009`
 
-### Dashboard Team Issues (default)
+### Zaffre Scrum Issues (default)
 
-For issues owned by the RHOAI Dashboard team (UI/frontend work):
+For issues owned by the Zaffre scrum team (Mike's team — Model Serving focus):
 
 **Component:** AI Core Dashboard (ID `15570`)
-**Team:** RHOAI Dashboard — `{"id": "ec74d716-af36-4b3c-950f-f79213d08f71-1809"}`
+**Team:** RHAI Zaffre — `"c1466179-4c13-43a4-895d-c632789ded28"`
 **Labels:** Use `dashboard-area-*` labels to categorize by functional area. See the "Area Labels" section in `jira-project-reference.md` (referenced below) for the full taxonomy. Multiple area labels can be applied to a single issue.
 
 ### AI Hub Team Issues
@@ -92,6 +92,7 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 **Team IDs:**
 | Team | ID |
 |------|------|
+| RHAI Zaffre | `c1466179-4c13-43a4-895d-c632789ded28` |
 | RHOAI Dashboard | `ec74d716-af36-4b3c-950f-f79213d08f71-1809` |
 | RHOAI AI Hub | `ec74d716-af36-4b3c-950f-f79213d08f71-1712` |
 

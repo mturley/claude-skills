@@ -1,11 +1,11 @@
 ---
 name: create-jira
-description: Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team
+description: Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team
 ---
 
 # Create Jira
 
-Create a Jira issue in the RHOAIENG project for the RHOAI Dashboard team.
+Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOAI Dashboard, Model Serving focus).
 
 **Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
 
