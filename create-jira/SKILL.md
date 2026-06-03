@@ -76,15 +76,7 @@ Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOA
     - The issue key (e.g., RHOAIENG-XXXXX)
     - A link to the issue: `https://redhat.atlassian.net/browse/{issueKey}`
 
-12. **Ask if they want to add it to a sprint**. If yes:
-    - Read [`../.context/people.md`](../.context/people.md) to determine the user's scrum team (from the "About Me" section)
-    - Follow the "Finding Sprints" instructions in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to find the correct sprint for that scrum team
-    - Use the active sprint for "current sprint" or the next future sprint for "next sprint"
-    - Update the issue's sprint field (customfield_10020) with the sprint ID (integer)
-    - Transition the issue from "New" to "Backlog" using `getTransitionsForJiraIssue` to find the transition ID, then `transitionJiraIssue` to perform the transition
-    - If no: **Ask if they want to transition it to Backlog** (without a sprint). If yes, transition from "New" to "Backlog" using `getTransitionsForJiraIssue` and `transitionJiraIssue`.
-
-13. **If a PR was mentioned**, set the Git Pull Request field:
+12. **If a PR was mentioned**, set the Git Pull Request field:
     - Use `editJiraIssue` to set `customfield_10875` to the full PR URL (e.g., `"https://github.com/kubeflow/model-registry/pull/2288"`)
     - This field does NOT auto-populate from GitHub, so it must be set manually
 
