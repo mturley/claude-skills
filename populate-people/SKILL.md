@@ -20,7 +20,7 @@ If any prerequisite is missing, inform the user and stop.
 
 ## Overview
 
-The team structure is defined on a Confluence page (content ID `479331996`). Team members are stored as opaque user key references that must be resolved to names, then cross-referenced against Jira (for accountIds and emails) and GitHub (for GitHub usernames).
+The team structure is defined on a Confluence page (content ID `304027784`). Team members are stored as opaque user key references that must be resolved to names, then cross-referenced against Jira (for accountIds and emails) and GitHub (for GitHub usernames).
 
 ## Phase 1: Identify the User
 
@@ -39,9 +39,9 @@ The team structure is defined on a Confluence page (content ID `479331996`). Tea
 
 ## Phase 3: Fetch Team Structure from Confluence
 
-1. Use `getConfluencePage` to fetch content ID `479331996`.
+1. Use `getConfluencePage` to fetch content ID `304027784`.
 2. The response contains an HTML table with rows for each scrum. Extract the following for each scrum:
-   - **Scrum name** (Green, Razzmatazz, Zaffre, Monarch, Crimson, Teal, Indigo, Purple, Tangerine)
+   - **Scrum name** (Green, Razzmatazz, Zaffre, Monarch, Crimson, Teal, Indigo, Onyx, Purple, Tangerine)
    - **Focus area** (from the "Team Links/Main area of focus" column)
    - **Developer user keys** from `<ri:user ri:userkey="..." />` tags in the Developers column
    - **Developer roles** noted in parentheses (lead, shared lead, scrum master, Staff Eng, QE, on loan, borrowed, etc.)
@@ -184,7 +184,7 @@ Last run: YYYY-MM-DD
 - Use today's date for "Last updated"
 - One section per scrum with `## <Name> Scrum` heading
 - Include a `Focus:` line under each heading (omit if unknown)
-- Sort scrums in this order: Green, Razzmatazz, Zaffre, Monarch, Crimson, Teal, Indigo, Purple, Tangerine
+- Sort scrums in this order: Green, Razzmatazz, Zaffre, Monarch, Crimson, Teal, Indigo, Onyx, Purple, Tangerine
 - Within each table, list the lead/scrum master first, then devs, then QEs
 - Note cross-scrum assignments in the Role column (e.g., "Staff Eng (also in Green)")
 - Note temporary assignments (e.g., "borrowed from RHDH for 3.0-3.4")
