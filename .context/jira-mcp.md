@@ -374,6 +374,22 @@ On Jira Cloud, use `contentFormat: "markdown"` to write descriptions in standard
 - Specific line: `[filename:L42](https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42)`
 - Line range: `[filename:L42-L50](https://github.com/OWNER/REPO/blob/main/path/to/file.ts#L42-L50)`
 
+### Smart Links (inlineCard) in Descriptions
+
+Markdown links (`[text](url)`) render as plain text links in Jira. To render **smart links** (rich previews showing issue key, status, title), use ADF with `inlineCard` nodes instead.
+
+**When to use smart links:** For references to Jira issues, Figma files, Google Docs, Confluence pages, and other URLs that Jira can resolve into rich previews.
+
+**How to use:** Set `contentFormat: "adf"` on the `editJiraIssue` call and pass the description as a raw ADF document. Use `inlineCard` nodes wherever you want a smart link:
+```json
+{"type": "inlineCard", "attrs": {"url": "https://redhat.atlassian.net/browse/RHOAIENG-12345"}}
+```
+
+**ADF validation gotcha:** Large ADF documents can fail with an unhelpful `INVALID_INPUT` error. The Jira API does not return details about which node is invalid. Debugging tips:
+- Avoid combining `code` with other marks (`strong`, `em`) on the same text node — split into adjacent nodes with one mark each. This matches how the Jira UI serializes such text.
+- When an ADF edit fails and the error is opaque, consider falling back to `contentFormat: "markdown"` first, then making a targeted follow-up edit via the Jira UI or a smaller ADF patch for just the smart links.
+- Test complex ADF documents by building up incrementally rather than sending the full document at once.
+
 ---
 
 ## Write Operation Preview Requirement
