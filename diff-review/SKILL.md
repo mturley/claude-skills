@@ -1,5 +1,5 @@
 ---
-name: review
+name: diff-review
 description: Launch vibediff for interactive code review with inline comments, then address the feedback. Use when the user wants to review changes before committing, when asked to review a diff, or for standalone code reviews of uncommitted changes.
 ---
 
@@ -17,7 +17,7 @@ Launch [vibediff](https://github.com/malvex/vibediff) to let the user review the
 
 1. Run the start script in the background:
    ```
-   ~/.claude/skills/review/start.sh
+   ~/.claude/skills/diff-review/start.sh
    ```
    Use `run_in_background: true` on the Bash tool. Save the output file path.
 
@@ -27,7 +27,7 @@ Launch [vibediff](https://github.com/malvex/vibediff) to let the user review the
 
      brew install malvex/tap/vibediff
 
-   Then run /review again.
+   Then run /diff-review again.
    ```
    Then **stop**.
 
@@ -46,7 +46,7 @@ When the user says they are done:
 
 1. Run the stop script with the PID, port, and output file path:
    ```
-   ~/.claude/skills/review/stop.sh <VIBEDIFF_PID> <VIBEDIFF_PORT> <output_file_path>
+   ~/.claude/skills/diff-review/stop.sh <VIBEDIFF_PID> <VIBEDIFF_PORT> <output_file_path>
    ```
 
 2. Parse the JSON array of comments from the output. Each comment has:
@@ -62,7 +62,7 @@ If the user says "abort" or wants to cancel:
 
 1. Run the abort script with the PID and port:
    ```
-   ~/.claude/skills/review/abort.sh <VIBEDIFF_PID> <VIBEDIFF_PORT>
+   ~/.claude/skills/diff-review/abort.sh <VIBEDIFF_PID> <VIBEDIFF_PORT>
    ```
 2. **Stop** — do not process any comments.
 

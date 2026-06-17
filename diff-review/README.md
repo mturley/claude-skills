@@ -1,4 +1,4 @@
-# /review
+# /diff-review
 
 Interactive code review using [vibediff](https://github.com/malvex/vibediff).
 
@@ -19,7 +19,7 @@ Interactive code review using [vibediff](https://github.com/malvex/vibediff).
 ## Usage
 
 ```
-/review
+/diff-review
 ```
 
 No arguments needed — vibediff picks up the current git diff automatically.
