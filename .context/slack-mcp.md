@@ -25,11 +25,13 @@ python3 <(curl -fsSL https://raw.githubusercontent.com/redhat-community-ai-tools
 
 | Channel | ID | Focus Area |
 |---------|----|-----------| 
-| #wg-dashboard-green | `C07C0447EAV` | AI Hub (model registry/catalog) - Mike's scrum |
-| #wg-dashboard-zaffre | `C069KSM8T9N` | Model Serving / Connections / Models-as-a-Service |
-| #wg-dashboard-razzmatazz | `C069KSM8T9N` | Pipelines / Experimentation / Hardware Profiles |
+| #wg-dashboard-zaffre | `C069KSM8T9N` | Model Serving - Mike's scrum |
+| #wg-dashboard-green | `C07C0447EAV` | AI Hub (model registry/catalog) |
+| #wg-dashboard-razzmatazz | `C07C0FNHVPT` | Pipelines / Experimentation / Hardware Profiles |
 | #wg-dashboard-monarch | `C07BFD5J4CB` | Dashboard Platform (modular architecture) |
 | #wg-dashboard-crimson | `C099MEPGF43` | GenAI Studio (cross-functional with Llama Stack teams) |
+| #wg-dashboard-onyx | `C0ATNPRPKNK` | Onyx scrum (Models-as-a-service / MaaS) |
+| #wg-dashboard-tangerine | `C09PD4PF58W` | Feast (Feature Store, cross-functional) |
 
 See `people.md` for full scrum team rosters and member details.
 
