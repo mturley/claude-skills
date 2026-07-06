@@ -26,6 +26,20 @@ When using Playwright with odh-dashboard, if instructed to enable a feature flag
   - Multiple flags: `?devFeatureFlags=deploymentWizardYAMLViewer=true,vLLMDeploymentOnMaaS=true`
 - Only include these in the first navigation per session - the UI retains flags across page navigation
 
+## Screenshots
+
+**MANDATORY: Always take screenshots in a subagent.** Screenshot data is large and pollutes the main conversation context. When you need to take a screenshot:
+
+1. Spawn a subagent (using the `Agent` tool with `model: "sonnet"`) that takes the screenshot via `mcp__playwright-chrome__browser_take_screenshot` or `mcp__playwright-firefox__browser_take_screenshot`
+2. In the subagent prompt, describe what you are looking for or trying to verify (if anything) so the subagent can inspect the screenshot and report back
+3. The subagent should return: the file path of the saved screenshot, a short summary of what is visible, and the results of any specific inspection requested
+4. Never call `browser_take_screenshot` directly from the main conversation — always delegate to a subagent
+
+Example subagent prompt:
+> "Take a screenshot of the current Playwright Chrome page. Describe what you see on the page. Specifically, check whether the model serving form has a 'Deploy' button visible and whether there are any error messages shown."
+
+This keeps screenshot image data confined to the subagent's context and out of the main conversation.
+
 ## Session Lifecycle
 
 ### Closing the browser when done
