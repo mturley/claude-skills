@@ -35,7 +35,7 @@ Collect all replies (messages after the initial Slackbot reminder).
 
 ### Step 3: Summarize Both Threads
 
-Present a summary of each thread, most recent first. Format:
+Present a summary of each thread in **chronological order** (oldest first, most recent last). Format:
 
 ```
 ## Status Sync — [human-readable date from thread_ts]
