@@ -96,6 +96,11 @@ Requires: Google Workspace MCP server
 Shows upcoming RHOAI release milestones from Product Pages. Supports filtering by date range or version, with optional z-stream/patch release inclusion.
 Requires: Product Pages MCP server
 
+### [/slack-status](slack-status/)
+
+Fetches and summarizes the two most recent Zaffre scrum status sync threads from `#wg-dashboard-zaffre`. Optionally watches the latest thread for new replies, checking every 20 minutes and summarizing activity when you send a prompt.
+Requires: Slack MCP server
+
 ### [/populate-people](populate-people/)
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information by cross-referencing Confluence, Jira, and GitHub. Useful for populating team context that other skills can reference.
