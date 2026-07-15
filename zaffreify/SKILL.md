@@ -62,14 +62,23 @@ Always apply `dashboard-zaffre-scrum`. Then ask the user (using AskUserQuestion)
 
 Allow multiple selections and an "Other" option for custom labels.
 
-### 6. Check for CLONE prefix
+### 6. Check for CLONE prefix and feature name placeholders
 
-Scan all issue summaries for the prefix `CLONE - `. If any are found:
+Scan all issue summaries for renaming needs. Two patterns to handle:
 
-- List them for the user
-- Ask (using AskUserQuestion): "What feature prefix should replace 'CLONE - '?" with a text input option
-- The user's answer becomes the replacement prefix (e.g. `Fast vLLM`)
-- Ensure the prefix ends with ` - ` when used in the summary (append if needed)
+1. **`CLONE - ` prefix** — e.g. `CLONE - QE signoff`
+2. **`[<Feature Name>]` placeholder** — e.g. `CLONE - [<Feature Name>]- Feature signoff - GA`
+
+If either pattern is found in any summary:
+
+- List the affected issues for the user
+- Ask (using AskUserQuestion): "What is the feature name for these issues?" with a text input option
+- The user's answer becomes the feature name (e.g. `Fast vLLM`)
+- Apply renaming rules:
+  - Replace `CLONE - [<Feature Name>]- ` with `<feature name> - ` (e.g. `Fast vLLM - Feature signoff - GA`)
+  - Replace `CLONE - [<Feature Name>] - ` (with space before dash) the same way
+  - Replace `CLONE - ` (without placeholder) with `<feature name> - ` (e.g. `Fast vLLM - QE signoff`)
+  - Process the most specific pattern first (placeholder variants before bare CLONE prefix)
 
 ### 7. Preview changes
 
@@ -101,7 +110,7 @@ For each issue, build the update payload:
 
 **Labels** — merge with existing, never replace. Add `dashboard-zaffre-scrum` plus the user-selected area labels to the existing labels array.
 
-**Summary** — if the issue has `CLONE - ` prefix and the user provided a replacement, replace `CLONE - ` with the new prefix.
+**Summary** — apply the renaming rules from step 6: replace `CLONE - [<Feature Name>]- ` or `CLONE - [<Feature Name>] - ` with `<feature name> - `, then replace any remaining `CLONE - ` with `<feature name> - `.
 
 Use `editJiraIssue` for each issue.
 
