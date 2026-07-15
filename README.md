@@ -105,6 +105,11 @@ Requires: Slack MCP server
 
 Generates or updates `.context/people.md` with RHOAI Dashboard team member information by cross-referencing Confluence, Jira, and GitHub. Useful for populating team context that other skills can reference.
 
+### [/zaffreify](zaffreify/)
+
+Bulk-updates a Jira issue and all its descendants to have the correct Zaffre scrum team fields: component (AI Core Dashboard), team (RHAI Zaffre), and labels. Asks which area labels to apply, and optionally renames `CLONE - ` prefixed issues with a feature name.
+Requires: Atlassian MCP server
+
 ### [/slackfmt-firefox](slackfmt-firefox/)
 
 Converts markdown to Slack's native rich text format using Firefox's Clipboard API. A stopgap solution for pasting into Slack's web interface in Firefox — the [slackfmt CLI](https://www.npmjs.com/package/@slackfmt/cli) only creates Chromium's clipboard format, which doesn't work in Firefox. Automates the [slackfmt web app](https://slackfmt.labs.caue.dev/) using Playwright Firefox.
