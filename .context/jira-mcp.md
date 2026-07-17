@@ -490,6 +490,9 @@ source ~/git/claude-skills/.env && curl -s \
 ```
 
 **Transition an issue:**
+
+> **CRITICAL: Always look up available transitions first.** Transition IDs are NOT fixed — they vary depending on the issue's current status. For example, "In Progress" may have different IDs when transitioning from "New" vs "Backlog". Always call `getTransitionsForJiraIssue` (MCP) or the REST transitions endpoint first, find the transition with the target status name, and use that ID. Never hardcode or guess transition IDs.
+
 ```bash
 source ~/git/claude-skills/.env && curl -s -X POST \
   "https://${JIRA_HOST}/rest/api/3/issue/RHOAIENG-12345/transitions" \
