@@ -26,6 +26,12 @@ When using Playwright with odh-dashboard, if instructed to enable a feature flag
   - Multiple flags: `?devFeatureFlags=deploymentWizardYAMLViewer=true,vLLMDeploymentOnMaaS=true`
 - Only include these in the first navigation per session - the UI retains flags across page navigation
 
+## Destructive Actions
+
+Before clicking any element that could modify or destroy data — delete buttons, confirm dialogs for destructive operations, form submissions that create/update/delete resources, or any action that cannot be easily undone — **stop and ask the user for confirmation**. This applies even when the user has asked you to test a flow end-to-end. Navigation, opening modals, filling fields, toggling switches, and dismissing dialogs (cancel/close) are fine without asking.
+
+The user can grant blanket approval for destructive actions during a single round of testing (e.g. "go ahead and click through everything without asking"). This approval expires when that testing round is complete — do not carry it forward to later testing.
+
 ## Screenshots
 
 **MANDATORY: Always take screenshots in a subagent.** Screenshot data is large and pollutes the main conversation context. When you need to take a screenshot:
@@ -41,6 +47,20 @@ Example subagent prompt:
 This keeps screenshot image data confined to the subagent's context and out of the main conversation.
 
 ## Session Lifecycle
+
+### Recovering from a closed browser context
+
+If the browser was closed unexpectedly (machine went to sleep, user quit the browser, etc.), subsequent tool calls will fail with errors like:
+
+- `Target page, context or browser has been closed`
+- `No open pages available`
+
+When this happens:
+
+1. Call `browser_close` on the affected MCP server (e.g. `mcp__playwright-chrome__browser_close`) — this resets the server's internal state even though the browser is already gone.
+2. Then call `browser_navigate` on the same server to start a fresh session.
+
+Do NOT keep retrying `browser_navigate` without closing first — the MCP server still holds a reference to the dead context and will keep erroring until you close it.
 
 ### Closing the browser when done
 
