@@ -16,3 +16,4 @@ Technical reference for using Jenkins MCP with the RHOAI Dashboard team's CI.
 ## Gotchas
 
 - **Job search is shallow:** `jenkins_search_jobs` only matches top-level job names. For nested jobs (like `components/dashboard/dashboard-e2e-tests`), use the full folder path directly with tools like `jenkins_get_recent_builds` — don't rely on search to find them.
+- **`fetch failed` means VPN is disconnected:** If any Jenkins MCP tool returns `MCP error -32603: fetch failed`, the Jenkins instance is behind Red Hat VPN. Stop and ask the user to connect to VPN before retrying. Do not retry in a loop — wait for the user to confirm they've connected.
