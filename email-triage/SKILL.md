@@ -8,11 +8,20 @@ disable-model-invocation: true
 
 Scan unread Gmail for important emails that need attention, filtering out noise from mailing lists, bots, and calendar invitations.
 
-**Requires:** Google Workspace MCP server
+**Requires:** `gws` CLI (Google Workspace CLI), authenticated
 
 ## Instructions
 
 ### Phase 1: Fetch Unread Emails
+
+Use the `gws` CLI to run Gmail searches. Example:
+```
+gws gmail users messages list --params '{"userId": "me", "q": "<gmail search query>", "maxResults": 100}'
+```
+Then fetch metadata for each message:
+```
+gws gmail users messages get --params '{"userId": "me", "id": "<MSG_ID>", "format": "metadata", "metadataHeaders": ["Subject", "From", "Date", "To", "Cc"]}'
+```
 
 Run these searches in parallel to cast a wide net:
 
