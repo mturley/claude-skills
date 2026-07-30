@@ -1,6 +1,6 @@
 ---
 name: zaffreify
-description: Use when setting up Jira issues for the Zaffre scrum team — sets component, team, labels, and optionally renames CLONE-prefixed issues across the issue and all its children/subtasks
+description: Use when setting up Jira issues for the Zaffre scrum team — sets component, team, labels, activity type, and optionally renames CLONE-prefixed issues across the issue and all its children/subtasks
 ---
 
 # Zaffreify
@@ -49,7 +49,7 @@ Collect the target issue plus all descendants into a single list.
 
 ### 4. Read current field values
 
-Query all collected issue keys with fields `summary`, `components`, `labels`, `customfield_10001` (Team).
+Query all collected issue keys with fields `summary`, `components`, `labels`, `customfield_10001` (Team), `customfield_10464` (Activity Type).
 
 ### 5. Ask which labels to apply
 
@@ -61,6 +61,15 @@ Always apply `dashboard-zaffre-scrum`. Then ask the user (using AskUserQuestion)
 - `dashboard-area-workbenches`
 
 Allow multiple selections and an "Other" option for custom labels.
+
+### 5b. Ask about Activity Type
+
+Ask the user (using AskUserQuestion) whether to set Activity Type to "New Features" on all issues. Default recommendation is yes.
+
+- `Set Activity Type to "New Features"` (Recommended)
+- `Leave Activity Type unchanged`
+
+Note: The Activity Type field (`customfield_10464`) is not available on the Sub-task edit screen in Jira. If the user chooses to set it, only apply it to the epic and tasks — skip subtasks silently (they don't support this field).
 
 ### 6. Check for CLONE prefix and feature name placeholders
 
@@ -84,13 +93,14 @@ If either pattern is found in any summary:
 
 Show the user a table of all issues and what will change:
 
-| Key | Summary | Component | Team | Labels to add |
+| Key | Summary | Component | Team | Labels to add | Activity Type |
 
 For each issue, show:
 - **Component:** current -> `AI Core Dashboard` (or "already set")
 - **Team:** current -> `RHAI Zaffre` (or "already set" / "inherited" for subtasks)
 - **Labels:** which labels will be added (preserving any existing labels)
 - **Summary:** old -> new (only if CLONE prefix is being replaced)
+- **Activity Type:** current -> `New Features` (or "already set" / "n/a" for subtasks) — only if user opted in at step 5b
 
 Wait for user approval before proceeding.
 
@@ -112,6 +122,11 @@ For each issue, build the update payload:
 
 **Summary** — apply the renaming rules from step 6: replace `CLONE - [<Feature Name>]- ` or `CLONE - [<Feature Name>] - ` with `<feature name> - `, then replace any remaining `CLONE - ` with `<feature name> - `.
 
+**Activity Type** (if user opted in at step 5b, NOT subtasks — the field is unavailable on their screen):
+```json
+{"customfield_10464": {"id": "12229"}}
+```
+
 Update each issue using the Jira API.
 
 ### 9. Report results
@@ -125,3 +140,4 @@ Show a summary of what was updated. If any subtask team updates fail with "inher
 | Component | `AI Core Dashboard` (ID `15570`) | Replaces any existing, including placeholder |
 | Team | `c1466179-4c13-43a4-895d-c632789ded28` | RHAI Zaffre. Plain string. Subtasks inherit. |
 | Labels | `dashboard-zaffre-scrum` + user-selected area labels | Added to existing, never replacing |
+| Activity Type | `customfield_10464` with `{"id": "12229"}` (New Features) | Optional. Not available on Sub-task screen — skip subtasks. |
