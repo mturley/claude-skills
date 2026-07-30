@@ -7,7 +7,7 @@ description: Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scr
 
 Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOAI Dashboard, Model Serving focus).
 
-**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira.md`](../.context/jira.md)
 
 ## Arguments
 
@@ -16,12 +16,12 @@ Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOA
 ## Instructions
 
 **Prerequisites Check:**
-- Verify that `../.context/jira-mcp.md` exists by attempting to read it
+- Verify that `../.context/jira.md` exists by attempting to read it
 - If the file doesn't exist, abort with this message:
   ```
-  Error: MCP usage reference not found.
+  Error: Jira reference file not found.
 
-  The technical reference file for Jira MCP is missing. This file contains
+  The technical reference file for Jira is missing. This file contains
   field IDs, formats, and gotchas needed to create Jira issues correctly.
 
   Please ensure you have the claude-skills repository properly set up:
@@ -48,7 +48,7 @@ Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOA
    - When referencing files, include GitHub links (see "File References" below)
 
 4. **Ask the user for the area label(s)** - if not already clear from context:
-   - Read the **Labels** section under "Dashboard Team Issues" in [`../.context/jira-mcp.md`](../.context/jira-mcp.md) to get the current list of `dashboard-area-*` labels and their descriptions
+   - Read the **Labels** section under "Dashboard Team Issues" in [`../.context/jira.md`](../.context/jira.md) to get the current list of `dashboard-area-*` labels and their descriptions
    - Present the available labels to the user and allow them to select one or more
 
 5. **Present the drafted title and description** for user approval. Allow them to refine it.
@@ -58,11 +58,11 @@ Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOA
 
 7. **If the issue type is Bug, ask for Severity** (customfield_10840)
 
-8. **Ask for Activity Type** (one of: Tech Debt & Quality, New Features, Learning & Enablement, or None). See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for field ID and option IDs.
+8. **Ask for Activity Type** (one of: Tech Debt & Quality, New Features, Learning & Enablement, or None). See [`../.context/jira.md`](../.context/jira.md) for field ID and option IDs.
 
 9. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
 
-10. **Create the issue** using `createJiraIssue`. See [`../.context/jira-mcp.md`](../.context/jira-mcp.md) for all field IDs and formats. Include:
+10. **Create the issue** using `atlassian-cli jira issue create`. See [`../.context/jira.md`](../.context/jira.md) for all field IDs and formats. Include:
     - `projectKey`, component, team, labels (based on area selection)
     - Priority (based on user selection)
     - Severity (if Bug, based on user selection)
@@ -135,5 +135,5 @@ When referencing files in the issue description, include GitHub links using stan
 2. Link to files on the `main` branch: `[filename](https://github.com/OWNER/REPO/blob/main/path/to/file.ts)`
 
 ## Important Notes
-- If using Jira MCP tools encounters issues, stop and ask the user how to proceed
+- If a Jira CLI command fails, stop and ask the user whether to enable the Atlassian MCP server or fall back to curl
 - Always show the created issue link to the user

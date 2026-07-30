@@ -1,22 +1,18 @@
-# Jira MCP Reference
+# Jira Reference
 
-Technical reference for using Jira MCP with the RHOAIENG project (RHAI Zaffre scrum / RHOAI Dashboard).
+Technical reference for working with Jira on the RHOAIENG project (RHAI Zaffre scrum / RHOAI Dashboard).
 
-## Server Configuration
+## Access Methods
 
-**Server:** Official Atlassian Cloud MCP (Streamable HTTP transport)
+**Primary:** Use `atlassian-cli` via Bash. If a command fails or the CLI doesn't support an operation, stop and ask the user whether to enable the Atlassian MCP server or fall back to `curl`.
+
 **Instance:** `redhat.atlassian.net`
-**Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432` (can also use `redhat.atlassian.net` as `cloudId` param)
-**MCP server name:** `atlassian` (tools are `mcp__atlassian__*`)
-**Auth:** OAuth via browser (no PAT needed)
-**User identifiers:** Atlassian Cloud `accountId` (not DC usernames). Look up via `lookupJiraAccountId` with email. See `people.md` for team roster with accountIds.
-
-> **Note:** SSE endpoint (`/v1/sse`) deprecated after June 30, 2026. We use Streamable HTTP (`/v1/mcp`) which is the recommended transport.
+**Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432`
+**User identifiers:** Atlassian Cloud `accountId` (not DC usernames). See `people.md` for team roster with accountIds. The `atlassian-cli --assignee` flag requires the accountId — email addresses will fail with "Specify a valid value for assignee".
 
 ## Important Rules
 
-- **Linking PRs to issues:** When asked to link/attach a PR to a Jira issue, ALWAYS use the Git Pull Request custom field (`customfield_10875`) via `editJiraIssue`. NEVER use `addCommentToJiraIssue` for this.
-- **Custom fields not in getJiraIssue responses:** The official Atlassian Cloud MCP strips custom fields from issue responses. To read custom field values, use `searchJiraIssuesUsingJql` with explicit `fields` parameter, or use the REST API directly.
+- **Linking PRs to issues:** ALWAYS use the Git Pull Request custom field (`customfield_10875`). NEVER use a comment for this.
 - **No issue type prefix in titles:** Do NOT prefix issue summaries with `BUG:`, `TASK:`, or `STORY:`. The issue type is already captured by the `issueTypeName` field — repeating it in the title is redundant.
 
 ## Quick Reference
@@ -44,16 +40,7 @@ Technical reference for using Jira MCP with the RHOAIENG project (RHAI Zaffre sc
 **Project Key:** `RHOAIENG`
 **Project ID:** `10350`
 
-**Creating issues (Cloud API):** Use `createJiraIssue` with:
-- `projectKey`: `"RHOAIENG"`
-- `issueTypeName`: `"Bug"`, `"Task"`, or `"Story"` (string names, not IDs)
-- `assignee_account_id`: Cloud accountId from people.md
-- `additional_fields`: object for custom fields (replaces DC's `customFields`)
-- `contentFormat`: `"markdown"` (for markdown descriptions)
-
-**Updating issues:** Use `editJiraIssue` with:
-- `fields`: object containing field updates (replaces DC's `customFields`)
-- `contentFormat`: `"markdown"`
+**Issue Type Names:** `"Bug"`, `"Task"`, `"Story"` (use string names in API calls, not IDs)
 
 **Issue Type IDs (for reference):**
 - Bug: `10016`
@@ -85,8 +72,15 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 **Type:** `atlassian-team` (Atlassian Teams integration)
 
 **Format:** Plain string (NOT an object — passing `{"id": "..."}` will fail with "Team id is not valid")
+
+*MCP / REST API:*
 ```json
 "ec74d716-af36-4b3c-950f-f79213d08f71-1809"
+```
+
+*atlassian-cli:* The `--field` flag requires valid JSON, so quote the string:
+```bash
+--field 'customfield_10001="c1466179-4c13-43a4-895d-c632789ded28"'
 ```
 
 **Team IDs:**
@@ -193,10 +187,10 @@ To extract URLs, check for both: `mark.attrs.href` on text nodes with link marks
 
 **How to set:**
 
-> **CRITICAL: This field is overwrite-only — always read before writing.** The API replaces the entire field value; it does not append. If you skip reading the current value, you will destroy existing PR links. Use `searchJiraIssuesUsingJql` with `fields: ["customfield_10875"]` and `responseContentFormat: "adf"` to read the current ADF content, then include all existing `inlineCard` nodes alongside the new one.
+> **CRITICAL: This field is overwrite-only — always read before writing.** The API replaces the entire field value; it does not append. If you skip reading the current value, you will destroy existing PR links. Read the current `customfield_10875` value first, then include all existing `inlineCard` nodes alongside the new one.
 
-1. **Read the current value** using `searchJiraIssuesUsingJql` with `fields: ["customfield_10875"]` and `responseContentFormat: "adf"`. Extract any existing `inlineCard` URLs from the ADF content.
-2. Use `editJiraIssue` with raw ADF (do NOT use `contentFormat: "markdown"` — it fails with "Operation value must be an Atlassian Document")
+1. **Read the current value** by fetching the issue with `customfield_10875` in the fields list. Extract any existing `inlineCard` URLs from the ADF content.
+2. Update the field with raw ADF (markdown format will fail with "Operation value must be an Atlassian Document")
 3. **Prefer `inlineCard` format** — this renders as a Smart Link in the Jira UI (showing PR title, status, etc.):
 
 ```json
@@ -289,7 +283,7 @@ The operator '~' is not supported by the 'sprint' field
 
 ### Workaround: Search for Issues in Sprints
 
-Use `searchJiraIssuesUsingJql` (MCP) or `POST /rest/api/3/search/jql` (REST API) with the JQL queries below. Include `customfield_10020` in the fields list to get sprint data. See the REST API section for the correct POST syntax — the old `GET /rest/api/3/search` endpoint has been removed.
+Search with JQL and include `customfield_10020` in the fields list to get sprint data.
 
 **For current sprint** (search for issues in open sprints):
 ```jql
@@ -394,7 +388,7 @@ Markdown links (`[text](url)`) render as plain text links in Jira. To render **s
 
 ## Write Operation Preview Requirement
 
-**Before any Jira write operation** (`createJiraIssue`, `editJiraIssue`, `addCommentToJiraIssue`, `transitionJiraIssue`), always show the user a preview of what will be written. This includes:
+**Before any Jira write operation** (creating, updating, commenting, or transitioning issues), always show the user a preview of what will be written. This includes:
 
 - **Creating issues:** Show the full drafted title, description, and all fields (priority, severity, labels, sprint, assignee, etc.) before making the API call.
 - **Updating issues:** Show a diff or summary of what fields/content will change.
@@ -407,33 +401,19 @@ Wait for user approval before proceeding with the write operation.
 
 ## Troubleshooting
 
-### `searchJiraIssuesUsingJql` maxResults Parameter
-**Symptom:** `Input validation error: Expected number, received string` when passing `maxResults`
-
-**Solution:** The `maxResults` parameter requires a strict number type. If validation fails, omit the parameter entirely (defaults to 10) rather than trying to cast or quote the value.
-
-### `editJiraIssue` description must go inside `fields`
-**Symptom:** `Input validation error: Required` for `fields`, or description silently ignored.
-
-**Solution:** The `description` is NOT a top-level parameter on `editJiraIssue`. It must be passed inside the `fields` object:
-```json
-fields: {"description": "..."}
-```
-The `fields` parameter is required and must be an object (not a string). The `contentFormat` parameter IS top-level and controls how the description markdown is interpreted.
-
 ### Authentication Failures
 **Symptom:** 401 Unauthorized or connection errors
 
-**Solutions (Cloud):**
-- Re-authenticate via browser when prompted by the OAuth flow
-- Check `claude mcp list` to see if the server shows "Needs authentication"
-- If MCP auth continues to fail, use the REST API fallback (see below)
+**Solutions:**
+- For `atlassian-cli`: run `atlassian-cli auth test` to verify credentials, then `atlassian-cli auth login` to re-authenticate
+- For MCP: re-authenticate via browser when prompted by the OAuth flow
+- If both fail, use the REST API fallback (see below)
 
 ---
 
 ## REST API Fallback
 
-When the Atlassian MCP server's OAuth flow fails (e.g. "Access denied" errors, callback URL issues), fall back to direct REST API calls using `curl`.
+When both `atlassian-cli` and the Atlassian MCP server are unavailable, fall back to direct REST API calls using `curl`.
 
 ### Setup
 
@@ -519,11 +499,10 @@ source ~/git/claude-skills/.env && curl -s -X POST \
 
 ### Notes
 
-- The REST API uses the same field IDs, formats, and values documented above for the MCP tools
+- The REST API uses the same field IDs, formats, and values documented above
 - Descriptions must be in ADF (Atlassian Document Format) JSON — the REST API v3 does not accept markdown directly
 - HTTP 204 on transitions means success (no response body)
 - HTTP 201 on issue creation means success (response includes `id`, `key`, `self`)
-- Always prefer MCP tools when they're working — only fall back to REST when MCP auth fails
 
 ---
 

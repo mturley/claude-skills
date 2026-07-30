@@ -9,7 +9,7 @@ Bulk-update a Jira issue and all its descendants to have the correct Zaffre scru
 
 Works on any issue type: epics (updates all tasks and subtasks underneath), stories/tasks/bugs (updates the issue and any subtasks).
 
-**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira-mcp.md`](../.context/jira-mcp.md)
+**Technical Reference:** For field IDs, formats, and gotchas, see [`../.context/jira.md`](../.context/jira.md)
 
 ## Arguments
 
@@ -23,7 +23,7 @@ If no issue key is provided, ask the user for the Jira issue key.
 
 ### 2. Fetch the issue
 
-Use `getJiraIssue` to fetch the issue. Show the user the summary and issue type.
+Fetch the issue details. Show the user the summary and issue type.
 
 ### 3. Collect all descendants
 
@@ -112,7 +112,7 @@ For each issue, build the update payload:
 
 **Summary** — apply the renaming rules from step 6: replace `CLONE - [<Feature Name>]- ` or `CLONE - [<Feature Name>] - ` with `<feature name> - `, then replace any remaining `CLONE - ` with `<feature name> - `.
 
-Use `editJiraIssue` for each issue.
+Update each issue using the Jira API.
 
 ### 9. Report results
 
