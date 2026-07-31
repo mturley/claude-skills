@@ -5,7 +5,7 @@ description: Use when setting up Jira issues for the Zaffre scrum team — sets 
 
 # Zaffreify
 
-Bulk-update a Jira issue and all its descendants to have the correct Zaffre scrum team fields: component, team, labels, and naming convention.
+Bulk-update a Jira issue and all its descendants to have the correct scrum team fields: component, team, labels, activity type, and naming convention.
 
 Works on any issue type: epics (updates all tasks and subtasks underneath), stories/tasks/bugs (updates the issue and any subtasks).
 
@@ -29,11 +29,11 @@ Fetch the issue details. Show the user the summary and issue type.
 
 Depending on issue type:
 
-**If Epic:** Find tasks via Epic Link, then find subtasks of those tasks:
+**If Epic:** Find child issues via Epic Link, then find subtasks of those tasks if any:
 ```jql
 "Epic Link" = <KEY> ORDER BY key ASC
 ```
-Then for any tasks found:
+Then for any issues found:
 ```jql
 parent IN (<TASK_KEYS>) ORDER BY key ASC
 ```
@@ -51,16 +51,22 @@ Collect the target issue plus all descendants into a single list.
 
 Query all collected issue keys with fields `summary`, `components`, `labels`, `customfield_10001` (Team), `customfield_10464` (Activity Type).
 
-### 5. Ask which labels to apply
+### 5. Ask which scrum team and area labels to apply
 
-Always apply `dashboard-zaffre-scrum`. Then ask the user (using AskUserQuestion) which area label(s) to add. Offer common options:
+Run the label lookup script to fetch available labels dynamically from Jira:
 
-- `dashboard-area-model-serving` (Recommended)
-- `dashboard-area-model-registry`
-- `dashboard-area-pipelines`
-- `dashboard-area-workbenches`
+```bash
+~/git/claude-skills/zaffreify/jira-labels.sh scrum
+~/git/claude-skills/zaffreify/jira-labels.sh area
+```
 
-Allow multiple selections and an "Other" option for custom labels.
+If the script fails (missing `.env`, no API token, network error), fall back to these hardcoded lists:
+- **Scrum:** `dashboard-zaffre-scrum`, `dashboard-crimson-scrum`, `dashboard-tangerine-scrum`, `dashboard-onyx-scrum`, `dashboard-razzmatazz-scrum`, `dashboard-green-scrum`, `dashboard-purple-scrum`, `dashboard-monarch-scrum`
+- **Area:** `dashboard-area-model-serving`, `dashboard-area-model-registry`, `dashboard-area-pipelines`, `dashboard-area-workbenches`
+
+**Scrum team** — present as a **single-select** AskUserQuestion using the scrum label list. Recommend `dashboard-zaffre-scrum`. The selected label determines both the label to apply and the team UUID (see Team Mapping table below).
+
+**Area labels** — present as a **multi-select** AskUserQuestion using the area label list. Recommend `dashboard-area-model-serving`. Allow "Other" for custom labels.
 
 ### 5b. Ask about Activity Type
 
@@ -97,7 +103,7 @@ Show the user a table of all issues and what will change:
 
 For each issue, show:
 - **Component:** current -> `AI Core Dashboard` (or "already set")
-- **Team:** current -> `RHAI Zaffre` (or "already set" / "inherited" for subtasks)
+- **Team:** current -> selected team name (or "already set" / "inherited" for subtasks)
 - **Labels:** which labels will be added (preserving any existing labels)
 - **Summary:** old -> new (only if CLONE prefix is being replaced)
 - **Activity Type:** current -> `New Features` (or "already set" / "n/a" for subtasks) — only if user opted in at step 5b
@@ -113,12 +119,12 @@ For each issue, build the update payload:
 {"components": [{"name": "AI Core Dashboard"}]}
 ```
 
-**Team** (NOT subtasks — they inherit from parent):
+**Team** (NOT subtasks — they inherit from parent). Use the UUID from the Team Mapping table below based on the scrum team selected in step 5:
 ```json
-{"customfield_10001": "c1466179-4c13-43a4-895d-c632789ded28"}
+{"customfield_10001": "<TEAM_UUID>"}
 ```
 
-**Labels** — merge with existing, never replace. Add `dashboard-zaffre-scrum` plus the user-selected area labels to the existing labels array.
+**Labels** — merge with existing, never replace. Add the selected scrum team label plus the user-selected area labels to the existing labels array.
 
 **Summary** — apply the renaming rules from step 6: replace `CLONE - [<Feature Name>]- ` or `CLONE - [<Feature Name>] - ` with `<feature name> - `, then replace any remaining `CLONE - ` with `<feature name> - `.
 
@@ -138,6 +144,34 @@ Show a summary of what was updated. If any subtask team updates fail with "inher
 | Field | Value | Notes |
 |-------|-------|-------|
 | Component | `AI Core Dashboard` (ID `15570`) | Replaces any existing, including placeholder |
-| Team | `c1466179-4c13-43a4-895d-c632789ded28` | RHAI Zaffre. Plain string. Subtasks inherit. |
-| Labels | `dashboard-zaffre-scrum` + user-selected area labels | Added to existing, never replacing |
+| Team | `customfield_10001` — plain UUID string | See Team Mapping below. Subtasks inherit. |
+| Labels | selected scrum label + user-selected area labels | Added to existing, never replacing |
 | Activity Type | `customfield_10464` with `{"id": "12229"}` (New Features) | Optional. Not available on Sub-task screen — skip subtasks. |
+
+## Team Mapping
+
+Maps the scrum team label (selected in step 5) to the Jira Team UUID for `customfield_10001`:
+
+| Scrum Label | Jira Team Name | Team UUID |
+|-------------|---------------|-----------|
+| `dashboard-tangerine-scrum` | RHAI Tangerine | `9679da1b-1866-4348-b65c-5ba033e9b761` |
+| `dashboard-crimson-scrum` | RHAI Crimson | `c6e27e7d-7675-4a9c-98cc-1625898636ba` |
+| `dashboard-razzmatazz-scrum` | RHAI Razzmatazz | `a3b9f319-0849-47bb-a8ee-ac908b882105` |
+| `dashboard-onyx-scrum` | RHAI Onyx | `2c35865b-83c2-4931-911f-041d57c82532` |
+| `dashboard-zaffre-scrum` | RHAI Zaffre | `c1466179-4c13-43a4-895d-c632789ded28` |
+| `dashboard-green-scrum` | RHAI Green | `cffa1fd0-e59a-4305-b39e-1d40ae31112e` |
+| `dashboard-purple-scrum` | RHAI Purple | `2cddc7b3-7a62-4be8-942d-1e160767cef1` |
+| `dashboard-monarch-scrum` | RHAI Monarch | `6cb9996b-0281-4bee-b062-611b1d2d1baa` |
+| `dashboard-pewter-scrum` | *(unknown — look up UUID if needed)* | — |
+| *(fallback)* | RHOAI Dashboard | `ec74d716-af36-4b3c-950f-f79213d08f71-1809` |
+
+If a scrum label is selected that isn't in this table, warn the user that the Team UUID is unknown and ask them to provide it or skip setting the team field.
+
+## Label Lookup Script
+
+`jira-labels.sh` dynamically fetches label names from Jira using the autocomplete suggestions API (`GET /rest/api/2/jql/autocompletedata/suggestions?fieldName=labels&fieldValue=<prefix>`). It requires `~/git/claude-skills/.env` with `JIRA_EMAIL`, `JIRA_TOKEN`, and `JIRA_HOST`.
+
+```bash
+jira-labels.sh area   # lists all dashboard-area-* labels
+jira-labels.sh scrum  # lists all dashboard-*-scrum labels
+```
