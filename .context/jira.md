@@ -4,7 +4,7 @@ Technical reference for working with Jira on the RHOAIENG project (RHAI Zaffre s
 
 ## Access Methods
 
-**Primary:** Use `atlassian-cli` via Bash. If a command fails or the CLI doesn't support an operation, stop and ask the user whether to enable the Atlassian MCP server or fall back to `curl`.
+**Primary:** Use the Atlassian MCP server (`mcp__atlassian__*` tools). If the MCP server is disabled or unavailable, fall back to `atlassian-cli` via Bash or `curl` (see "REST API Fallback" section below).
 
 **Instance:** `redhat.atlassian.net`
 **Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432`
