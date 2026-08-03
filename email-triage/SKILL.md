@@ -14,46 +14,45 @@ Scan unread Gmail for important emails that need attention, filtering out noise 
 
 ### Phase 1: Fetch Unread Emails
 
-Use the `gws` CLI to run Gmail searches. Example:
+Run the fetch script to search, deduplicate, and fetch metadata for all unread emails in one step:
 ```
-gws gmail users messages list --params '{"userId": "me", "q": "<gmail search query>", "maxResults": 100}'
-```
-Then fetch metadata for each message:
-```
-gws gmail users messages get --params '{"userId": "me", "id": "<MSG_ID>", "format": "metadata", "metadataHeaders": ["Subject", "From", "Date", "To", "Cc"]}'
+python3 ~/.claude/skills/email-triage/fetch-emails.py
 ```
 
-Run these searches in parallel to cast a wide net:
+The script prints a JSON file path to stdout (progress/warnings go to stderr). Read the output file to get all email metadata grouped by thread. The JSON structure:
 
-1. **Directly addressed, recent** (last 30 days):
-   ```
-   is:unread to:me -from:noreply -from:no-reply -from:notifications@ category:personal
-   ```
-   Max 100 results.
+```json
+{
+  "fetched_at": "...",
+  "total_unread_scanned": 187,
+  "unique_messages": 120,
+  "thread_count": 55,
+  "threads": {
+    "<threadId>": {
+      "subject": "...",
+      "message_count": 3,
+      "messages": [
+        {
+          "id": "...",
+          "subject": "...",
+          "from_name": "Emily Samoylov",
+          "from_email": "esamoylo@redhat.com",
+          "date": "Mon, 03 Aug 2026 07:35:54 -0700",
+          "to": "...",
+          "cc": "...",
+          "labels": ["UNREAD", "IMPORTANT", "CATEGORY_PERSONAL"]
+        }
+      ]
+    }
+  }
+}
+```
 
-2. **Action-required keywords** (last 90 days):
-   ```
-   is:unread to:me subject:(action OR review OR approve OR sign OR deadline OR urgent OR ASAP OR reminder OR complete OR required OR overdue)
-   ```
-   Max 50 results.
+Messages within each thread are sorted oldest-first. Use the `labels`, `from_email`, `to`, `cc`, and `subject` fields for filtering in Phase 2.
 
-3. **Important unread from humans** (last 30 days):
-   ```
-   is:unread is:important -from:jira -from:noreply -from:no-reply -from:notifications@ -from:notification@ -from:gemini-notes@ -from:hello@udemybusiness
-   ```
-   Max 100 results.
+### Phase 2: Filter
 
-4. **Mentions by name** (last 30 days):
-   Search for the user's first name in the body/subject to catch @-mentions in Jira, GitHub, or mailing list replies:
-   ```
-   is:unread "mentioned you" OR "@<first name>"
-   ```
-   Max 50 results.
-
-### Phase 2: Deduplicate and Filter
-
-1. Deduplicate results by message ID across all searches.
-2. **Filter out noise** — remove emails matching these patterns:
+**Filter out noise** — remove threads/messages matching these patterns:
    - Calendar invitations and cancellations (subjects starting with "Invitation:", "Updated invitation:", "Canceled event:", or from Google Calendar)
    - Automated meeting notes (from `gemini-notes@google.com`)
    - Bot/CI notifications (from addresses containing `noreply`, `no-reply`, `bot`, `notifications@`) — **unless** the subject contains action-required keywords
@@ -63,7 +62,7 @@ Run these searches in parallel to cast a wide net:
    - Slack digest emails
    - Expired deadlines from more than 6 months ago (benefits enrollment, token expiration, etc.) — flag these for bulk archival instead
 
-3. **Keep** emails that match any of these signals:
+**Keep** emails that match any of these signals:
    - User is directly mentioned by name (e.g., "@Mike" in a Jira comment)
    - User is the sole or primary recipient (not a large CC list or mailing list)
    - Subject contains compliance/training deadlines
