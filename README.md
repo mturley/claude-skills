@@ -34,11 +34,6 @@ These skills also work with [Cursor](https://cursor.com) and other tools that su
    - **`.context/`** contains shared context files (MCP documentation, team data) needed by some skills.
    - **`.shared-scripts/`** contains shared Python utilities and scripts used by multiple skills.
 
-   Alternatively, you can symlink the entire repo, though this includes git history and means any other skills you add would become untracked files in this repo:
-   ```bash
-   ln -s ~/git/claude-skills ~/.claude/skills
-   ```
-
    If you prefer, you can copy individual folders to `~/.claude/skills/` instead of using symlinks.
 
 3. **(Optional)** Add a generic reference to the `.context` directory in your global `~/.claude/CLAUDE.md` so Claude proactively checks for MCP documentation in all sessions, not just when using skills:
