@@ -6,7 +6,7 @@ Technical reference for working with Confluence on the RHOAI Dashboard team's sp
 
 ## Access Methods
 
-**Primary:** Use `atlassian-cli confluence` via Bash. If a command fails or the CLI doesn't support an operation, stop and ask the user whether to enable the Atlassian MCP server or fall back to `curl`.
+**Primary:** Use the Atlassian MCP server (`mcp__atlassian__*` tools). If the MCP server is disabled or unavailable, fall back to `curl`.
 
 ## Resolving User References (Legacy Data Center)
 

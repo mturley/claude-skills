@@ -4,11 +4,11 @@ Technical reference for working with Jira on the RHOAIENG project (RHAI Zaffre s
 
 ## Access Methods
 
-**Primary:** Use the Atlassian MCP server (`mcp__atlassian__*` tools). If the MCP server is disabled or unavailable, fall back to `atlassian-cli` via Bash or `curl` (see "REST API Fallback" section below).
+**Primary:** Use the Atlassian MCP server (`mcp__atlassian__*` tools). If the MCP server is disabled or unavailable, fall back to `curl` (see "REST API Fallback" section below).
 
 **Instance:** `redhat.atlassian.net`
 **Cloud ID:** `2b9e35e3-6bd3-4cec-b838-f4249ee02432`
-**User identifiers:** Atlassian Cloud `accountId` (not DC usernames). See `people.md` for team roster with accountIds. The `atlassian-cli --assignee` flag requires the accountId — email addresses will fail with "Specify a valid value for assignee".
+**User identifiers:** Atlassian Cloud `accountId` (not DC usernames). See `people.md` for team roster with accountIds.
 
 ## Important Rules
 
@@ -73,14 +73,8 @@ For issues owned by the RHOAI AI Hub team (operator, backend, infrastructure):
 
 **Format:** Plain string (NOT an object — passing `{"id": "..."}` will fail with "Team id is not valid")
 
-*MCP / REST API:*
 ```json
 "ec74d716-af36-4b3c-950f-f79213d08f71-1809"
-```
-
-*atlassian-cli:* The `--field` flag requires valid JSON, so quote the string:
-```bash
---field 'customfield_10001="c1466179-4c13-43a4-895d-c632789ded28"'
 ```
 
 **Team IDs:**
@@ -405,15 +399,15 @@ Wait for user approval before proceeding with the write operation.
 **Symptom:** 401 Unauthorized or connection errors
 
 **Solutions:**
-- For `atlassian-cli`: run `atlassian-cli auth test` to verify credentials, then `atlassian-cli auth login` to re-authenticate
-- For MCP: re-authenticate via browser when prompted by the OAuth flow
-- If both fail, use the REST API fallback (see below)
+- Re-authenticate via browser when prompted by the MCP OAuth flow
+- Check `claude mcp list` to see if the server shows "Needs authentication"
+- If MCP auth continues to fail, use the REST API fallback (see below)
 
 ---
 
 ## REST API Fallback
 
-When both `atlassian-cli` and the Atlassian MCP server are unavailable, fall back to direct REST API calls using `curl`.
+When the Atlassian MCP server is unavailable (disabled, auth failure, etc.), fall back to direct REST API calls using `curl`.
 
 ### Setup
 
