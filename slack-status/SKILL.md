@@ -1,6 +1,7 @@
 ---
 name: slack-status
 description: Use when the user wants to see recent Zaffre scrum status updates from the wg-dashboard-zaffre Slack channel, or when they want to monitor the latest status thread for new replies.
+disable-model-invocation: true
 ---
 
 # /slack-status — Zaffre Scrum Status Threads

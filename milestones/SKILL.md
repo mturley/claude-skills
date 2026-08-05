@@ -1,6 +1,7 @@
 ---
 name: milestones
 description: Show upcoming RHOAI release milestones from Product Pages, with filtering by date range or version
+disable-model-invocation: true
 ---
 
 # RHOAI Milestones

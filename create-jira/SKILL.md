@@ -1,6 +1,7 @@
 ---
 name: create-jira
 description: Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team
+disable-model-invocation: true
 ---
 
 # Create Jira
@@ -62,7 +63,7 @@ Create a Jira issue in the RHOAIENG project for the RHAI Zaffre scrum team (RHOA
 
 9. **Ask if there's an epic to link** - if the user mentions an epic or parent issue, note it for the next step.
 
-10. **Create the issue** using `atlassian-cli jira issue create`. See [`../.context/jira.md`](../.context/jira.md) for all field IDs and formats. Include:
+10. **Create the issue.** See [`../.context/jira.md`](../.context/jira.md) for the access method and all field IDs and formats. Include:
     - `projectKey`, component, team, labels (based on area selection)
     - Priority (based on user selection)
     - Severity (if Bug, based on user selection)

@@ -1,6 +1,7 @@
 ---
 name: pr-review
 description: Review a pull request by checking out its branch and analyzing the changes
+disable-model-invocation: true
 ---
 
 # Review Pull Request
